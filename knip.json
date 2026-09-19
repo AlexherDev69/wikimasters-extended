@@ -1,0 +1,9 @@
+{
+  "wxt": {
+    "entry": ["src/entrypoints/**/*"]
+  },
+  "project": ["src/**/*.ts"],
+  "paths": {
+    "#imports": [".wxt/types/imports-module.d.ts"]
+  }
+}
