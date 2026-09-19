@@ -1,0 +1,10 @@
+# Raw page exports may contain personal data (username, messages). Never commit them.
+tests/fixtures/raw/
+
+node_modules/
+.output/
+.wxt/
+*.log
+.env*
+!.env.example
+coverage/
