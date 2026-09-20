@@ -2,8 +2,14 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applyModalLink, findModalLinkTarget, type ModalLinkTarget } from './modal-link';
-import { LETTERBOXD_LINK_SELECTOR, WIKIPEDIA_LINK_SELECTOR } from './modal-selectors';
+import { findDetailModal } from '../../card-detection/data/detail-modal';
+import {
+  applyModalLink,
+  findModalLinkTarget,
+  removeModalLink,
+  type ModalLinkTarget,
+} from './modal-link';
+import { LETTERBOXD_LINK_SELECTOR } from './modal-selectors';
 
 /** Another full-screen layer of the site, rendered before the detail modal. */
 const DECOY_LAYER_HTML =
@@ -44,12 +50,13 @@ function observeBody(): MutationObserver {
   return observer;
 }
 
+/** The content script finds the modal once and hands it to every feature. */
 function requireTarget(): ModalLinkTarget {
-  const target = findModalLinkTarget(document.body);
-  if (target === null) {
+  const modal = findDetailModal(document.body);
+  if (modal === null) {
     throw new Error('The fixture modal was not found');
   }
-  return target;
+  return findModalLinkTarget(modal);
 }
 
 function ourLink(): HTMLAnchorElement | null {
@@ -80,44 +87,11 @@ describe('findModalLinkTarget', () => {
     expect(requireTarget().ourLink).toBe(ourLink());
   });
 
-  it('should return nothing when no modal is open', () => {
-    document.body.innerHTML = '<div class="p-4"><h3>Pulp Fiction</h3></div>';
-
-    expect(findModalLinkTarget(document.body)).toBeNull();
-  });
-
-  it('should return nothing when the modal carries no Wikipedia link', () => {
-    openModal();
-    document.body.querySelector(WIKIPEDIA_LINK_SELECTOR)?.remove();
-
-    expect(findModalLinkTarget(document.body)).toBeNull();
-  });
-
   it('should return no title when the card of the modal cannot be read', () => {
     openModal();
     makeCardUnreadable();
 
-    const target = findModalLinkTarget(document.body);
-
-    expect(target).not.toBeNull();
-    expect(target?.title).toBeNull();
-  });
-
-  it('should skip a full-screen layer that is not the detail modal', () => {
-    document.body.innerHTML = DECOY_LAYER_HTML + MODAL_HTML;
-
-    const target = requireTarget();
-
-    expect(target.title).toBe(MODAL_CARD_TITLE);
-    expect(target.wikipediaLink.getAttribute('href')).toBe(
-      'https://fr.wikipedia.org/wiki/Dvoricht%C3%A9',
-    );
-  });
-
-  it('should return nothing when the only layer carries no card frame', () => {
-    document.body.innerHTML = DECOY_LAYER_HTML;
-
-    expect(findModalLinkTarget(document.body)).toBeNull();
+    expect(requireTarget().title).toBeNull();
   });
 });
 
@@ -250,5 +224,32 @@ describe('applyModalLink', () => {
     ourLink()?.remove();
 
     expect(document.body.innerHTML).toBe(siteHtml);
+  });
+});
+
+describe('removeModalLink', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('should take back the link and leave the site as it was', () => {
+    openModal();
+    const siteHtml = document.body.innerHTML;
+    applyModalLink(requireTarget(), FILM_URL);
+
+    removeModalLink(document.body);
+
+    expect(ourLink()).toBeNull();
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should do nothing when no link was added', () => {
+    openModal();
+    const observer = observeBody();
+
+    removeModalLink(document.body);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
   });
 });

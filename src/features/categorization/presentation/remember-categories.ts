@@ -1,4 +1,4 @@
-import type { CardCategory } from '../../categorization/domain/category';
+import type { CardCategory } from '../domain/category';
 
 /**
  * How many categories the content script keeps. Browsing the marketplace

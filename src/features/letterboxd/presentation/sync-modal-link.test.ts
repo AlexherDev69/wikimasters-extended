@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findDetailModal } from '../../card-detection/data/detail-modal';
 import type { CardCategory } from '../../categorization/domain/category';
 import { LETTERBOXD_LINK_SELECTOR } from '../data/modal-selectors';
 import { syncModalLink } from './sync-modal-link';
@@ -32,6 +33,11 @@ function makeCategories(...results: CardCategory[]): Map<string, CardCategory> {
 
 function openModal(): void {
   document.body.innerHTML = MODAL_HTML;
+}
+
+/** What the content script does: find the modal once, then sync with it. */
+function sync(categoriesByTitle: ReadonlyMap<string, CardCategory>): void {
+  syncModalLink(findDetailModal(document.body), categoriesByTitle);
 }
 
 /** The site reuses the same modal for the next card it shows. */
@@ -66,7 +72,7 @@ describe('syncModalLink', () => {
   it('should add the link of the card shown in the modal when its category is known', () => {
     openModal();
 
-    syncModalLink(document.body, makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL)));
+    sync(makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL)));
 
     expect(ourLink()?.getAttribute('href')).toBe(FILM_URL);
   });
@@ -74,10 +80,10 @@ describe('syncModalLink', () => {
   it('should write nothing on a second sync', () => {
     openModal();
     const categories = makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL));
-    syncModalLink(document.body, categories);
+    sync(categories);
     const observer = observeBody();
 
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();
@@ -87,7 +93,7 @@ describe('syncModalLink', () => {
     openModal();
     const observer = observeBody();
 
-    syncModalLink(document.body, makeCategories(makeCategory(OTHER_CARD_TITLE, FILM_URL)));
+    sync(makeCategories(makeCategory(OTHER_CARD_TITLE, FILM_URL)));
 
     expect(ourLink()).toBeNull();
     expect(observer.takeRecords()).toHaveLength(0);
@@ -96,9 +102,9 @@ describe('syncModalLink', () => {
 
   it('should add the link on the sync that follows the arrival of the results', () => {
     openModal();
-    syncModalLink(document.body, new Map());
+    sync(new Map());
 
-    syncModalLink(document.body, makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL)));
+    sync(makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL)));
 
     expect(ourLink()?.getAttribute('href')).toBe(FILM_URL);
   });
@@ -109,10 +115,10 @@ describe('syncModalLink', () => {
       makeCategory(MODAL_CARD_TITLE, FILM_URL),
       makeCategory(OTHER_CARD_TITLE, 'https://letterboxd.com/film/lost-river/'),
     );
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     showOtherCard(OTHER_CARD_TITLE);
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     expect(ourLink()?.getAttribute('href')).toBe('https://letterboxd.com/film/lost-river/');
     expect(document.body.querySelectorAll(LETTERBOXD_LINK_SELECTOR)).toHaveLength(1);
@@ -124,10 +130,10 @@ describe('syncModalLink', () => {
       makeCategory(MODAL_CARD_TITLE, FILM_URL),
       makeCategory(OTHER_CARD_TITLE, null),
     );
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     showOtherCard(OTHER_CARD_TITLE);
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     expect(ourLink()).toBeNull();
   });
@@ -135,12 +141,12 @@ describe('syncModalLink', () => {
   it('should remove our link while the card of the modal cannot be read', () => {
     openModal();
     const categories = makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL));
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     // The site reuses the modal and renders the next card as a skeleton: our
     // link would otherwise still point at the film shown before.
     showOtherCard('');
-    syncModalLink(document.body, categories);
+    sync(categories);
 
     expect(ourLink()).toBeNull();
   });
@@ -150,7 +156,7 @@ describe('syncModalLink', () => {
     showOtherCard('');
     const observer = observeBody();
 
-    syncModalLink(document.body, makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL)));
+    sync(makeCategories(makeCategory(MODAL_CARD_TITLE, FILM_URL)));
 
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();
@@ -160,7 +166,7 @@ describe('syncModalLink', () => {
     document.body.innerHTML = '<div class="glow-c"><h3>Pulp Fiction</h3></div>';
     const observer = observeBody();
 
-    syncModalLink(document.body, makeCategories(makeCategory(OTHER_CARD_TITLE, FILM_URL)));
+    sync(makeCategories(makeCategory(OTHER_CARD_TITLE, FILM_URL)));
 
     expect(ourLink()).toBeNull();
     expect(observer.takeRecords()).toHaveLength(0);

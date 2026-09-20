@@ -2,6 +2,7 @@ import { browser, defineContentScript } from '#imports';
 import { SITE_MATCH_PATTERNS } from '../core/config/site';
 import { createLogger } from '../core/logger/logger';
 import { observeCards } from '../features/card-detection/data/card-observer';
+import { findDetailModal } from '../features/card-detection/data/detail-modal';
 import { scanCards, type ObservedCard } from '../features/card-detection/data/scan-cards';
 import { handleScan } from '../features/card-detection/presentation/handle-scan';
 import type { CardCategory } from '../features/categorization/domain/category';
@@ -14,7 +15,8 @@ import {
 import {
   rememberCategories,
   type CategoryMemory,
-} from '../features/letterboxd/presentation/remember-categories';
+} from '../features/categorization/presentation/remember-categories';
+import { removeModalLink } from '../features/letterboxd/data/modal-link';
 import { syncModalLink } from '../features/letterboxd/presentation/sync-modal-link';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
@@ -42,9 +44,10 @@ export default defineContentScript({
   runAt: 'document_idle',
   main(ctx): void {
     const logger = createLogger('content-script');
-    // Results of the cards met so far, read by the modal sync, and the titles
-    // already asked for. Bounded together, so a title dropped from one is
-    // dropped from the other and can be asked again if its card comes back.
+    const root = document.body;
+    // Results of the cards met so far, read by every part of the overlay, and
+    // the titles already asked for. Bounded together, so a title dropped from
+    // one is dropped from the other and can be asked again if its card returns.
     const memory: CategoryMemory = {
       categoriesByTitle: new Map<string, CardCategory>(),
       seenTitles: new Set<string>(),
@@ -52,11 +55,22 @@ export default defineContentScript({
     /** Titles of the last scan, the cards the page shows right now. */
     let visibleTitles: ReadonlySet<string> = new Set<string>();
 
+    /**
+     * Brings the whole overlay in line with what is known of the cards.
+     * Every sync writes only what differs, so running it on every scan costs
+     * nothing once the page already shows the right thing.
+     */
+    function syncOverlay(): void {
+      // The observer of the cards also fires when the modal opens, so no
+      // observer, no polling and no timer of its own is needed here.
+      const modal = findDetailModal(root);
+      syncModalLink(modal, memory.categoriesByTitle);
+    }
+
     async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
       const results = await requestCategories(cards);
       rememberCategories(memory, visibleTitles, results);
-      // The modal is usually already open when its results come back.
-      syncModalLink(document.body, memory.categoriesByTitle);
+      syncOverlay();
       return results;
     }
 
@@ -65,15 +79,18 @@ export default defineContentScript({
 
       handleScan(observedCards, memory.seenTitles, logger, categorize);
       rememberCategories(memory, visibleTitles);
-      // The observer of the cards also fires when the modal opens, so no
-      // observer, no polling and no timer of its own is needed here.
-      syncModalLink(document.body, memory.categoriesByTitle);
+      syncOverlay();
     }
 
-    const root = document.body;
     onScan(scanCards(root));
 
     const disconnect = observeCards({ root, onScan });
-    ctx.onInvalidated(disconnect);
+    ctx.onInvalidated(() => {
+      disconnect();
+      // Reloading the extension leaves the page open: everything the overlay
+      // added goes away with it, rather than staying behind with nobody to
+      // keep it in line with the cards on screen.
+      removeModalLink(root);
+    });
   },
 });

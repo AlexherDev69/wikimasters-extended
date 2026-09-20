@@ -1,12 +1,6 @@
-import { scanCards } from '../../card-detection/data/scan-cards';
+import type { DetailModal } from '../../card-detection/data/detail-modal';
 import { isLetterboxdUrl } from '../domain/resolve-letterboxd-url';
-import {
-  LETTERBOXD_LINK_ATTRIBUTE,
-  LETTERBOXD_LINK_SELECTOR,
-  MODAL_FRAME_SELECTOR,
-  MODAL_ROOT_SELECTOR,
-  WIKIPEDIA_LINK_SELECTOR,
-} from './modal-selectors';
+import { LETTERBOXD_LINK_ATTRIBUTE, LETTERBOXD_LINK_SELECTOR } from './modal-selectors';
 
 const LINK_TEXT = 'Voir sur Letterboxd →';
 
@@ -25,10 +19,9 @@ const REL_ATTRIBUTE = 'rel';
 /** Where our link goes, and what is already there. */
 export interface ModalLinkTarget {
   /**
-   * Title of the card shown in the modal, read exactly as the scanner does.
-   * Null while the card cannot be read, which the site does when it reuses the
-   * modal for the next card: the link of the previous card must go away rather
-   * than stay clickable on the wrong film.
+   * Title of the card shown in the modal, as the detail modal reads it. Null
+   * while the card cannot be read: the link of the previous card must then go
+   * away rather than stay clickable on the wrong film.
    */
   title: string | null;
   wikipediaLink: HTMLAnchorElement;
@@ -36,42 +29,13 @@ export interface ModalLinkTarget {
   ourLink: HTMLAnchorElement | null;
 }
 
-interface DetailModal {
-  root: Element;
-  wikipediaLink: HTMLAnchorElement;
-}
-
 /**
- * The detail modal among the full-screen layers: the one holding a card frame
- * and the Wikipedia link. Another layer of the site sharing the same utility
- * classes, a toast host or a dialog, is skipped instead of hiding the modal.
+ * Locates the insertion point in an open detail modal. The modal itself is
+ * found once per sync pass and handed to every feature that writes in it.
  */
-function findDetailModal(root: ParentNode): DetailModal | null {
-  for (const layer of root.querySelectorAll(MODAL_ROOT_SELECTOR)) {
-    const wikipediaLink = layer.querySelector<HTMLAnchorElement>(WIKIPEDIA_LINK_SELECTOR);
-    if (wikipediaLink !== null && layer.querySelector(MODAL_FRAME_SELECTOR) !== null) {
-      return { root: layer, wikipediaLink };
-    }
-  }
-  return null;
-}
-
-/**
- * Locates the insertion point in the open detail modal. Null when no detail
- * modal is open: the extension then does nothing at all.
- */
-export function findModalLinkTarget(root: ParentNode): ModalLinkTarget | null {
-  const modal = findDetailModal(root);
-  if (modal === null) {
-    return null;
-  }
-
-  // The card of the modal is an ordinary card root, so the scanner gives the
-  // title in the very form the categorization was asked for.
-  const [observed] = scanCards(modal.root);
-
+export function findModalLinkTarget(modal: DetailModal): ModalLinkTarget {
   return {
-    title: observed?.card.title ?? null,
+    title: modal.title,
     wikipediaLink: modal.wikipediaLink,
     ourLink: modal.root.querySelector<HTMLAnchorElement>(LETTERBOXD_LINK_SELECTOR),
   };
@@ -125,5 +89,16 @@ export function applyModalLink(target: ModalLinkTarget, url: string | null): voi
   }
   if (ourLink.getAttribute(REL_ATTRIBUTE) !== LINK_REL) {
     ourLink.rel = LINK_REL;
+  }
+}
+
+/**
+ * Takes back the link of this feature. Called when the content script context
+ * is invalidated, so reloading the extension does not leave a link behind that
+ * nothing keeps in line with the card on screen any more.
+ */
+export function removeModalLink(root: ParentNode): void {
+  for (const link of root.querySelectorAll(LETTERBOXD_LINK_SELECTOR)) {
+    link.remove();
   }
 }

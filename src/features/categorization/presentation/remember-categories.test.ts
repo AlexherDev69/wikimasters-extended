@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { CardCategory } from '../../categorization/domain/category';
+import type { CardCategory } from '../domain/category';
 import {
   MAX_REMEMBERED_CATEGORIES,
   rememberCategories,
