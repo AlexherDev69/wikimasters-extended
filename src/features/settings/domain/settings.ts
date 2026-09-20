@@ -1,13 +1,17 @@
 import { isRecord } from '../../../core/types/guards';
 
 /**
- * What the user can switch off, one boolean per part of the overlay. The
- * first four are on by default: an extension that was installed and never
- * configured does exactly what its description says. `hideCardStats` is the
+ * What the user can switch off, one boolean per part of the overlay. Every
+ * switch but two is on by default: an extension that was installed and never
+ * configured does exactly what its description says. `hideCardStats` is one
  * exception, off by default, because its effect is subtractive rather than
  * additive: it hides something of the site instead of adding a node of ours,
  * so an installation that never touched the options page must keep seeing
- * exactly what the site shows.
+ * exactly what the site shows. `tagAutoFill` is the other: it writes a tag
+ * into a field of the site on a click, which the rules of wiki-masters.com
+ * describe as interacting in the user's place, with a ban announced as the
+ * sanction, so nobody ends up doing that without having chosen to. See its
+ * own comment and README.md.
  */
 export interface Settings {
   /** Badge on the cards, and category line in the detail modal. */
@@ -20,6 +24,15 @@ export interface Settings {
   missingImages: boolean;
   /** Hides the ATK/DEF numbers of the cards and of the detail modal. */
   hideCardStats: boolean;
+  /** Proposals in the tag area of the detail modal. Read-only: see tagAutoFill. */
+  tagSuggestions: boolean;
+  /**
+   * A click on a proposal writes it in the tag field of the site and
+   * validates it, which is interacting in the user's place. Off by default,
+   * on its own from `tagSuggestions`: showing proposals never writes on the
+   * site, whatever this one says.
+   */
+  tagAutoFill: boolean;
 }
 
 /** Exported so a view can give every switch a place in a display order. */
@@ -29,6 +42,8 @@ export const SETTING_KEYS = [
   'letterboxdLink',
   'missingImages',
   'hideCardStats',
+  'tagSuggestions',
+  'tagAutoFill',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -39,6 +54,8 @@ export const DEFAULT_SETTINGS: Settings = {
   letterboxdLink: true,
   missingImages: true,
   hideCardStats: false,
+  tagSuggestions: true,
+  tagAutoFill: false,
 };
 
 /**
@@ -47,13 +64,16 @@ export const DEFAULT_SETTINGS: Settings = {
  * is deliberately left out: it hides two numbers already on the page and
  * needs nothing from Wikidata, so switching it on alone must never start any
  * traffic, exactly as switching it off must never stop traffic another
- * setting still needs.
+ * setting still needs. `tagAutoFill` is left out too: it changes what a click
+ * on an already shown proposal does, never whether Wikidata is asked at all,
+ * which `tagSuggestions` alone decides.
  */
 const CATEGORIZATION_SETTING_KEYS = [
   'categoryBadges',
   'categoryHighlight',
   'letterboxdLink',
   'missingImages',
+  'tagSuggestions',
 ] as const satisfies readonly (keyof Settings)[];
 
 /**
@@ -79,10 +99,11 @@ export function normalizeSettings(value: unknown): Settings {
 }
 
 /**
- * True while at least one categorization-consuming feature is on. With all
- * four off the content script asks for no categorization at all, so a user
- * who turns them off entirely sends nothing to Wikimedia. `hideCardStats` is
- * not one of them, on purpose: see CATEGORIZATION_SETTING_KEYS.
+ * True while at least one categorization-consuming feature is on. With every
+ * one of them off the content script asks for no categorization at all, so a
+ * user who turns them off entirely sends nothing to Wikimedia. `hideCardStats`
+ * and `tagAutoFill` are not among them, on purpose: see
+ * CATEGORIZATION_SETTING_KEYS.
  */
 export function hasEnabledFeature(settings: Settings): boolean {
   return CATEGORIZATION_SETTING_KEYS.some((key) => settings[key]);

@@ -13,6 +13,7 @@ function makeCategory(overrides: Partial<CardCategory> = {}): CardCategory {
     personSubtypes: [],
     letterboxdUrl: null,
     image: null,
+    suggestedTags: [],
     ...overrides,
   };
 }

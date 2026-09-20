@@ -73,4 +73,11 @@ export interface CardCategory {
   letterboxdUrl: string | null;
   /** Null unless `status` is `categorized` and Wikidata holds an image. */
   image: CardImage | null;
+  /**
+   * Tags to propose in the tag area of the detail modal, empty unless
+   * `status` is `categorized`. Built from what the categorization already
+   * knows of the card: no new SPARQL property and no new request for this
+   * alone. See tag-suggestions/domain/suggest-tags.ts.
+   */
+  suggestedTags: string[];
 }

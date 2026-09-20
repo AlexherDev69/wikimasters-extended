@@ -478,6 +478,7 @@ describe('categorizeCards', () => {
       personSubtypes: [],
       letterboxdUrl: null,
       image: null,
+      suggestedTags: [],
     });
   });
 
@@ -500,6 +501,14 @@ describe('categorizeCards', () => {
       primarySubtype: null,
       personSubtypes: [],
     });
+  });
+
+  it('should carry the French category label among the suggested tags of a categorized card', async () => {
+    const deps = makeStubDeps(STUB_CLASSES_RESOLVED);
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.suggestedTags).toEqual(['Vivant']);
   });
 
   it('should categorize the card when a parent is unresolved but its classes elect a category', async () => {

@@ -6,11 +6,13 @@ import {
   type LetterboxdCard,
 } from '../../letterboxd/domain/resolve-letterboxd-url';
 import type { CommonsFile } from '../../missing-image/domain/card-image';
+import { suggestTags } from '../../tag-suggestions/domain/suggest-tags';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
 import {
   classifyCachedCard,
   collectNeededClassIds,
   requiredClassIds,
+  resolveOccupations,
   type CachedCardClassification,
   type NeededClassIds,
 } from './classify-cached-card';
@@ -103,6 +105,7 @@ function emptyResult(title: string, status: 'not_found' | 'error'): CardCategory
     personSubtypes: [],
     letterboxdUrl: null,
     image: null,
+    suggestedTags: [],
   };
 }
 
@@ -361,6 +364,12 @@ function buildResult(
     stage.categoryTargets,
     stage.occupationResolutions,
   );
+  // Occupation labels the class cache already resolved for the tie-break
+  // above, reused here rather than fetched again: no new SPARQL property and
+  // no new request for the tags this card proposes.
+  const occupationLabels = resolveOccupations(facts, stage.occupationResolutions).map(
+    (occupation) => occupation.label,
+  );
 
   return {
     title: card.title,
@@ -373,6 +382,11 @@ function buildResult(
     // The address of the picture is resolved by the stage below, once the whole
     // batch is known: one request for every file rather than one per card.
     image: facts.image === null ? null : { ...facts.image, thumbnailUrl: null },
+    suggestedTags: suggestTags({
+      categoryId: classification.categoryId,
+      primarySubtype: classification.primarySubtype,
+      occupationLabels,
+    }),
   };
 }
 

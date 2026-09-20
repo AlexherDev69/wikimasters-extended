@@ -7,6 +7,8 @@ const ALL_OFF: Settings = {
   letterboxdLink: false,
   missingImages: false,
   hideCardStats: false,
+  tagSuggestions: false,
+  tagAutoFill: false,
 };
 
 describe('normalizeSettings', () => {
@@ -27,6 +29,8 @@ describe('normalizeSettings', () => {
       letterboxdLink: false,
       missingImages: true,
       hideCardStats: false,
+      tagSuggestions: true,
+      tagAutoFill: false,
     });
   });
 
@@ -81,8 +85,27 @@ describe('normalizeSettings', () => {
     expect(DEFAULT_SETTINGS.categoryBadges).toBe(true);
   });
 
-  it('should read every saved switch back when all five were written', () => {
+  it('should read every saved switch back when all seven were written', () => {
     expect(normalizeSettings(ALL_OFF)).toEqual(ALL_OFF);
+  });
+
+  it('should default tagSuggestions to true and tagAutoFill to false when nothing was ever saved', () => {
+    const settings = normalizeSettings(null);
+
+    expect(settings.tagSuggestions).toBe(true);
+    expect(settings.tagAutoFill).toBe(false);
+  });
+
+  it('should fall back to the defaults when the stored value of the two new switches is not a boolean', () => {
+    expect(normalizeSettings({ tagSuggestions: 'false', tagAutoFill: 1 })).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('should read tagSuggestions and tagAutoFill back as saved, keeping the other defaults', () => {
+    expect(normalizeSettings({ tagSuggestions: false, tagAutoFill: true })).toEqual({
+      ...DEFAULT_SETTINGS,
+      tagSuggestions: false,
+      tagAutoFill: true,
+    });
   });
 });
 
@@ -101,7 +124,18 @@ describe('hasEnabledFeature', () => {
 
   it('should be false when hideCardStats is the only setting on', () => {
     // Hiding the stats needs nothing from Wikidata: turning it on alone must
-    // never start the traffic the other four settings ask for.
+    // never start the traffic the other settings ask for.
     expect(hasEnabledFeature({ ...ALL_OFF, hideCardStats: true })).toBe(false);
+  });
+
+  it('should be true when tagSuggestions is the only feature left on', () => {
+    expect(hasEnabledFeature({ ...ALL_OFF, tagSuggestions: true })).toBe(true);
+  });
+
+  it('should be false when tagAutoFill is the only setting on', () => {
+    // It only changes what a click on an already shown proposal does: on its
+    // own it must never start the traffic that shows a proposal in the first
+    // place.
+    expect(hasEnabledFeature({ ...ALL_OFF, tagAutoFill: true })).toBe(false);
   });
 });

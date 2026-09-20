@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { MAX_SUGGESTED_TAGS, MAX_TAG_LENGTH } from '../../tag-suggestions/domain/suggest-tags';
 import type { CardCategory } from '../domain/category';
 import {
   CATEGORIZE_CARDS_MESSAGE,
@@ -26,6 +27,7 @@ const VALID_CARD_CATEGORY: CardCategory = {
   personSubtypes: [],
   letterboxdUrl: 'https://letterboxd.com/film/pulp-fiction/',
   image: { fileName: 'Pulp Fiction poster.jpg', kind: 'picture', thumbnailUrl: THUMBNAIL_URL },
+  suggestedTags: ['Cinéma et TV'],
 };
 
 function makeResponse(cards: unknown): unknown {
@@ -130,6 +132,7 @@ describe('isCategorizeCardsResponse', () => {
         kind: 'picture',
         thumbnailUrl: null,
       },
+      suggestedTags: ['Personne', 'Cinéma', 'Réalisateur'],
     };
 
     expect(isCategorizeCardsResponse(makeResponse([person]))).toBe(true);
@@ -282,10 +285,71 @@ describe('isCategorizeCardsResponse', () => {
             categoryId: null,
             letterboxdUrl: null,
             image: null,
+            suggestedTags: [],
           },
         ]),
       ),
     ).toBe(true);
+  });
+
+  it('should accept a result with no suggested tag', () => {
+    expect(
+      isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, suggestedTags: [] }])),
+    ).toBe(true);
+  });
+
+  it('should reject a suggested tag list longer than the maximum', () => {
+    const suggestedTags = Array.from({ length: MAX_SUGGESTED_TAGS + 1 }, (_, index) => `Tag ${index}`);
+
+    expect(
+      isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, suggestedTags }])),
+    ).toBe(false);
+  });
+
+  it('should reject an empty string or an overlong string as a suggested tag', () => {
+    expect(
+      isCategorizeCardsResponse(
+        makeResponse([{ ...VALID_CARD_CATEGORY, suggestedTags: [''] }]),
+      ),
+    ).toBe(false);
+    expect(
+      isCategorizeCardsResponse(
+        makeResponse([{ ...VALID_CARD_CATEGORY, suggestedTags: ['   '] }]),
+      ),
+    ).toBe(false);
+    expect(
+      isCategorizeCardsResponse(
+        makeResponse([
+          { ...VALID_CARD_CATEGORY, suggestedTags: ['a'.repeat(MAX_TAG_LENGTH + 1)] },
+        ]),
+      ),
+    ).toBe(false);
+  });
+
+  it('should reject a suggested tag that is not a string', () => {
+    expect(
+      isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, suggestedTags: [42] }])),
+    ).toBe(false);
+  });
+
+  it('should reject a result whose suggested tags is not an array', () => {
+    expect(
+      isCategorizeCardsResponse(
+        makeResponse([{ ...VALID_CARD_CATEGORY, suggestedTags: 'Cinéma et TV' }]),
+      ),
+    ).toBe(false);
+  });
+
+  it('should reject suggested tags on a result that was not categorized', () => {
+    for (const status of ['not_found', 'error']) {
+      expect(
+        isCategorizeCardsResponse(
+          makeResponse([
+            { ...VALID_CARD_CATEGORY, status, categoryId: null, letterboxdUrl: null, image: null },
+          ]),
+        ),
+      ).toBe(false);
+    }
   });
 
   it('should reject a result whose title or qid has the wrong type', () => {

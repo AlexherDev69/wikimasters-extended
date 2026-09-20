@@ -18,6 +18,7 @@ import {
 } from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
+import { TAG_PROPOSALS_SELECTOR } from '../../tag-suggestions/data/tag-selectors';
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
 
@@ -49,6 +50,8 @@ const ALL_OFF: Settings = {
   letterboxdLink: false,
   missingImages: false,
   hideCardStats: false,
+  tagSuggestions: false,
+  tagAutoFill: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -61,6 +64,7 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
     personSubtypes: [],
     letterboxdUrl: null,
     image: null,
+    suggestedTags: [],
     ...overrides,
   };
 }
@@ -69,7 +73,11 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
 const RESULTS: CardCategory[] = [
   makeCategory(GRID_CARD_TITLE, { categoryId: 'science_concept' }),
   makeCategory(LARGE_CARD_TITLE),
-  makeCategory(MODAL_CARD_TITLE, { categoryId: 'film_tv', letterboxdUrl: FILM_URL }),
+  makeCategory(MODAL_CARD_TITLE, {
+    categoryId: 'film_tv',
+    letterboxdUrl: FILM_URL,
+    suggestedTags: ['Cinéma et TV'],
+  }),
   makeCategory(PLACEHOLDER_CARD_TITLE, { categoryId: 'person', image: CARD_IMAGE }),
 ];
 
@@ -126,6 +134,10 @@ function cardImages(): NodeListOf<Element> {
 
 function hideStatsStyle(): Element | null {
   return document.head.querySelector(HIDE_STATS_STYLE_SELECTOR);
+}
+
+function tagProposals(): Element | null {
+  return document.body.querySelector(TAG_PROPOSALS_SELECTOR);
 }
 
 /**
@@ -628,5 +640,87 @@ describe('createOverlay', () => {
     overlay.destroy();
 
     expect(hideStatsStyle()).toBeNull();
+  });
+
+  it('should show the tag proposals of the card shown in the modal when the setting is on', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount();
+
+    await scanUntilDrawn(overlay);
+
+    expect(tagProposals()).not.toBeNull();
+  });
+
+  it('should add no tag proposal when the tag suggestions are off at load', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, tagSuggestions: false });
+
+    scan(overlay);
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
+    });
+
+    expect(tagProposals()).toBeNull();
+  });
+
+  it('should take back the tag proposals at once when they are turned off', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    expect(tagProposals()).not.toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, tagSuggestions: false });
+
+    expect(tagProposals()).toBeNull();
+    expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
+  });
+
+  it('should bring the tag proposals back at once when they are turned on again', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    expect(tagProposals()).not.toBeNull();
+    overlay.applySettings({ ...DEFAULT_SETTINGS, tagSuggestions: false });
+
+    overlay.applySettings(DEFAULT_SETTINGS);
+
+    expect(tagProposals()).not.toBeNull();
+  });
+
+  it('should ask for the categorization when the tag suggestions are the only setting left on', () => {
+    document.body.innerHTML = GRID_HTML + LARGE_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, tagSuggestions: true });
+
+    scan(overlay);
+
+    expect(categorize).toHaveBeenCalledOnce();
+  });
+
+  it('should write nothing on a second scan while only the tag suggestions are left on', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, tagSuggestions: true });
+    scan(overlay);
+    await vi.waitFor(() => {
+      expect(tagProposals()).not.toBeNull();
+    });
+    scan(overlay);
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
+  it('should take back the tag proposals when the context is invalidated', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    expect(tagProposals()).not.toBeNull();
+
+    overlay.destroy();
+
+    expect(document.body.innerHTML).toBe(siteHtml);
   });
 });

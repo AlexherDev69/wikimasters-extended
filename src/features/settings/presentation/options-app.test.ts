@@ -86,7 +86,7 @@ describe('mountOptions', () => {
     const container = await mount();
 
     expect([...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')]).toHaveLength(
-      5,
+      SETTING_KEYS.length,
     );
     for (const key of SETTING_KEYS) {
       expect(checkbox(container, settingSelector(key))?.checked).toBe(DEFAULT_SETTINGS[key]);

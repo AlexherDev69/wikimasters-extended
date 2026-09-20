@@ -62,6 +62,7 @@ function makeCategory(title: string): CardCategory {
     personSubtypes: [],
     letterboxdUrl: null,
     image: null,
+    suggestedTags: [],
   };
 }
 
@@ -154,6 +155,7 @@ describe('handleScan', () => {
           personSubtypes: ['cinema'],
           letterboxdUrl: 'https://letterboxd.com/actor/alpha/',
           image: null,
+          suggestedTags: [],
         },
       ]);
 
@@ -249,6 +251,7 @@ describe('handleScan', () => {
           personSubtypes: [],
           letterboxdUrl: null,
           image: null,
+          suggestedTags: [],
         },
         {
           title: 'Gamma',
@@ -259,6 +262,7 @@ describe('handleScan', () => {
           personSubtypes: [],
           letterboxdUrl: null,
           image: null,
+          suggestedTags: [],
         },
       ]);
 
