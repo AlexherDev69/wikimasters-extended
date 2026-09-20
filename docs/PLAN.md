@@ -245,6 +245,14 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 - Table statique classe vers catégorie (JSON versionné), fallback `P279*` par classe, cache à deux niveaux
 - Vérification : tests unitaires avec fetch mocké sur réponses enregistrées (`tests/fixtures/wikidata/`), plus un jeu de référence de 100 titres réels avec catégories attendues, produit indépendamment du code
 
+#### Phase 3a : la relance d'une catégorisation ratée déclenche un scan (faite le 2026-09-21)
+
+- Constat en situation réelle : pendant une panne du service de requêtes Wikidata (502 et timeouts de 30 s mesurés depuis la machine le 2026-09-21, entrecoupés de réponses normales), une carte ouverte sur `/pulls` restait en `status: "error"` sans jamais être redemandée. Ni catégorie, ni image, ni étiquettes proposées
+- Cause : `handleScan` libère bien les titres ratés au bout de 60 s, mais rien ne redemande un titre que personne ne scanne. Une page qui a cessé de muter ne lève aucun scan, et une modale ouverte sur une carte immobile est exactement ce cas. La libération était donc une relance en théorie seulement
+- Correctif : l'overlay enveloppe le `scheduleRetry` qu'il reçoit et relit la page juste après la libération. Les cartes sont relues plutôt que reprises du scan qui a échoué, parce qu'une minute a passé et que la page peut montrer tout autre chose
+- Rien n'est relancé quand rien n'a échoué : `handleScan` n'arme un retry que s'il a des titres à libérer, donc le scan supplémentaire n'a lieu que pour un lot réellement raté
+- Piège trouvé dans le harnais de test de l'overlay : il exécutait les retries immédiatement. Une fois le scan branché dessus, toute fixture portant une carte sans résultat (deux des trois cartes de `placeholder-cards.html`) partait en boucle infinie. Les retries sont désormais conservés et déclenchés par le test qui les vérifie, ce qui est aussi plus proche du timer réel
+
 ### Phase 4 : UI catégorisation
 
 #### Phase 4a : badge, ligne dans la modale, mise en évidence par page (faite le 2026-09-20, revue indépendante passée, mise en évidence RETIRÉE le 2026-09-20, voir phase 10b)
