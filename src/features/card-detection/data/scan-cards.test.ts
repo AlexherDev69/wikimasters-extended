@@ -17,6 +17,7 @@ const FIXTURE_CARD_GRID = readFixture('card-grid-with-description.html');
 const FIXTURE_CARD_LARGE = readFixture('card-large-with-description.html');
 const FIXTURE_CARD_LARGE_NO_DESC = readFixture('card-large-no-description.html');
 const FIXTURE_CARD_MODAL = readFixture('card-detail-modal.html');
+const FIXTURE_CATALOGUE_PAGE = readFixture('global-collection-page.html');
 
 describe('scanCards', () => {
   beforeEach(() => {
@@ -43,5 +44,22 @@ describe('scanCards', () => {
   it('should return an empty array when there are no card elements', () => {
     document.body.innerHTML = '<p>Nothing here</p>';
     expect(scanCards(document)).toHaveLength(0);
+  });
+
+  it('should extract the three cards of the catalogue page without the friend pill', () => {
+    document.body.innerHTML = FIXTURE_CATALOGUE_PAGE;
+
+    // The pill naming the friend who owns a card is made of spans inside the
+    // card, so it must leave the title and the description untouched. The
+    // header block of the page holds no card either.
+    expect(scanCards(document).map((observed) => observed.card)).toEqual([
+      { title: '5G', description: 'standard de téléphonie mobile', rarity: 'l' },
+      {
+        title: 'Agnès Jaoui',
+        description: 'actrice, réalisatrice, scénariste et chanteuse française',
+        rarity: 'l',
+      },
+      { title: 'Airbus A400M Atlas', description: 'avion militaire', rarity: 'l' },
+    ]);
   });
 });

@@ -64,6 +64,17 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* The strip becomes a completion when the catalogue totals are known: the
+   share then sits right next to the counts instead of closing a wide row. */
+.wme-rarity .wme-share {
+  min-width: 0;
+}
+
+.wme-catalogue {
+  font-size: 11px;
+  color: var(--wme-text-faint);
+}
+
 /* The list of categories scrolls on its own, so the header and the reset
    button stay where they are whatever the size of the collection. */
 .wme-rows {

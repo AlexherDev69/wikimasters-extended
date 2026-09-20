@@ -2,6 +2,11 @@ import { isArrayOf, isRecord } from '../../../core/types/guards';
 import { isRarity } from '../../card-detection/domain/rarity';
 import { isCategoryId } from '../../categorization/domain/category';
 import { isValidTitle, MAX_CARDS_PER_REQUEST } from '../../categorization/presentation/messages';
+import {
+  isCatalogueObservation,
+  isCatalogueTotals,
+  type CatalogueTotals,
+} from '../domain/catalogue-totals';
 import type { RecordedCard } from '../domain/collection-index';
 import {
   isNamedPersonSubtype,
@@ -13,7 +18,7 @@ import {
 } from '../domain/collection-summary';
 
 /**
- * The three messages of the collection index, with a guard for BOTH
+ * The four messages of the collection index, with a guard for BOTH
  * directions: what the content script and the popup send is untrusted input
  * for the service worker, and its answers are untrusted input for them.
  *
@@ -24,12 +29,15 @@ import {
 
 export const RECORD_COLLECTION_CARDS_MESSAGE = 'wikimasters-extended:record-collection-cards';
 
+export const RECORD_CATALOGUE_TOTALS_MESSAGE = 'wikimasters-extended:record-catalogue-totals';
+
 export const GET_COLLECTION_SUMMARY_MESSAGE = 'wikimasters-extended:get-collection-summary';
 
 export const CLEAR_COLLECTION_INDEX_MESSAGE = 'wikimasters-extended:clear-collection-index';
 
 const COLLECTION_MESSAGE_TYPES: readonly string[] = [
   RECORD_COLLECTION_CARDS_MESSAGE,
+  RECORD_CATALOGUE_TOTALS_MESSAGE,
   GET_COLLECTION_SUMMARY_MESSAGE,
   CLEAR_COLLECTION_INDEX_MESSAGE,
 ];
@@ -46,6 +54,15 @@ export interface RecordCollectionCardsRequest {
 
 export interface RecordCollectionCardsResponse {
   recorded: number;
+}
+
+export interface RecordCatalogueTotalsRequest {
+  type: typeof RECORD_CATALOGUE_TOTALS_MESSAGE;
+  totals: CatalogueTotals;
+}
+
+export interface RecordCatalogueTotalsResponse {
+  recorded: true;
 }
 
 export interface GetCollectionSummaryRequest {
@@ -99,6 +116,20 @@ export function isRecordCollectionCardsRequest(
   );
 }
 
+/**
+ * The six totals are bounded whole numbers: they end up as the denominator of
+ * a completion, and anything else would make the popup print nonsense.
+ */
+export function isRecordCatalogueTotalsRequest(
+  message: unknown,
+): message is RecordCatalogueTotalsRequest {
+  return (
+    isRecord(message) &&
+    message['type'] === RECORD_CATALOGUE_TOTALS_MESSAGE &&
+    isCatalogueTotals(message['totals'])
+  );
+}
+
 export function isGetCollectionSummaryRequest(
   message: unknown,
 ): message is GetCollectionSummaryRequest {
@@ -115,6 +146,12 @@ export function isRecordCollectionCardsResponse(
   message: unknown,
 ): message is RecordCollectionCardsResponse {
   return isRecord(message) && isCount(message['recorded']);
+}
+
+export function isRecordCatalogueTotalsResponse(
+  message: unknown,
+): message is RecordCatalogueTotalsResponse {
+  return isRecord(message) && message['recorded'] === true;
 }
 
 function isSummaryCard(value: unknown): value is SummaryCard {
@@ -153,11 +190,13 @@ function isCollectionSummary(value: unknown): value is CollectionSummary {
     return false;
   }
   const lastSeenAt = value['lastSeenAt'];
+  const catalogue = value['catalogue'];
 
   return (
     isCount(value['totalCards']) &&
     isCount(value['uncategorizedCount']) &&
     (lastSeenAt === null || typeof lastSeenAt === 'number') &&
+    (catalogue === null || isCatalogueObservation(catalogue)) &&
     isArrayOf(value['categories'], isCategorySummary) &&
     isArrayOf(value['rarities'], isRarityCount)
   );

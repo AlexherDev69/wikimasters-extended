@@ -5,12 +5,13 @@ import {
   CATEGORY_LABELS,
   PERSON_SUBTYPE_LABELS,
 } from '../../category-badge/domain/category-display';
+import type { CatalogueObservation } from '../domain/catalogue-totals';
 import type {
   CategorySummary,
   CollectionSummary,
-  RarityCount,
   SubtypeCount,
 } from '../domain/collection-summary';
+import { computeRarityCompletion } from '../domain/rarity-completion';
 import { COUNT_CLASS, createCategoryDot, LABEL_CLASS, RARITY_LABELS } from './popup-elements';
 
 /**
@@ -31,6 +32,16 @@ const UPDATED_PREFIX = 'Dernière mise à jour : ';
 const ONE_CARD_TEXT = 'carte vue dans ta collection';
 const MANY_CARDS_TEXT = 'cartes vues dans ta collection';
 const UNCATEGORIZED_LABEL = 'Non catégorisées';
+
+/** Where the completion comes from, and what it is worth. */
+const CATALOGUE_PREFIX = 'Totaux du catalogue relevés le ';
+const CATALOGUE_SUFFIX = '. Complétion calculée sur les cartes vues dans ta collection.';
+
+/** The extension never opens that page by itself, so the user is told to. */
+const CATALOGUE_HINT_TEXT =
+  'Ouvre la page « Toutes les cartes » du site pour afficher ta complétion par rareté.';
+
+const COMPLETION_SEPARATOR = ' / ';
 
 /** The persons whose trade is unknown, which is not a subtype of its own. */
 const OTHER_SUBTYPE_LABEL = 'Autre';
@@ -56,8 +67,25 @@ const FALSE = 'false';
 const PERCENT_SUFFIX = ' %';
 const FULL_SHARE = 100;
 
-const DATE_LOCALE = 'fr-FR';
+/** Two at most: a completion of 0,17 % is worth printing, 0,1703 % is not. */
+const MAX_SHARE_DECIMALS = 2;
+
+/**
+ * What a share too small for those two decimals reads as. Eighty-eight cards
+ * out of two million is the ordinary state of a common rarity, and printing it
+ * as "0 %" would say the user owns none: that reading is left to a real zero.
+ * The text names the smallest share the decimals above can print.
+ */
+const SHARE_FLOOR_TEXT = '< 0,01 %';
+
+const FRENCH_LOCALE = 'fr-FR';
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { dateStyle: 'short', timeStyle: 'short' };
+
+/** Built once: the popup formats a handful of numbers on every render. */
+const NUMBER_FORMAT = new Intl.NumberFormat(FRENCH_LOCALE);
+const SHARE_FORMAT = new Intl.NumberFormat(FRENCH_LOCALE, {
+  maximumFractionDigits: MAX_SHARE_DECIMALS,
+});
 
 const SCREEN_CLASS = 'wme-screen';
 const HEADER_CLASS = 'wme-header';
@@ -68,6 +96,7 @@ const HINT_CLASS = 'wme-hint';
 const RARITIES_CLASS = 'wme-rarities';
 const RARITY_CLASS = 'wme-rarity';
 const RARITY_CODE_CLASS = 'wme-rarity-code';
+const CATALOGUE_CLASS = 'wme-catalogue';
 const ROWS_CLASS = 'wme-rows';
 const ROW_CLASS = 'wme-row';
 const ROW_HEAD_CLASS = 'wme-row-head';
@@ -123,11 +152,22 @@ function formatTotal(total: number): string {
 }
 
 function formatSeenAt(timestamp: number): string {
-  return new Date(timestamp).toLocaleString(DATE_LOCALE, DATE_OPTIONS);
+  return new Date(timestamp).toLocaleString(FRENCH_LOCALE, DATE_OPTIONS);
 }
 
 function shareOf(count: number, total: number): number {
   return total === 0 ? 0 : Math.round((count * FULL_SHARE) / total);
+}
+
+/** A share of the catalogue, which is often a fraction of one percent. */
+function formatShare(share: number): string {
+  const formatted = SHARE_FORMAT.format(share * FULL_SHARE);
+
+  // Compared to a formatted zero rather than to a threshold of its own: what
+  // rounds down to nothing is exactly what the format above cannot show.
+  return share > 0 && formatted === SHARE_FORMAT.format(0)
+    ? SHARE_FLOOR_TEXT
+    : `${formatted}${PERCENT_SUFFIX}`;
 }
 
 function renderHeader(summary: CollectionSummary): HTMLElement {
@@ -143,16 +183,51 @@ function renderHeader(summary: CollectionSummary): HTMLElement {
   return header;
 }
 
-function renderRarities(rarities: readonly RarityCount[]): HTMLElement {
-  const strip = createBlock(RARITIES_CLASS);
+function renderRarityItem(code: string, count: string, share: string | null): HTMLElement {
+  const item = createBlock(RARITY_CLASS);
 
-  for (const entry of rarities) {
-    const item = createBlock(RARITY_CLASS);
-    item.appendChild(createText(RARITY_CODE_CLASS, RARITY_LABELS[entry.rarity]));
-    item.appendChild(createText(COUNT_CLASS, String(entry.count)));
-    strip.appendChild(item);
+  item.appendChild(createText(RARITY_CODE_CLASS, code));
+  item.appendChild(createText(COUNT_CLASS, count));
+  if (share !== null) {
+    item.appendChild(createText(SHARE_CLASS, share));
+  }
+  return item;
+}
+
+/**
+ * The rarity strip. With the totals of the catalogue it becomes a completion,
+ * with a line per rarity of the game, the ones owning nothing included.
+ * Without them it stays the plain count of what the index holds.
+ */
+function renderRarities(summary: CollectionSummary): HTMLElement {
+  const strip = createBlock(RARITIES_CLASS);
+  const { catalogue } = summary;
+
+  if (catalogue === null) {
+    for (const entry of summary.rarities) {
+      strip.appendChild(renderRarityItem(RARITY_LABELS[entry.rarity], String(entry.count), null));
+    }
+    return strip;
+  }
+
+  for (const entry of computeRarityCompletion(summary.rarities, catalogue.totals)) {
+    const counts = `${NUMBER_FORMAT.format(entry.owned)}${COMPLETION_SEPARATOR}${NUMBER_FORMAT.format(entry.total)}`;
+    strip.appendChild(
+      renderRarityItem(RARITY_LABELS[entry.rarity], counts, formatShare(entry.share)),
+    );
   }
   return strip;
+}
+
+/** Where the totals come from, or how to make them known. */
+function renderCatalogueLine(catalogue: CatalogueObservation | null): HTMLElement {
+  if (catalogue === null) {
+    return createText(CATALOGUE_CLASS, CATALOGUE_HINT_TEXT);
+  }
+  return createText(
+    CATALOGUE_CLASS,
+    `${CATALOGUE_PREFIX}${formatSeenAt(catalogue.observedAt)}${CATALOGUE_SUFFIX}`,
+  );
 }
 
 /** The thin proportional bar under a row, purely decorative. */
@@ -287,7 +362,8 @@ export function renderSummary(state: SummaryViewState, callbacks: SummaryCallbac
   }
 
   screen.appendChild(renderHeader(summary));
-  screen.appendChild(renderRarities(summary.rarities));
+  screen.appendChild(renderRarities(summary));
+  screen.appendChild(renderCatalogueLine(summary.catalogue));
   screen.appendChild(rows);
   screen.appendChild(renderFooter(state, callbacks));
   return screen;

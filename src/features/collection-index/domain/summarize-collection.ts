@@ -1,4 +1,4 @@
-import { RARITIES, type Rarity } from '../../card-detection/domain/rarity';
+import { RARITIES_RAREST_FIRST, type Rarity } from '../../card-detection/domain/rarity';
 import {
   CATEGORY_IDS,
   PERSON_SUBTYPE_IDS,
@@ -24,6 +24,7 @@ import type {
   CardFactsCache,
   ClassTargetCache,
 } from '../../categorization/domain/ports';
+import type { CatalogueObservation, CatalogueTotalsRepository } from './catalogue-totals';
 import type {
   CollectionCardEntry,
   CollectionIndex,
@@ -58,17 +59,17 @@ const SUBTYPE_ORDER: readonly PersonSubtypeId[] = [
   ...PERSON_SUBTYPE_IDS.filter((subtype) => !PERSON_SUBTYPE_PRIORITY.includes(subtype)),
 ];
 
-/** Rarest first, the order a collector reads their own cards in. */
-const RARITY_ORDER: readonly Rarity[] = [...RARITIES].reverse();
-
 /**
- * The caches this use case reads. There is no network port on purpose: opening
- * the popup must never send a request to Wikimedia, whatever the state of the
- * caches. A card the caches cannot answer for is simply counted as
- * uncategorized, and the next display of it categorizes it for good.
+ * The local stores this use case reads. There is no network port on purpose:
+ * opening the popup must never send a request to Wikimedia, whatever the state
+ * of the caches. A card the caches cannot answer for is simply counted as
+ * uncategorized, and the next display of it categorizes it for good. The
+ * catalogue totals come from storage for the same reason: they were read on
+ * the site, never fetched.
  */
 export interface SummarizeCollectionDeps {
   indexRepository: CollectionIndexRepository;
+  catalogueTotalsRepository: CatalogueTotalsRepository;
   cardFactsCache: CardFactsCache;
   classTargetCache: ClassTargetCache;
 }
@@ -98,7 +99,8 @@ function compareSubtypes(left: SubtypeCount, right: SubtypeCount): number {
 }
 
 function compareCards(left: SummaryCard, right: SummaryCard): number {
-  const byRarity = RARITY_ORDER.indexOf(left.rarity) - RARITY_ORDER.indexOf(right.rarity);
+  const byRarity =
+    RARITIES_RAREST_FIRST.indexOf(left.rarity) - RARITIES_RAREST_FIRST.indexOf(right.rarity);
   return byRarity === 0 ? left.title.localeCompare(right.title, TITLE_LOCALE) : byRarity;
 }
 
@@ -183,7 +185,7 @@ function countRarities(index: CollectionIndex): RarityCount[] {
     counts.set(entry.rarity, (counts.get(entry.rarity) ?? 0) + 1);
   }
 
-  return RARITY_ORDER.filter((rarity) => counts.has(rarity)).map((rarity) => ({
+  return RARITIES_RAREST_FIRST.filter((rarity) => counts.has(rarity)).map((rarity) => ({
     rarity,
     count: counts.get(rarity) ?? 0,
   }));
@@ -199,11 +201,12 @@ function mostRecentSeenAt(index: CollectionIndex): number | null {
   return latest;
 }
 
-function emptySummary(): CollectionSummary {
+function emptySummary(catalogue: CatalogueObservation | null): CollectionSummary {
   return {
     totalCards: 0,
     uncategorizedCount: 0,
     lastSeenAt: null,
+    catalogue,
     categories: [],
     rarities: [],
   };
@@ -222,10 +225,15 @@ function emptySummary(): CollectionSummary {
 export async function summarizeCollection(
   deps: SummarizeCollectionDeps,
 ): Promise<CollectionSummary> {
-  const index = await deps.indexRepository.read();
+  // Both come from the same storage area and neither depends on the other, so
+  // the popup waits for one read and not for two in a row.
+  const [index, catalogue] = await Promise.all([
+    deps.indexRepository.read(),
+    deps.catalogueTotalsRepository.read(),
+  ]);
   const titles = [...index.keys()];
   if (titles.length === 0) {
-    return emptySummary();
+    return emptySummary(catalogue);
   }
 
   const factsByTitle = await deps.cardFactsCache.getFresh(titles);
@@ -255,6 +263,7 @@ export async function summarizeCollection(
     totalCards: titles.length,
     uncategorizedCount,
     lastSeenAt: mostRecentSeenAt(index),
+    catalogue,
     categories: toCategorySummaries(buckets),
     rarities: countRarities(index),
   };

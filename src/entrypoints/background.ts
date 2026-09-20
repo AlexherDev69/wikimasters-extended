@@ -11,6 +11,7 @@ import { createTitleResolver } from '../features/categorization/data/title-resol
 import type { CategorizeCardsDeps } from '../features/categorization/domain/categorize-cards';
 import type { Clock } from '../features/categorization/domain/ports';
 import { createCategorizeMessageHandler } from '../features/categorization/presentation/handle-categorize-message';
+import { createCatalogueTotalsRepository } from '../features/collection-index/data/catalogue-totals-repository';
 import { createCollectionIndexRepository } from '../features/collection-index/data/collection-index-repository';
 import { createCollectionMessageHandler } from '../features/collection-index/presentation/handle-collection-messages';
 import { createStorageMessageHandler } from '../features/settings/presentation/handle-storage-messages';
@@ -34,6 +35,9 @@ export default defineBackground({
     const classTargetCache = createClassTargetCache();
     // Shared too: the options page counts what the popup summarizes.
     const indexRepository = createCollectionIndexRepository(systemClock);
+    // Facts about the game, read on the catalogue page of the site: neither
+    // maintenance operation of the options page touches them.
+    const catalogueTotalsRepository = createCatalogueTotalsRepository(systemClock);
 
     const deps: CategorizeCardsDeps = {
       titleResolver: createTitleResolver(httpOptions),
@@ -46,6 +50,7 @@ export default defineBackground({
     const handleCategorize = createCategorizeMessageHandler(deps);
     const handleCollection = createCollectionMessageHandler({
       indexRepository,
+      catalogueTotalsRepository,
       cardFactsCache,
       classTargetCache,
       logger,
