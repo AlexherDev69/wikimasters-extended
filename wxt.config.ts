@@ -12,5 +12,8 @@ export default defineConfig({
     name: 'WikiMasters Extended',
     description: "Overlay en lecture seule pour wiki-masters.com : catégorisation des cartes via Wikidata.",
     version: '0.1.0',
+    permissions: ['storage'],
+    // The only outgoing hosts. The site itself is never called by the extension.
+    host_permissions: ['https://fr.wikipedia.org/*', 'https://query.wikidata.org/*'],
   },
 });
