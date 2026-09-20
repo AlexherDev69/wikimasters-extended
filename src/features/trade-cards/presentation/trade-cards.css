@@ -3,24 +3,58 @@
  * starts with one of our data attributes, the last rule of the file included:
  * it reaches a node of the site, but only one standing immediately after a
  * preview of ours, which is a place only this extension ever creates.
+ *
+ * The shape is the one the site gives its own cards, read off its markup: a
+ * portrait frame of about 1 to 1.4, its picture in the top 45%, the rarity
+ * badge in the corner of that picture, and the name below on the ground of
+ * the rarity. A card met in a trade offer is then the card the reader already
+ * knows from the collection, only smaller.
  */
 
 [data-wme-trade-preview] {
   /*
    * Defaults, overridden right below by the rarity the preview carries. A
    * preview whose rarity variable the site stopped shipping keeps a readable
-   * neutral colour rather than losing its border entirely.
+   * neutral ground rather than losing its colour entirely, and the ink below
+   * stays legible on it.
    */
-  --wme-trade-colour: rgba(230, 237, 243, 0.55);
+  --wme-trade-colour: #c9d4e0;
   --wme-trade-width: 84px;
-  --wme-trade-art-height: 54px;
+  /* The 45% of the card the site gives the picture, and the rest of it. */
+  --wme-trade-art-height: 53px;
+  --wme-trade-body-height: 65px;
+  /* The ink the site writes on its cards, whatever the rarity under it. */
+  --wme-trade-ink: rgb(13, 17, 23);
+  /*
+   * The two grounds a picture is laid on, the very ones the card picture
+   * feature uses on the site's own cards: a light one for emblems, which are
+   * drawn for a white page, a dark one for photographs. The same file must
+   * not look like two different cards from one page to the next.
+   */
+  --wme-trade-ground-light: #eef1f5;
+  --wme-trade-ground-dark: #0d1117;
+
   display: block;
   width: var(--wme-trade-width);
   box-sizing: border-box;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--wme-trade-colour) 45%, transparent);
-  background-color: rgba(9, 12, 17, 0.55);
+  border: 1px solid color-mix(in srgb, var(--wme-trade-colour) 55%, transparent);
+  /*
+   * The ground of the card. The site paints an artwork of the rarity there,
+   * a file of its own we have no business loading; this is the same reading
+   * of it, light where the picture sits and full colour at the foot.
+   */
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--wme-trade-colour) 55%, #ffffff) 0%,
+    color-mix(in srgb, var(--wme-trade-colour) 85%, #ffffff) 46%,
+    var(--wme-trade-colour) 100%
+  );
+  /* The glow of the site's own `glow-<rarity>` rules, at this size. */
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--wme-trade-colour) 28%, transparent),
+    0 0 11px color-mix(in srgb, var(--wme-trade-colour) 18%, transparent);
   /*
    * The whole offer is one button of the site, which opens the detail of the
    * trade. A click on our preview must do exactly what a click on the chip it
@@ -59,10 +93,34 @@
   --wme-trade-colour: var(--color-rarity-l);
 }
 
+/*
+ * The picture area. Nothing known of the card yet, or nothing to draw: the
+ * veil the site lays over its own artwork is all that shows, a darker tint of
+ * the rarity in the place a picture will take.
+ */
 [data-wme-trade-preview] .wme-trade-art {
   position: relative;
   height: var(--wme-trade-art-height);
-  background-color: color-mix(in srgb, var(--wme-trade-colour) 18%, rgba(9, 12, 17, 0.9));
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-wme-trade-kind='picture']:not([data-wme-trade-failed]) .wme-trade-art {
+  background-color: var(--wme-trade-ground-dark);
+}
+
+[data-wme-trade-kind='emblem']:not([data-wme-trade-failed]) .wme-trade-art {
+  background-color: var(--wme-trade-ground-light);
+}
+
+/* The fade the site draws at the foot of a picture, at this size. */
+[data-wme-trade-kind]:not([data-wme-trade-failed]) .wme-trade-art::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 14px;
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
 }
 
 [data-wme-trade-preview] .wme-trade-media {
@@ -70,14 +128,16 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
   object-fit: cover;
-  object-position: center;
+  /* Faces sit in the upper part of a portrait, which is most of these files. */
+  object-position: 50% 25%;
 }
 
-/* A logo is shown whole on the ground of its rarity, a photograph is cropped. */
+/* A logo, a flag or a coat of arms is shown whole, never cropped. */
 [data-wme-trade-kind='emblem'] .wme-trade-media {
   object-fit: contain;
-  padding: 3px;
+  padding: 6%;
 }
 
 /* A picture that failed to load leaves the flat ground, never a broken glyph. */
@@ -95,18 +155,28 @@
   font-weight: 700;
   line-height: 12px;
   letter-spacing: 0.02em;
-  /* The ink of the site's own rarity chip, on the colour of the rarity. */
-  color: rgb(13, 17, 23);
+  /* The badge of the site, down to its ink and its halo. */
+  color: var(--wme-trade-ink);
   background-color: var(--wme-trade-colour);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--wme-trade-colour) 60%, transparent);
 }
 
 [data-wme-trade-preview] .wme-trade-title {
   display: block;
-  padding: 3px 4px 4px;
+  /*
+   * The card keeps the proportions of a card whatever its name, and grows
+   * instead of cutting one that needs more room. A title the reader has to
+   * click to finish is exactly what this feature exists to remove.
+   */
+  min-height: var(--wme-trade-body-height);
+  box-sizing: border-box;
+  padding: 5px;
+  /* The heading face of the site, which is what its own card titles use. */
+  font-family: var(--font-heading, inherit);
   font-size: 10px;
-  line-height: 1.25;
-  font-weight: 600;
-  color: rgba(230, 237, 243, 0.92);
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--wme-trade-ink);
   /* A title longer than the card wraps rather than overflowing or being cut. */
   overflow-wrap: anywhere;
 }

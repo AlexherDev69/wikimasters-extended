@@ -545,6 +545,11 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Fixture assainie tirée de deux offres réelles (une carte contre une, une carte contre quatre), pseudonymes remplacés. Sept pastilles, six titres distincts, dont un que les deux offres nomment
 - Vérification visuelle : la fixture rendue avec la vraie feuille de style et les couleurs de rareté du site, en largeur bureau et en 375 px. Les cartes se replient sans débordement, et une image qui échoue laisse le fond plat de la rareté plutôt que le glyphe d'image cassée du navigateur, ce que la marque d'échec garantit
 - Septième réglage, activé par défaut : la fonctionnalité ajoute des noeuds qui lui appartiennent et ne retire rien du site
+- Reprise du dessin le même jour, sur retour de l'utilisateur ("le résultat est sympa mais devrait plus ressembler à ça", capture d'une carte du site à l'appui). La vignette prend la forme d'une carte du site, relevée sur ses propres exports : format portrait d'environ 1 pour 1,4, image dans les 45 % du haut sous le voile `bg-black/20` du site, badge de rareté dans le coin de cette image avec son encre `rgb(13, 17, 23)` et son halo, titre en dessous en gras sur le fond de la rareté, et le double halo des règles `glow-<rareté>` autour du tout
+- Le fond de l'image est celui de la phase 7, clair pour un emblème et sombre pour une photographie : le même fichier ne doit pas ressembler à deux cartes différentes d'une page à l'autre. Le cadrage suit la même règle, et c'est aussi celle du site, qui montre une photographie en `object-cover` et un emblème en `object-contain`
+- Le site peint le fond de ses cartes avec un visuel de rareté qui lui appartient (`super_rare.png` et ses voisins), que rien ne nous autorise à charger : c'est un dégradé de la couleur de la rareté qui le lit à sa place, clair là où l'image se pose et pleine couleur au pied
+- Changement de feuille de style seulement : aucun noeud, aucune clé et aucune ligne de code touchés, donc rien de ce qui garantit une sync sans écriture ne bouge
+- Vérification visuelle refaite : les six raretés côte à côte, un emblème, une photographie, une carte dont aucune image n'est connue et une image en échec, en largeur bureau et en 375 px
 
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
