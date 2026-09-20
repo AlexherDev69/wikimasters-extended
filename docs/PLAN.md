@@ -247,7 +247,7 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 
 ### Phase 4 : UI catégorisation
 
-#### Phase 4a : badge, ligne dans la modale, mise en évidence par page (faite le 2026-09-20, revue indépendante passée)
+#### Phase 4a : badge, ligne dans la modale, mise en évidence par page (faite le 2026-09-20, revue indépendante passée, mise en évidence RETIRÉE le 2026-09-20, voir phase 10b)
 
 - Badge sur chaque carte catégorisée : pastille de couleur et libellé court ("Personne · Cinéma", "Lieu"...), en bas à gauche, `pointer-events: none`. Aucun badge pour une carte introuvable, en erreur ou pas encore catégorisée. Rétréci et descendu le 2026-09-20 à la demande de l'utilisateur : il chevauche désormais la ligne entre la photo et le texte au lieu de se tenir au-dessus, et sa pastille de couleur suit la taille du texte au lieu d'être fixe. Pas entièrement sous la ligne : la carte ne garde que 12 px de marge avant son titre en format grille, moins que la hauteur du badge
 - Modale de détail : une ligne "Catégorie : ..." après le lien Wikipédia (et après le lien Letterboxd quand il existe), avec les autres sous-types d'une personne ("aussi : ...")
@@ -307,7 +307,7 @@ Plan initial, avec l'état de chaque point :
 
 - Badge de catégorie sur chaque carte (toutes pages) et catégorie détaillée dans la modale : fait (4a)
 - La collection étant paginée, trois réponses complémentaires au besoin de filtre, par ordre de coût :
-  1. Mise en évidence par catégorie sur la page courante (atténuer les cartes hors catégorie). Simple, mais limité à la page affichée : fait (4a)
+  1. Mise en évidence par catégorie sur la page courante (atténuer les cartes hors catégorie). Simple, mais limité à la page affichée : fait (4a), RETIRÉE le 2026-09-20 (phase 10b)
   2. Vue "Ma collection par catégorie" dans l'extension (popup ou page dédiée), alimentée par l'index local des cartes déjà vues. Tri, filtres et regroupements sans limite de page : fait (4c), sous forme de popup
   3. Synergie avec les étiquettes natives : l'extension indique la catégorie, l'utilisateur pose lui-même l'étiquette avec la sélection en lot du site. Le filtre natif marche alors sur toutes les pages, côté serveur. L'extension ne clique jamais à la place de l'utilisateur. Le badge donne déjà l'information ; rien de plus à coder tant que le DOM des étiquettes natives n'a pas été observé (export de `/collection` attendu)
 - Popup de stats : nombre de cartes par catégorie et sous-type : fait (4c)
@@ -486,6 +486,16 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Sur les règles du site : cacher un nombre dans son propre navigateur ne donne aucun avantage, ne révèle rien et n'automatise rien. C'est une préférence d'affichage, comme un mode lecture, et un clic la défait entièrement
 - Aucune requête, aucun message, aucune permission, manifest identique
 
+#### Phase 10b : retrait de la mise en évidence par catégorie (faite le 2026-09-20)
+
+- Demande de l'utilisateur, capture du panneau flottant à l'appui : "enleve ça". La même demande avait été faite puis annulée le même jour ("ne supprime pas les catégories"), donc la portée est tenue au plus près de ce qui est montré : le panneau et les voiles qu'il pilote partent, la catégorisation et le badge restent entiers
+- Retirés : la fonctionnalité `category-highlight` en entier (panneau, voile, comptage des catégories de la page, sélection des titres voilés), sa feuille de style, son réglage `categoryHighlight` et sa ligne dans la page d'options
+- Mise à jour d'une installation existante : la clé `categoryHighlight` laissée dans les réglages est simplement ignorée (la normalisation n'itère que sur les réglages connus) et disparaît au premier enregistrement, même mécanisme que `collectionIndex` en phase 8a. Aucune donnée à supprimer : l'état du panneau n'a jamais été stocké
+- `hasEnabledFeature` passe de cinq clés à quatre. Conséquence assumée : une installation qui n'avait gardé QUE la mise en évidence n'envoie désormais plus rien vers Wikidata, ce qui est bien le comportement voulu puisque plus rien n'y affiche une catégorie
+- Le panneau était le seul noeud que l'extension ajoutait directement dans `document.body`. Après ce retrait, tout ce qu'elle pose vit à l'intérieur d'une carte ou de la modale de détail, la seule exception étant la feuille de style de la phase 10a, qui vit dans `document.head` et n'ajoute aucun noeud visible
+- Conservé : catégorisation Wikidata, badge sur les cartes, ligne de catégorie dans la modale, couleurs d'accent, lien Letterboxd, images manquantes, étiquettes suggérées, masquage des statistiques, les deux caches et leur entretien. Permissions, hôtes et manifest inchangés
+- La réponse 1 au besoin de filtre de la phase 4 disparaît avec elle. Il reste la réponse 3, les étiquettes natives que l'utilisateur pose lui-même, que la phase 8b alimente en propositions
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
@@ -525,7 +535,7 @@ Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P
 
 | # | Risque | Impact | Parade |
 | --- | --- | --- | --- |
-| R1 | Confirmé : collection paginée, un filtre DOM ne voit que la page courante | Filtres sur page peu utiles seuls | Assumé : la mise en évidence agit sur la page affichée, et les étiquettes natives posées par l'utilisateur prennent le relais pour le reste (phase 8) |
+| R1 | Confirmé : collection paginée, un filtre DOM ne voit que la page courante | Filtres sur page peu utiles seuls | Assumé, et tranché : la mise en évidence par page a été retirée le 2026-09-20 (phase 10b). Le badge donne la catégorie carte par carte, et les étiquettes natives que l'utilisateur pose lui-même, alimentées en propositions par la phase 8b, prennent le relais pour le filtrage |
 | R6 | Retiré avec la phase 8a : portait sur l'index local incomplet | | |
 | R2 | Changement du DOM à chaque déploiement du site | Détection cassée | Détection structurelle, sélecteurs centralisés, fixtures, mode dégradé silencieux |
 | R3 | Interprétation stricte des règles par le site | Bannissement du compte | Lecture seule stricte, aucun avantage de jeu, accord du développeur avant publication |
