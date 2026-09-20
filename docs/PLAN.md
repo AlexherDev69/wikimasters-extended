@@ -63,13 +63,13 @@ Le navigateur intégré est bloqué par Turnstile à la connexion. L'analyse s'a
 | --- | --- |
 | Le composant carte est-il exploitable ? | Oui. Même composant partout, racine identifiable par la classe `glow-<rareté>`, titre dans `h3`, description facultative dans `p` |
 | Y a-t-il un identifiant d'article ? | Pas sur la carte. Dans la modale de détail, oui : lien `https://fr.wikipedia.org/wiki/<titre>` |
-| Comment se charge `/collection` ? | Pagination (Précédent, Suivant). Le site a déjà tri, filtre par rareté, filtre par étiquette, liste de souhaits et gestion d'étiquettes en lot |
+| Comment se charge `/collection` ? | Pagination (Précédent, Suivant). Le site a déjà tri, filtre par rareté, filtre par étiquette et gestion d'étiquettes en lot. La liste de souhaits est un filtre de `/global-collection`, pas de `/collection` (confirmé par l'utilisateur) |
 | Où apparaissent les cartes ? | `/pulls` (une à la fois), `/collection`, `/marketplace` (lots de 40, "Charger la suite"), modale de détail. Probablement aussi `/trades`, `/battle`, `/profile`, `/global-collection` |
 | Le pipeline tient-il sur de vraies cartes ? | Oui. 43 sur 43 titres résolus, 42 sur 43 avec un P31, 1,8 s au total |
-| Y a-t-il un ensemble fini de cartes ? | Inconnu. La page `/global-collection` ("Toutes les cartes") existe mais n'a pas été capturée |
+| Y a-t-il un ensemble fini de cartes ? | Oui, mais immense : `/global-collection` liste 2 773 461 cartes (tout frwiki ou presque) sur 55 470 pages de 50, avec le total par rareté en en-tête (L 1761, UR 12368, SR 66788, R 179657, PC 516762, C 1996125). Aucun marqueur de possession sur les cartes du catalogue |
 | Y a-t-il d'autres langues que frwiki ? | Aucun indice. Le lien de la modale porte le sous-domaine de langue, ce qui permettra de le gérer si besoin |
 
-Reste à capturer : `/collection` une fois chargée et `/global-collection`.
+Reste à capturer : `/collection` une fois chargée (DOM des étiquettes natives). `/global-collection` a été capturée le 2026-09-20.
 
 ## 3. Verdict de faisabilité
 
@@ -77,7 +77,7 @@ Reste à capturer : `/collection` une fois chargée et `/global-collection`.
 | --- | --- | --- |
 | 1. Catégorisation (badge sur carte, stats locales) | Faisable, validé sur cartes réelles | Coût réseau faible, cache très efficace |
 | 1. Filtres et tri dans la collection | Faisable mais limité par la pagination | Un filtre DOM ne voit que la page courante. Trois réponses complémentaires, voir phase 4 |
-| 1. Taux de complétion par catégorie | À clarifier | Dépend de `/global-collection`. À défaut : répartition de la collection par catégorie, sans dénominateur |
+| 1. Taux de complétion par catégorie | Infaisable tel quel | Le catalogue compte 2,77 millions de cartes sur 55 470 pages et l'extension ne navigue jamais seule : impossible de connaître le nombre de cartes par catégorie, et le taux serait de toute façon proche de zéro. Faisable à la place : complétion par rareté (index local contre les totaux affichés en en-tête du catalogue), et éventuellement complétion par catégorie limitée aux légendaires (1761 cartes, 36 pages) si l'utilisateur les parcourt. La répartition de la collection par catégorie, sans dénominateur, est livrée (phase 4c) |
 | 2. Lien Letterboxd | Faisable | 3 niveaux de fallback pour les films, 2 pour les personnes. Emplacement idéal trouvé : la modale de détail, à côté du lien Wikipédia |
 
 ## 4. Architecture proposée
@@ -193,7 +193,7 @@ Le site n'expose aucun attribut `data-*` et chaque déploiement peut changer les
 ### Phase 0 : reconnaissance des pages connectées (faite à 80 %)
 
 - Fait : [DOM_NOTES.md](DOM_NOTES.md), 4 fixtures anonymisées dans `tests/fixtures/`, extraction prototype validée sur 41 cartes du marché sans faux positif, pipeline validé sur 43 cartes réelles
-- Reste : exports de `/collection` chargée et de `/global-collection`. Non bloquant pour les phases 1 à 3 et 5, nécessaire avant la phase 4
+- Reste : export de `/collection` chargée (DOM des étiquettes natives). `/global-collection` capturée le 2026-09-20, voir DOM_NOTES
 
 ### Phase 1 : socle du projet (faite le 2026-09-20, revue indépendante passée)
 
@@ -274,7 +274,7 @@ Reste à faire par l'utilisateur : contrôle visuel dans Chrome (lisibilité du 
 - Manifest : seule l'entrée `action` (popup) est ajoutée, permissions inchangées. Le polyfill `modulepreload` de Vite est désactivé : il embarquait un `fetch` inutile dans la fenêtre, Chrome gérant `modulepreload` nativement
 - Points de revue acceptés sans changement : l'index est réécrit en entier à chaque lot (le quota de 10 Mo correspond à environ 125 000 cartes) ; un titre déjà envoyé n'est pas renvoyé avant le rechargement de l'onglet, un changement de rareté n'est donc vu qu'à la session suivante
 
-Question ouverte pour l'utilisateur : la page `/collection` propose un filtre "liste de souhaits". S'il affiche des cartes non possédées sous la même URL, elles entreraient dans l'index. À vérifier sur le site ; un export HTML de cette vue permettrait de la détecter.
+Question close le 2026-09-20 : la liste de souhaits n'existe pas sur `/collection`. C'est un filtre de `/global-collection`, page qui n'alimente jamais l'index. Tout ce qui s'affiche sur `/collection` est donc possédé.
 
 Reste à faire par l'utilisateur : contrôle visuel de la fenêtre dans Chrome.
 
@@ -288,7 +288,7 @@ Plan initial, avec l'état de chaque point :
   2. Vue "Ma collection par catégorie" dans l'extension (popup ou page dédiée), alimentée par l'index local des cartes déjà vues. Tri, filtres et regroupements sans limite de page : fait (4c), sous forme de popup
   3. Synergie avec les étiquettes natives : l'extension indique la catégorie, l'utilisateur pose lui-même l'étiquette avec la sélection en lot du site. Le filtre natif marche alors sur toutes les pages, côté serveur. L'extension ne clique jamais à la place de l'utilisateur. Le badge donne déjà l'information ; rien de plus à coder tant que le DOM des étiquettes natives n'a pas été observé (export de `/collection` attendu)
 - Popup de stats : nombre de cartes par catégorie et sous-type : fait (4c)
-- Taux de complétion par catégorie : à faire, demande le catalogue de `/global-collection` (export attendu, voir Phase 0)
+- Taux de complétion par catégorie : infaisable contre le catalogue entier (2,77 millions de cartes, voir le verdict de faisabilité). Variantes possibles, à décider : complétion par rareté, complétion par catégorie limitée aux légendaires
 - Vérification : scénarios manuels de la section 7
 
 ### Phase 5 : lien Letterboxd (faite le 2026-09-20)

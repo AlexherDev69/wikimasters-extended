@@ -57,8 +57,8 @@ Dans `.card-frame` : `h2` (titre), libellé de rareté, onglets "Détails" et "M
 | --- | --- |
 | `/pulls` | Paquet fermé : aucune carte. Paquet ouvert : une carte à la fois, carrousel "Carte n / 5", carte grand format dans un wrapper `animate-card-flip` déplaçable |
 | `/marketplace` | Grille de `div#marketplace-auction-<uuid> > a.card-frame`. Environ 40 cartes par lot, bouton "Charger la suite" (ajout au DOM). Natif : recherche, tri, filtre par rareté. 45 424 enchères au moment de l'export |
-| `/collection` | Pagination (confirmé par l'utilisateur). D'après les textes d'interface : tri (date d'ajout, nom, rareté, ATK, DEF, favoris), filtre par rareté, filtre par étiquette ou liste de souhaits, gestion d'étiquettes y compris en lot sur une sélection, boutons Précédent et Suivant |
-| `/global-collection` | Non capturée. Textes repérés : "Rechercher dans le catalogue...", "Aucune carte du catalogue n'est liée à cet article." |
+| `/collection` | Pagination (confirmé par l'utilisateur). D'après les textes d'interface : tri (date d'ajout, nom, rareté, ATK, DEF, favoris), filtre par rareté, filtre par étiquette, gestion d'étiquettes y compris en lot sur une sélection, boutons Précédent et Suivant |
+| `/global-collection` | Capturée le 2026-09-20 (export brut non versionné). Catalogue de TOUTES les cartes du jeu : 2 773 461 cartes, 50 par page, "Page 1 / 55470". Bloc d'en-tête `div.card-frame` avec le total par rareté (L 1761, UR 12368, SR 66788, R 179657, PC 516762, C 1996125). Natif : recherche "par titre ou catégorie", tri, filtre par rareté, bouton "Liste de souhaits" (icône bookmark). Même composant carte qu'ailleurs (`glow-<rareté>`, `h3`, `p`), donc détecté et badgé sans changement. AUCUN marqueur de possession sur les cartes du catalogue : toutes les racines portent exactement les mêmes classes. Certaines cartes portent une pastille avec l'icône `lucide-users` et un pseudo de joueur (signification à confirmer) : ce sont des `span`, sans effet sur l'extraction du titre et de la description |
 
 ## Validation du pipeline sur un échantillon réel
 
@@ -83,4 +83,4 @@ Enseignements :
 ## Reste à capturer
 
 - `/collection` une fois les cartes affichées (grille, contrôles de tri et de filtre, pagination, mode sélection)
-- `/global-collection`, pour savoir si le catalogue est fini et s'il peut servir de dénominateur à un taux de complétion
+- `/global-collection` : fait. Le catalogue est fini mais compte 2,77 millions de cartes sur 55 470 pages, sans marqueur de possession : il ne peut pas servir de dénominateur par catégorie (voir PLAN, verdict de faisabilité). La liste de souhaits est un filtre de cette page, pas de `/collection`
