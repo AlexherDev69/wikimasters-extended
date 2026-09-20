@@ -10,6 +10,8 @@ Fixtures anonymisées (composant carte seul, aucune donnée de compte) dans `tes
 | `card-large-with-description.html` | Carte grand format (ouverture de paquet) |
 | `card-large-no-description.html` | Carte grand format sans description |
 | `card-detail-modal.html` | Modale de détail complète, avec le lien Wikipédia |
+| `global-collection-page.html` | Bloc d'en-tête du catalogue (totaux par rareté) et trois cartes |
+| `placeholder-cards.html` | Deux cartes sans illustration (logo du site) et une carte illustrée |
 
 ## Routes découvertes
 
@@ -42,6 +44,10 @@ Extraction recommandée :
 | Titre | `h3.textContent` | `img[alt]` non vide |
 | Rareté | Suffixe de la classe `glow-*` | Texte du badge |
 | Description | `p` de la zone texte | Aucune (facultative) |
+
+Carte sans illustration (relevé du 2026-09-20 sur les exports bruts : 7 cartes sur 41 au marché, 12 sur 50 parmi les légendaires du catalogue) : la zone image contient alors `div > div > img[alt="WikiMasters"]`, le logo du site servi par `/_next/image?url=%2Flogo.png` (présent dans `src` et dans `srcset`), avec les classes `object-contain opacity-70`. Une vraie illustration est un `img[alt="<titre>"][crossorigin="anonymous"]` direct, suivi d'un dégradé. Les deux variantes sont dans la fixture `tests/fixtures/placeholder-cards.html`. La zone image se retrouve par la structure (l'ancêtre du logo qui est enfant direct de la racine), pas par ses classes Tailwind.
+
+En-têtes du site (page publique, 2026-09-20) : aucun `Content-Security-Policy`, aucun `Cross-Origin-Embedder-Policy`. Une balise `img` ajoutée par l'extension peut donc charger une image de Wikimedia. `Special:FilePath` de Commons répond par deux redirections sans en-tête CORS : l'image de l'extension ne doit pas porter `crossorigin`.
 
 La carte de la landing publique est différente (`aspect-[5/7]`, pas de `glow-*`). Elle n'est pas ciblée.
 
