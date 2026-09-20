@@ -130,12 +130,19 @@ Table statique classe vers catégorie : reportée. Les mesures montrent que la r
 | Type de carte | Ordre de résolution |
 | --- | --- |
 | Film | P6127 `/film/<id>/`, sinon P4947 `/tmdb/<id>/`, sinon P345 `/imdb/<id>/`, sinon `/search/<titre sans parenthèse>/` |
-| Personne avec métier cinéma | ID du métier dominant (réalisateur P12383, acteur P6119, scénariste P14583, producteur P14196), sinon `/search/<nom>/` |
-| Studio | P13273 (URL à vérifier), sinon pas de lien |
+| Personne avec métier cinéma | ID du métier dominant (réalisateur P12383 `/director/`, acteur P6119 `/actor/`, scénariste P14583 `/writer/`, producteur P14196 `/producer/`), sinon ID d'un autre métier de cinéma de la personne, sinon `/search/<nom>/` |
+| Studio | P13273 `/studio/<id>/` (vérifié), sinon pas de lien |
 | Série TV | Pas de lien en v1 (Letterboxd couvre très peu de séries) |
 | Personne hors cinéma avec un ID Letterboxd | Pas de lien |
 
 Condition d'affichage pour une personne : au moins un métier de cinéma dans P106 (pas forcément le principal). Phil Collins, acteur occasionnel, a donc un lien. Einstein et Macron n'en ont pas.
+
+Précisions apportées par les données réelles :
+
+- Un "film" est une carte Cinéma et TV dont une classe décisive atteint "film" (Q11424) ou "série de films" (Q24856). Une série TV a aussi un identifiant IMDb, qui ne mène à rien sur Letterboxd : sans cette distinction elle recevrait un lien cassé. Le cache par classe garde donc les racines atteintes, pas seulement la catégorie
+- Le métier dominant se lit dans la description de la carte, comme le sous-type principal (Tarantino : "réalisateur, scénariste..." donne `/director/`). Seuls comptent les métiers dont le sous-type est Cinéma : "présentateur de journal" est une sous-classe d'"acteur" dans Wikidata, mais ne fait pas d'une journaliste une actrice
+- Les identifiants Wikidata sont traités comme non fiables : format strict exigé, origine `https://letterboxd.com/` imposée par construction et revérifiée avant de poser le lien
+- Wikidata connaît peu d'identifiants Letterboxd de personnes (absents pour Michael Mann ou Bryan Singer) : la recherche par nom est donc le cas courant pour les personnes. Sur 100 cartes réelles : 22 liens, dont 12 directs et 10 par recherche
 
 Emplacements :
 
@@ -236,7 +243,9 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 - Popup de stats : nombre de cartes par catégorie et sous-type
 - Vérification : scénarios manuels de la section 7
 
-### Phase 5 : lien Letterboxd
+### Phase 5 : lien Letterboxd (faite le 2026-09-20)
+
+Écarts assumés : le lien n'est posé que dans la modale de détail (pas d'icône sur la carte grand format en v1). L'URL est calculée par le service worker et renvoyée avec la catégorie. L'extension ne contacte jamais Letterboxd, elle construit seulement un lien. Jeu de référence : 100 cartes réelles avec l'URL attendue, produit par un prototype indépendant.
 
 - Résolveur de lien (fonction pure), bouton sur la carte, ouverture en nouvel onglet avec `rel="noopener noreferrer"`
 - Vérification : tests unitaires couvrant chaque ligne du tableau de résolution, dont le cas Einstein
