@@ -93,32 +93,37 @@ content script (wiki-masters.com)
 service worker
   1. cache (chrome.storage.local) -> hit : réponse immédiate
   2. miss : API frwiki, 50 titres par requête -> QID (redirections gérées)
-  3. SPARQL direct -> P31, P106, IDs Letterboxd, IMDb, TMDb
-  4. classification : table statique classe -> catégorie
-  5. classe inconnue : SPARQL P279* par classe, résultat mis en cache par classe
-  6. écriture cache, réponse au content script
+  3. SPARQL direct -> P31, P279, P106, IDs Letterboxd, IMDb, TMDb (les faits bruts sont mis en cache par carte)
+  4. classes et métiers absents du cache par classe : SPARQL P279* par classe vers les racines, résultat mis en cache par classe
+  5. classification recalculée à chaque lecture (fonctions pures), réponse au content script
 ```
 
-Point clé : le cache se fait à deux niveaux. Par carte (titre vers résultat), et par classe Wikidata (classe vers catégorie). Le nombre de classes distinctes est très inférieur au nombre de cartes et leur rattachement ne change jamais, donc le fallback coûteux devient rare très vite.
+Point clé : le cache se fait à deux niveaux. Par carte (titre vers faits bruts Wikidata), et par classe Wikidata (classe vers catégorie). Le nombre de classes distinctes est très inférieur au nombre de cartes et leur rattachement change rarement, donc la requête coûteuse devient rare très vite. Comme la carte stocke les faits et non la catégorie finale, modifier les listes de racines n'invalide que le cache par classe : aucune carte n'est à retélécharger.
 
 ### Catégories v1 (proposition, ajustée sur l'échantillon réel)
 
-Personne, Cinéma et TV, Musique, Sport, Lieu, Vivant, Monument et bâtiment, Oeuvre et culture, Évènement, Organisation, Transport et technique, Astronomie, Science et concept, Autre.
+Personne, Cinéma et TV, Musique, Sport, Vivant, Gastronomie, Monument et bâtiment, Religion et idées, Oeuvre et culture, Lieu, Transport et technique, Évènement, Organisation, Astronomie, Science et concept, Autre. Gastronomie et Religion et idées ont été ajoutées après le premier essai sur 50 cartes réelles de la collection (validées par l'utilisateur le 2026-09-20).
 
 Règles de classification :
 
 1. `P31 = Q5` : catégorie Personne, sous-types via P106
-2. Sinon, chaque classe P31 est rattachée à une catégorie (table puis fallback par classe). Vote majoritaire entre les classes de la carte, ordre de priorité des racines en cas d'égalité. Exemple réel : "McDonald's" a une classe qui remonte vers Lieu et quatre vers Organisation
-3. Sans P31, utiliser P279 et classer en "Science et concept" (exemple réel : "Hutte")
-4. Article introuvable : "Autre", nouvelle tentative après expiration du cache
+2. Sinon, chaque classe P31 est rattachée à une catégorie : la première, dans l'ordre de priorité, dont une racine est atteinte par `P279*`. Vote majoritaire entre les classes de la carte, ordre de priorité en cas d'égalité. Exemple réel : "McDonald's" a une classe qui remonte vers Lieu et quatre vers Organisation
+3. Si les classes P31 ne donnent aucun vote, ou s'il n'y a pas de P31, les parents P279 votent. Exemples réels : "Hutte" (pas de P31) devient Monument et bâtiment ; "Ville", "Colt M1911", "Novitchok" et "Myodésopsie" ont pour P31 une méta-classe qui ne mène nulle part ("type de maladie", "modèle d'arme à feu") alors que leurs parents mènent à la bonne catégorie
+4. Toujours aucun vote : "Science et concept" si la carte est elle-même une classe (pas de P31, au moins un P279), sinon "Autre"
+5. Article introuvable : statut "introuvable" sans catégorie, nouvelle tentative après expiration du cache
 
-Sous-types de Personne (Cinéma, Musique, Sport, Politique, Science, Littérature, Art, Autre) :
+L'ordre de priorité compte, car une classe Wikidata atteint souvent plusieurs racines. "Monument et bâtiment" passe avant "Oeuvre et culture" (une structure architecturale est aussi une "oeuvre"), "Religion et idées" avant "Organisation" (une religion est une "organisation" dans Wikidata), "Lieu" avant "Organisation" (une commune est aussi une organisation). Une même catégorie peut apparaître deux fois dans l'ordre : "étendue d'eau" (Lieu) passe avant "Monument et bâtiment", car un lac de barrage est aussi une "structure architecturale". La racine "occurrence" a été retirée d'Évènement : trop générique, elle classait "Bouddhisme" en évènement.
 
-- Même mécanique que pour P31 : table métier vers sous-type, fallback `P279*` par métier
+Sous-types de Personne (Cinéma, Musique, Sport, Politique, Science, Littérature, Art, Médias, Autre) :
+
+- Même mécanique que pour P31 : chaque métier est rattaché à un sous-type via `P279*` vers des racines de métiers
 - Une personne garde tous ses sous-types comme tags (Kim Ji-soo : Musique et Cinéma)
-- Le sous-type principal se décide avec la description de la carte, car l'ordre des P106 dans Wikidata n'a aucun sens. Exemple réel : Phil Collins sort "acteur" en premier alors que sa description dit "batteur, chanteur et auteur-compositeur"
+- Le sous-type principal se décide avec la description de la carte, car l'ordre des P106 dans Wikidata n'a aucun sens. Exemple réel : Phil Collins sort "acteur" en premier alors que sa description dit "batteur, chanteur et auteur-compositeur". Le métier dont le libellé français (variantes masculine et féminine) apparaît le plus tôt dans la description l'emporte. Sans correspondance : vote majoritaire, puis ordre de priorité
+- Deux ordres distincts pour Médias. Au niveau du métier, Médias passe avant Cinéma, car dans Wikidata "animateur de télévision" est une sous-classe d'"acteur" : sans cela les journalistes sortaient en Cinéma (et auraient reçu un lien Letterboxd). Au niveau de la personne, Médias passe en dernier en cas d'égalité de votes : Georges Mandel, homme politique et journaliste, reste en Politique
+- "artiste peintre" n'atteint pas "artiste" dans Wikidata mais "artiste visuel", ajouté aux racines d'Art
+- Limite connue : les tags secondaires sont bruités (Phil Collins reçoit "Science" via "autobiographe"). Sans conséquence sur le sous-type principal, et corrigeable sans retéléchargement puisque les métiers bruts sont en cache
 
-La table statique n'est pas écrite à la main : un script de build interroge Wikidata pour les classes les plus fréquentes et applique les mêmes racines, avec un fichier de corrections manuelles par-dessus. Le fallback en ligne ne sert alors que pour les classes rares.
+Table statique classe vers catégorie : reportée. Les mesures montrent que la résolution en ligne suffit (2,7 s pour 49 classes, une seule fois par classe). Elle reste une optimisation possible du premier affichage : un script de build interrogerait Wikidata pour les classes les plus fréquentes avec les mêmes racines.
 
 ### Résolution du lien Letterboxd
 
@@ -142,10 +147,10 @@ Fonction pure, sans effet de bord, donc entièrement testable.
 
 ### Cache
 
-- Clé : titre frwiki. Valeur : `{ qid, p31, p106, category, subcategory, letterboxd, imdbId, tmdbId, fetchedAt }`, environ 300 octets
-- TTL : 90 jours pour une carte résolue, 7 jours pour une carte non résolue
-- Cache par classe : sans TTL, invalidé par un numéro de version de la table de mapping
-- Stockage : `chrome.storage.local` avec `unlimitedStorage` (10 000 cartes = environ 3 Mo)
+- Clé : titre frwiki. Valeur : les faits bruts `{ qid, classIds, parentClassIds, occupationIds, externalIds (Letterboxd, IMDb, TMDb), fetchedAt, status }`, environ 300 à 500 octets. La catégorie n'est pas stockée, elle est recalculée à la lecture
+- TTL : 90 jours pour une carte résolue, 7 jours pour une carte non résolue. Une erreur réseau n'est jamais mise en cache
+- Cache par classe : `{ target, label, rootsVersion }`, sans TTL, invalidé par le numéro de version des listes de racines
+- Stockage : `chrome.storage.local` (quota de 10 Mo, 10 000 cartes = 3 à 5 Mo). `unlimitedStorage` seulement si le besoin apparaît
 
 ### Garde-fous liés aux règles du site
 
@@ -203,11 +208,23 @@ Versions retenues : WXT 0.21, Vitest 5 avec happy-dom, ESLint 10, Knip 6, TypeSc
 - `selectors.ts`, extracteur `{ title, description, rarity }`, MutationObserver avec debounce, suivi de la navigation client
 - Vérification : tests sur fixtures de la phase 0, contrôle manuel sur `/collection` et `/pulls`
 
-### Phase 3 : pipeline Wikidata (service worker)
+### Phase 3 : pipeline Wikidata (service worker) (faite le 2026-09-20)
 
-- Résolveur de titres (lots de 50, redirections, normalisation), client SPARQL en POST (lots de 50 à 100), retry avec backoff sur 429 et 5xx
+Écarts assumés par rapport aux lignes ci-dessous :
+
+- Pas de table statique classe vers catégorie : la résolution en ligne par classe est assez rapide et n'a lieu qu'une fois par classe. Une classe qui est elle-même une racine est résolue localement, sans requête
+- Forme de la requête des racines imposée par les mesures : `?class wdt:P279* ?root` avec `hint:Prior hint:gearing "forward"` puis `FILTER(?root IN (...))`, soit 2,7 s pour 49 classes. La forme `VALUES ?root` prenait 88 s (dont une requête à 64 s, au-delà de la limite de 60 s du service) et la forme sans indice 38 s
+- Sans P31, les parents P279 votent comme des classes ("Hutte" devient Monument et bâtiment au lieu de Science et concept)
+- Le cache par carte stocke les faits bruts et non la catégorie, voir la section Cache
+- Les IDs externes (Letterboxd, IMDb, TMDb) sont déjà récupérés et mis en cache, car ils viennent de la même requête. Ils ne servent qu'à partir de la phase 5
+- Le résultat n'est que journalisé par le content script. Une carte dont la catégorisation échoue est redemandée au plus tôt 60 s plus tard : certaines pages mutent en continu, une relance immédiate bombarderait Wikimedia pendant une panne
+- Respect du `Retry-After` de Wikidata : s'il dépasse le plafond d'attente, l'extension ne réessaie pas et suspend tout appel vers cet hôte jusqu'à l'échéance (un 429 réel a été observé pendant la mise au point). L'échéance est stockée dans `chrome.storage.local`, car le service worker MV3 est arrêté bien avant et perdrait un état en mémoire
+
+Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisées en un seul lot, aucune erreur réseau, environ 40 résultats justes. Les 10 ratés ont été diagnostiqués sur Wikidata et corrigés par les listes de racines et la règle 3 (voir Catégories v1). Le jeu de référence compte désormais 100 titres réels : les 50 du marché et les 50 de cette page.
+
+- Résolveur de titres (lots de 50, redirections, normalisation), client SPARQL en POST (lots de 50), retry avec backoff sur 429 et 5xx
 - Table statique classe vers catégorie (JSON versionné), fallback `P279*` par classe, cache à deux niveaux
-- Vérification : tests unitaires avec fetch mocké sur réponses enregistrées, plus un jeu de référence de 50 titres avec catégories attendues
+- Vérification : tests unitaires avec fetch mocké sur réponses enregistrées (`tests/fixtures/wikidata/`), plus un jeu de référence de 100 titres réels avec catégories attendues, produit indépendamment du code
 
 ### Phase 4 : UI catégorisation
 
