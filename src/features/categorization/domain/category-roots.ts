@@ -5,9 +5,10 @@ import type { CategoryId, PersonSubtypeId } from './category';
  * cache only: the raw facts cached per card stay valid and are never refetched.
  *
  * Version 2 tunes the lists against 100 real cards, so the class caches written
- * by version 1 must be recomputed.
+ * by version 1 must be recomputed. Version 3 adds the matched roots to each
+ * stored entry, which the entries of version 2 do not carry.
  */
-export const ROOTS_VERSION = 2;
+export const ROOTS_VERSION = 3;
 
 export const HUMAN_CLASS_ID = 'Q5';
 

@@ -1,5 +1,6 @@
 import { FRWIKI_TITLE_SEPARATOR } from '../../../core/config/wikimedia';
 import { isRecord } from '../../../core/types/guards';
+import { isLetterboxdUrl } from '../../letterboxd/domain/resolve-letterboxd-url';
 import {
   isCategorizationStatus,
   isCategoryId,
@@ -64,7 +65,7 @@ function isCardCategory(value: unknown): value is CardCategory {
   if (!isRecord(value)) {
     return false;
   }
-  const { title, status, qid, categoryId, primarySubtype, personSubtypes } = value;
+  const { title, status, qid, categoryId, primarySubtype, personSubtypes, letterboxdUrl } = value;
 
   return (
     typeof title === 'string' &&
@@ -73,7 +74,11 @@ function isCardCategory(value: unknown): value is CardCategory {
     (categoryId === null || isCategoryId(categoryId)) &&
     (primarySubtype === null || isPersonSubtypeId(primarySubtype)) &&
     Array.isArray(personSubtypes) &&
-    personSubtypes.every(isPersonSubtypeId)
+    personSubtypes.every(isPersonSubtypeId) &&
+    // The content script writes this one into an href, so nothing but the
+    // Letterboxd origin is accepted, and only on a card that was categorized,
+    // which is the documented invariant of the field.
+    (letterboxdUrl === null || (status === 'categorized' && isLetterboxdUrl(letterboxdUrl)))
   );
 }
 

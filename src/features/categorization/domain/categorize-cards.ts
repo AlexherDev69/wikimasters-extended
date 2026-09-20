@@ -1,4 +1,10 @@
 import type { Logger } from '../../../core/logger/logger';
+import { cinemaRoleFromRoots, CINEMA_SUBTYPE } from '../../letterboxd/domain/cinema-role';
+import {
+  resolveLetterboxdUrl,
+  type CinemaRoleOccupation,
+  type LetterboxdCard,
+} from '../../letterboxd/domain/resolve-letterboxd-url';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
 import { categoryClassIds, classifyEntity, decisiveClassIds, isHuman } from './classify-entity';
 import {
@@ -38,8 +44,10 @@ interface ClassKindGateway<TTarget> {
 }
 
 interface ClassStage {
+  categoryResolutions: Map<string, ClassResolution<CategoryId>>;
+  /** Targets alone, the shape the classification reads. */
   categoryTargets: Map<string, CategoryId | null>;
-  occupations: Map<string, ResolvedOccupation>;
+  occupationResolutions: Map<string, ClassResolution<PersonSubtypeId>>;
   /**
    * Class ids a failed request left unresolved: their cards report an error.
    * One set per kind, because the same id can be a category class for one card
@@ -65,7 +73,15 @@ function deduplicateByTitle(cards: readonly CardToCategorize[]): CardToCategoriz
 }
 
 function emptyResult(title: string, status: 'not_found' | 'error'): CardCategory {
-  return { title, status, qid: null, categoryId: null, primarySubtype: null, personSubtypes: [] };
+  return {
+    title,
+    status,
+    qid: null,
+    categoryId: null,
+    primarySubtype: null,
+    personSubtypes: [],
+    letterboxdUrl: null,
+  };
 }
 
 /** Class ids to resolve before classifying, both branches of the cascade included. */
@@ -260,12 +276,22 @@ async function loadClassStage(
   for (const [classId, resolution] of categoryResolutions) {
     categoryTargets.set(classId, resolution.target);
   }
-  const occupations = new Map<string, ResolvedOccupation>();
-  for (const [classId, resolution] of occupationResolutions) {
-    occupations.set(classId, { label: resolution.label, subtype: resolution.target });
-  }
 
-  return { categoryTargets, occupations, unresolvedCategoryIds, unresolvedOccupationIds };
+  return {
+    categoryResolutions,
+    categoryTargets,
+    occupationResolutions,
+    unresolvedCategoryIds,
+    unresolvedOccupationIds,
+  };
+}
+
+/** One entry per P106 of the card, in its order, unresolved ones included. */
+function occupationsOf(facts: EntityFacts, stage: ClassStage): ResolvedOccupation[] {
+  return facts.occupationIds.map((classId) => {
+    const resolution = stage.occupationResolutions.get(classId);
+    return { label: resolution?.label ?? null, subtype: resolution?.target ?? null };
+  });
 }
 
 function classifyAsPerson(
@@ -273,10 +299,65 @@ function classifyAsPerson(
   facts: EntityFacts,
   stage: ClassStage,
 ): PersonClassification {
-  const occupations = facts.occupationIds.map(
-    (classId) => stage.occupations.get(classId) ?? { label: null, subtype: null },
-  );
-  return classifyPerson(card.description, occupations);
+  return classifyPerson(card.description, occupationsOf(facts, stage));
+}
+
+/**
+ * The two film roots of the `film_tv` group. A card that only matches the
+ * television roots shares the `film_tv` category but is not a film, and
+ * Letterboxd covers almost no series.
+ *
+ * Exported so a test checks that the group still queries both: dropping one
+ * there would silently turn every film into a card without a link.
+ */
+export const FILM_ROOT_IDS: readonly string[] = ['Q11424', 'Q24856'];
+
+function isFilm(facts: EntityFacts, categoryId: CategoryId, stage: ClassStage): boolean {
+  if (categoryId !== 'film_tv') {
+    return false;
+  }
+  // The classes that really voted, so a parent of an already elected card
+  // cannot turn a television series into a film.
+  return decisiveClassIds(facts, stage.categoryTargets).some((classId) => {
+    const matchedRootIds = stage.categoryResolutions.get(classId)?.matchedRootIds ?? [];
+    return matchedRootIds.some((rootId) => FILM_ROOT_IDS.includes(rootId));
+  });
+}
+
+/** Occupations carrying a Letterboxd role, with the label of the tie-break. */
+function cinemaRolesOf(facts: EntityFacts, stage: ClassStage): CinemaRoleOccupation[] {
+  const roles: CinemaRoleOccupation[] = [];
+
+  for (const classId of facts.occupationIds) {
+    const resolution = stage.occupationResolutions.get(classId);
+    if (resolution === undefined || resolution.target !== CINEMA_SUBTYPE) {
+      continue;
+    }
+    const role = cinemaRoleFromRoots(resolution.matchedRootIds);
+    if (role !== null) {
+      roles.push({ role, label: resolution.label });
+    }
+  }
+  return roles;
+}
+
+/** Everything the Letterboxd resolver needs, gathered from this batch. */
+function toLetterboxdCard(
+  card: CardToCategorize,
+  facts: EntityFacts,
+  categoryId: CategoryId,
+  person: PersonClassification | null,
+  stage: ClassStage,
+): LetterboxdCard {
+  return {
+    title: card.title,
+    description: card.description,
+    categoryId,
+    personSubtypes: person?.personSubtypes ?? [],
+    externalIds: facts.externalIds,
+    isFilm: isFilm(facts, categoryId, stage),
+    cinemaRoles: cinemaRolesOf(facts, stage),
+  };
 }
 
 function buildResult(
@@ -309,6 +390,7 @@ function buildResult(
     categoryId,
     primarySubtype: person?.primarySubtype ?? null,
     personSubtypes: person?.personSubtypes ?? [],
+    letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, categoryId, person, stage)),
   };
 }
 

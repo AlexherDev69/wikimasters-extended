@@ -12,14 +12,20 @@ import {
   type FetchLike,
 } from '../../../core/http/fetch-json';
 import type { Logger } from '../../../core/logger/logger';
-import { isRecord, isStringArray } from '../../../core/types/guards';
+import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
 import { createCardFactsCache } from '../data/card-facts-cache';
 import { createClassRootsSource } from '../data/class-roots-source';
 import { createClassTargetCache } from '../data/class-target-cache';
 import { createEntityFactsSource } from '../data/entity-facts-source';
 import { createTitleResolver } from '../data/title-resolver';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
-import { categorizeCards, type CardToCategorize, type CategorizeCardsDeps } from './categorize-cards';
+import { CATEGORY_ROOT_GROUPS } from './category-roots';
+import {
+  categorizeCards,
+  FILM_ROOT_IDS,
+  type CardToCategorize,
+  type CategorizeCardsDeps,
+} from './categorize-cards';
 import type { EntityFacts } from './entity-facts';
 import type { CachedCardFacts, ClassResolution, Clock } from './ports';
 
@@ -62,6 +68,33 @@ function readGoldenExpectations(): GoldenEntry[] {
 }
 
 const GOLDEN_EXPECTATIONS = readGoldenExpectations();
+
+/** Expected Letterboxd link of the same cards, produced the same way. */
+interface GoldenLetterboxdEntry {
+  title: string;
+  letterboxdUrl: string | null;
+}
+
+function parseGoldenLetterboxdEntry(raw: unknown): GoldenLetterboxdEntry {
+  if (
+    !isRecord(raw) ||
+    typeof raw['title'] !== 'string' ||
+    !isNullableString(raw['letterboxdUrl'])
+  ) {
+    throw new Error('Unexpected golden Letterboxd shape');
+  }
+  return { title: raw['title'], letterboxdUrl: raw['letterboxdUrl'] };
+}
+
+function readGoldenLetterboxd(): GoldenLetterboxdEntry[] {
+  const raw = readFixture('golden-letterboxd.json');
+  if (!Array.isArray(raw)) {
+    throw new Error('Unexpected golden Letterboxd shape');
+  }
+  return raw.map(parseGoldenLetterboxdEntry);
+}
+
+const GOLDEN_LETTERBOXD = readGoldenLetterboxd();
 
 const GOLDEN_CARDS: CardToCategorize[] = GOLDEN_EXPECTATIONS.map((entry) => ({
   title: entry.title,
@@ -169,7 +202,10 @@ const STUB_FACTS: EntityFacts = {
  */
 function makeStubDeps(cachedTargets: Map<string, CategoryId | null>): CategorizeCardsDeps {
   const categoryResolutions = new Map<string, ClassResolution<CategoryId>>(
-    [...cachedTargets].map(([classId, target]) => [classId, { target, label: null }]),
+    [...cachedTargets].map(([classId, target]) => [
+      classId,
+      { target, label: null, matchedRootIds: [] },
+    ]),
   );
 
   return {
@@ -233,6 +269,21 @@ describe('categorizeCards', () => {
     }
   });
 
+  it('should return the expected Letterboxd link of every card of the golden set', async () => {
+    const replay = createReplayFetch();
+
+    const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl));
+    const resultByTitle = byTitle(results);
+
+    expect(GOLDEN_LETTERBOXD).toHaveLength(GOLDEN_EXPECTATIONS.length);
+    for (const expected of GOLDEN_LETTERBOXD) {
+      expect({
+        title: expected.title,
+        letterboxdUrl: resultByTitle.get(expected.title)?.letterboxdUrl,
+      }).toEqual({ title: expected.title, letterboxdUrl: expected.letterboxdUrl });
+    }
+  });
+
   it('should perform one frwiki request and one entity facts request for 50 unknown cards', async () => {
     const replay = createReplayFetch();
 
@@ -278,6 +329,7 @@ describe('categorizeCards', () => {
       categoryId: null,
       primarySubtype: null,
       personSubtypes: [],
+      letterboxdUrl: null,
     });
   });
 
@@ -370,6 +422,18 @@ describe('categorizeCards', () => {
 
     expect(results).toEqual([]);
     expect(replay.calls).toHaveLength(0);
+  });
+
+  it('should read its film roots from the roots the film_tv group queries', () => {
+    // The two lists repeat the same ids: removing one from the group would
+    // silently stop every film from getting a link.
+    const filmGroups = CATEGORY_ROOT_GROUPS.filter((group) => group.target === 'film_tv');
+    const queriedRootIds = new Set(filmGroups.flatMap((group) => [...group.rootIds]));
+
+    expect(FILM_ROOT_IDS.length).toBeGreaterThan(0);
+    for (const rootId of FILM_ROOT_IDS) {
+      expect(queriedRootIds).toContain(rootId);
+    }
   });
 
   it('should report an error when the class roots request fails for an uncached class', async () => {

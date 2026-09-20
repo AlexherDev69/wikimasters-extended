@@ -65,4 +65,6 @@ export interface CardCategory {
   /** Non-null only when `categoryId` is `person`. */
   primarySubtype: PersonSubtypeId | null;
   personSubtypes: PersonSubtypeId[];
+  /** Null unless `status` is `categorized` and the card has a Letterboxd page. */
+  letterboxdUrl: string | null;
 }

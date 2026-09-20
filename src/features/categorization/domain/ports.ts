@@ -10,6 +10,14 @@ export interface Clock {
 export interface ClassResolution<TTarget> {
   target: TTarget | null;
   label: string | null;
+  /**
+   * Roots of the queried list the class reaches through P279*, sorted. A class
+   * that IS one of the roots contains at least itself. The target alone loses
+   * which root was matched, and the Letterboxd link needs it: a film and a
+   * television series share the `film_tv` target, an actor and a director the
+   * `cinema` one.
+   */
+  matchedRootIds: string[];
 }
 
 export type CardFactsStatus = 'resolved' | 'not_found';
