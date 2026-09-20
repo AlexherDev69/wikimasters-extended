@@ -3,22 +3,34 @@ import type { StorageStats } from '../domain/storage-stats';
 import { createParagraph, createSection } from './options-elements';
 
 /**
- * What the extension holds on this machine, and the two ways to empty it. Both
- * actions ask for their confirmation in place, as the reset of the statistics
- * window does: a dialog of the browser would take the focus out of the page.
+ * What the extension holds on this machine, and the ways to empty it. Every
+ * action asks for its confirmation in place: a dialog of the browser would
+ * take the focus out of the page.
  */
 
 const SECTION_TITLE = 'Données locales';
 
-/** The two actions, in the order the section shows them. */
-const MAINTENANCE_ACTIONS = ['categorization-cache', 'collection-index'] as const;
+/** The actions, in the order the section shows them. */
+const MAINTENANCE_ACTIONS = ['categorization-cache', 'legacy-index-data'] as const;
 
 export type MaintenanceActionId = (typeof MAINTENANCE_ACTIONS)[number];
 
-const COUNT_LABELS: readonly { key: keyof StorageStats; label: string }[] = [
+/**
+ * The one action every installation has, on every render of the section: the
+ * caches are always there. Exported because it is also where the page sends
+ * the focus when the control it aimed at has left the screen.
+ */
+export const CACHE_ACTION: MaintenanceActionId = 'categorization-cache';
+
+/** What the section holds while there is no old index data to remove. */
+const CACHE_ONLY: readonly MaintenanceActionId[] = [CACHE_ACTION];
+
+/** The members of the stats the section shows as a number. */
+type CountKey = 'cardFacts' | 'classTargets';
+
+const COUNT_LABELS: readonly { key: CountKey; label: string }[] = [
   { key: 'cardFacts', label: 'Cartes en cache de catégorisation' },
   { key: 'classTargets', label: 'Classes Wikidata en cache' },
-  { key: 'collectionCards', label: "Cartes dans l'index de collection" },
 ];
 
 interface ActionText {
@@ -32,9 +44,10 @@ const CACHE_HINT =
   'Efface les faits Wikidata gardés pour chaque carte et la catégorie gardée pour chaque classe. ' +
   'Les cartes seront redemandées à fr.wikipedia.org et à query.wikidata.org la prochaine fois que tu les affiches.';
 
-const INDEX_HINT =
-  "Efface la liste des cartes vues dans ta collection : les statistiques repartent de zéro et se " +
-  'remplissent à nouveau au fil de ce que tu affiches. Le cache de catégorisation reste en place.';
+const LEGACY_HINT =
+  "L'index de collection a été retiré de l'extension, mais une version précédente a laissé ses " +
+  'deux entrées sur cette machine : la liste des cartes vues et les totaux du catalogue. Ce ' +
+  'bouton les supprime. Le cache de catégorisation et les réglages ne sont pas touchés.';
 
 const ACTION_TEXTS: Record<MaintenanceActionId, ActionText> = {
   'categorization-cache': {
@@ -43,11 +56,11 @@ const ACTION_TEXTS: Record<MaintenanceActionId, ActionText> = {
     question: 'Vider le cache de catégorisation ?',
     confirm: 'Oui, vider',
   },
-  'collection-index': {
-    button: "Réinitialiser l'index de collection",
-    hint: INDEX_HINT,
-    question: "Effacer tout l'index de collection ?",
-    confirm: 'Oui, effacer',
+  'legacy-index-data': {
+    button: "Supprimer les données de l'ancien index",
+    hint: LEGACY_HINT,
+    question: "Supprimer les données de l'ancien index ?",
+    confirm: 'Oui, supprimer',
   },
 };
 
@@ -59,7 +72,8 @@ const ERROR_TEXT =
 /** Said next to the action that failed: nothing was erased, it can be retried. */
 const CLEAR_ERROR_TEXTS: Record<MaintenanceActionId, string> = {
   'categorization-cache': "Le cache n'a pas pu être vidé. Réessaie dans un instant.",
-  'collection-index': "L'index n'a pas pu être effacé. Réessaie dans un instant.",
+  'legacy-index-data':
+    "Les données de l'ancien index n'ont pas pu être supprimées. Réessaie dans un instant.",
 };
 
 const ACTION_ATTRIBUTE = 'data-wme-action';
@@ -185,6 +199,16 @@ function renderSummary(state: LocalDataState): HTMLElement {
   return state.stats === null ? createText(MESSAGE_CLASS, LOADING_TEXT) : renderCounts(state.stats);
 }
 
+/**
+ * The removal of the old index is offered only while there is something left
+ * to remove, so it goes away for good once it has run, and an installation
+ * that never held the index never sees it. It is also left out while the
+ * counts are unknown: nothing then says that those keys are there.
+ */
+function visibleActions(state: LocalDataState): readonly MaintenanceActionId[] {
+  return state.stats?.hasLegacyIndexData === true ? MAINTENANCE_ACTIONS : CACHE_ONLY;
+}
+
 export function renderLocalDataSection(
   state: LocalDataState,
   callbacks: LocalDataCallbacks,
@@ -192,7 +216,7 @@ export function renderLocalDataSection(
   const section = createSection(SECTION_TITLE);
   section.appendChild(renderSummary(state));
 
-  for (const action of MAINTENANCE_ACTIONS) {
+  for (const action of visibleActions(state)) {
     section.appendChild(renderAction(action, state, callbacks));
   }
   return section;

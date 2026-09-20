@@ -17,14 +17,6 @@ import { removeModalCategoryLines } from '../../category-badge/data/modal-catego
 import { syncCardBadges } from '../../category-badge/presentation/sync-card-badges';
 import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
 import { createCategoryHighlight } from '../../category-highlight/presentation/category-highlight';
-import {
-  createCatalogueRecorder,
-  type SendCatalogueTotals,
-} from '../../collection-index/presentation/record-catalogue-totals';
-import {
-  createCollectionRecorder,
-  type SendRecordedCards,
-} from '../../collection-index/presentation/record-collection-cards';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
 import { syncModalLink } from '../../letterboxd/presentation/sync-modal-link';
 import { removeCardImages } from '../../missing-image/data/card-image';
@@ -61,17 +53,7 @@ export interface OverlayDeps {
   logger: Logger;
   /** Asks the service worker for the categories of a batch of cards. */
   categorize: CategorizeCards;
-  /** Hands the cards of a collection page to the service worker. */
-  recordCards: SendRecordedCards;
-  /** Hands the totals read on the catalogue page to the service worker. */
-  recordCatalogueTotals: SendCatalogueTotals;
   scheduleRetry: ScheduleRetry;
-  /**
-   * The path of the page right now, asked on every scan rather than passed in:
-   * a scan also runs when the settings change, and the overlay is then the only
-   * one who knows it is running.
-   */
-  readPathname: () => string;
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
@@ -92,27 +74,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * exactly as it does when the page loads, without the previous filter.
    */
   let highlight = createCategoryHighlight(root);
-  /**
-   * Remembers the cards of the collection pages, and only those: the cards of
-   * the marketplace, of the trades and of the packs are not owned.
-   */
-  const recorder = createCollectionRecorder({
-    send: deps.recordCards,
-    logger,
-    scheduleRetry,
-    isEnabled: (): boolean => settings.collectionIndex,
-  });
-  /**
-   * Reads, on the catalogue page alone, how many cards the game holds per
-   * rarity. It follows the same setting as the index: those totals are the
-   * denominator of its completion and are worth nothing without it.
-   */
-  const catalogueRecorder = createCatalogueRecorder({
-    send: deps.recordCatalogueTotals,
-    logger,
-    scheduleRetry,
-    isEnabled: (): boolean => settings.collectionIndex,
-  });
 
   /**
    * Brings every enabled part in line with what is known of the cards given,
@@ -173,13 +134,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (hasEnabledFeature(settings)) {
       handleScan(cards, memory.seenTitles, logger, categorize, scheduleRetry);
     }
-    // On every scan, whatever its setting says: the recorder needs to see them
-    // all to know when the route changed. It sends nothing while it is off.
-    const pathname = deps.readPathname();
-    recorder.record(cards, pathname);
-    // Reads the header block of the catalogue page and writes nothing: the
-    // totals are numbers the site already displays.
-    catalogueRecorder.record(root, pathname);
     rememberCategories(memory, visibleTitles);
     sync(cards);
   }

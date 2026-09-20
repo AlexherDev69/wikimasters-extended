@@ -29,8 +29,8 @@ export function createCategorizationStorage(): CategorizationCacheMaintenance {
     },
 
     async clear(): Promise<void> {
-      // Only the keys of these two prefixes: the collection index, the settings
-      // and the host cooldowns are none of its business.
+      // Only the keys of these two prefixes: the settings, the host cooldowns
+      // and what an old index left behind are none of its business.
       const keys = await listLocalKeys();
       await removeLocalKeys(keys.filter(belongsToCache));
     },

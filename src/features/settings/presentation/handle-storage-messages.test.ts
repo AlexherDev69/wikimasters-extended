@@ -4,10 +4,7 @@ import type {
   CategorizationCacheCounts,
   CategorizationCacheMaintenance,
 } from '../../categorization/domain/ports';
-import type {
-  CollectionIndex,
-  CollectionIndexRepository,
-} from '../../collection-index/domain/collection-index';
+import type { LegacyIndexData } from '../domain/legacy-index-data';
 import {
   createStorageMessageHandler,
   type StorageMessageDeps,
@@ -17,11 +14,11 @@ import {
   CLEAR_CATEGORIZATION_CACHE_MESSAGE,
   GET_STORAGE_STATS_MESSAGE,
   isClearCategorizationCacheResponse,
+  isRemoveLegacyIndexDataResponse,
   isStorageStatsResponse,
+  REMOVE_LEGACY_INDEX_DATA_MESSAGE,
   STORAGE_UNAVAILABLE_ERROR,
 } from './storage-messages';
-
-const SEEN_AT = new Date('2026-02-01T12:00:00.000Z').getTime();
 
 interface FakeMaintenance extends CategorizationCacheMaintenance {
   cleared: boolean;
@@ -43,17 +40,22 @@ function makeMaintenance(entries: CategorizationCacheCounts): FakeMaintenance {
   };
 }
 
-function makeIndex(titles: readonly string[]): CollectionIndex {
-  return new Map(
-    titles.map((title) => [title, { rarity: 'c' as const, firstSeenAt: SEEN_AT, lastSeenAt: SEEN_AT }]),
-  );
+interface FakeLegacyData extends LegacyIndexData {
+  removed: boolean;
 }
 
-function makeRepository(index: CollectionIndex): CollectionIndexRepository {
+function makeLegacyData(present: boolean): FakeLegacyData {
+  let removed = false;
+
   return {
-    read: (): Promise<CollectionIndex> => Promise.resolve(index),
-    upsert: (): Promise<void> => Promise.resolve(),
-    clear: (): Promise<void> => Promise.resolve(),
+    get removed(): boolean {
+      return removed;
+    },
+    isPresent: (): Promise<boolean> => Promise.resolve(present && !removed),
+    remove: (): Promise<void> => {
+      removed = true;
+      return Promise.resolve();
+    },
   };
 }
 
@@ -64,10 +66,12 @@ function makeLogger(): Logger {
 describe('createStorageMessageHandler', () => {
   let logger: Logger;
   let cacheMaintenance: FakeMaintenance;
+  let legacyIndexData: FakeLegacyData;
 
   beforeEach(() => {
     logger = makeLogger();
     cacheMaintenance = makeMaintenance({ cardFacts: 12, classTargets: 4 });
+    legacyIndexData = makeLegacyData(true);
   });
 
   function makeHandler(
@@ -75,7 +79,7 @@ describe('createStorageMessageHandler', () => {
   ): ReturnType<typeof createStorageMessageHandler> {
     return createStorageMessageHandler({
       cacheMaintenance,
-      indexRepository: makeRepository(makeIndex(['Alpha', 'Beta', 'Gamma'])),
+      legacyIndexData,
       logger,
       ...overrides,
     });
@@ -93,7 +97,7 @@ describe('createStorageMessageHandler', () => {
     expect(sendResponse).not.toHaveBeenCalled();
   });
 
-  it('should answer the three counts when the stats are asked for', async () => {
+  it('should answer the counts and the old data when the stats are asked for', async () => {
     const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
 
     const handled = makeHandler()({ type: GET_STORAGE_STATS_MESSAGE }, sendResponse);
@@ -103,9 +107,24 @@ describe('createStorageMessageHandler', () => {
       expect(sendResponse).toHaveBeenCalledOnce();
     });
     expect(sendResponse).toHaveBeenCalledWith({
-      stats: { cardFacts: 12, classTargets: 4, collectionCards: 3 },
+      stats: { cardFacts: 12, classTargets: 4, hasLegacyIndexData: true },
     });
     expect(isStorageStatsResponse(sendResponse.mock.calls[0]?.[0])).toBe(true);
+  });
+
+  it('should say that there is no old data on an installation that holds none', async () => {
+    const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
+
+    makeHandler({ legacyIndexData: makeLegacyData(false) })(
+      { type: GET_STORAGE_STATS_MESSAGE },
+      sendResponse,
+    );
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({
+        stats: { cardFacts: 12, classTargets: 4, hasLegacyIndexData: false },
+      });
+    });
   });
 
   it('should empty both levels of the cache when the clear is asked for', async () => {
@@ -120,35 +139,56 @@ describe('createStorageMessageHandler', () => {
     expect(isClearCategorizationCacheResponse(sendResponse.mock.calls[0]?.[0])).toBe(true);
   });
 
-  it('should leave the collection index alone when the cache is cleared', async () => {
-    const repository = makeRepository(makeIndex(['Alpha']));
-    const clear = vi.spyOn(repository, 'clear');
+  it('should leave the old index data alone when the cache is cleared', async () => {
     const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
 
-    makeHandler({ indexRepository: repository })(
-      { type: CLEAR_CATEGORIZATION_CACHE_MESSAGE },
-      sendResponse,
-    );
+    makeHandler()({ type: CLEAR_CATEGORIZATION_CACHE_MESSAGE }, sendResponse);
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledOnce();
     });
-    expect(clear).not.toHaveBeenCalled();
+    expect(legacyIndexData.removed).toBe(false);
   });
 
-  it('should count the index as empty once the cache has been cleared', async () => {
-    const handler = makeHandler({ indexRepository: makeRepository(new Map()) });
+  it('should remove the old index data when its own removal is asked for', async () => {
+    const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
+
+    const handled = makeHandler()({ type: REMOVE_LEGACY_INDEX_DATA_MESSAGE }, sendResponse);
+
+    expect(handled).toBe(true);
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledOnce();
+    });
+    expect(legacyIndexData.removed).toBe(true);
+    expect(isRemoveLegacyIndexDataResponse(sendResponse.mock.calls[0]?.[0])).toBe(true);
+  });
+
+  it('should leave both levels of the cache alone when the old data is removed', async () => {
+    const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
+
+    makeHandler()({ type: REMOVE_LEGACY_INDEX_DATA_MESSAGE }, sendResponse);
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledOnce();
+    });
+    expect(cacheMaintenance.cleared).toBe(false);
+  });
+
+  it('should count nothing left once the cache and the old data are gone', async () => {
+    const handler = makeHandler();
     const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
 
     handler({ type: CLEAR_CATEGORIZATION_CACHE_MESSAGE }, vi.fn());
+    handler({ type: REMOVE_LEGACY_INDEX_DATA_MESSAGE }, vi.fn());
     await vi.waitFor(() => {
       expect(cacheMaintenance.cleared).toBe(true);
+      expect(legacyIndexData.removed).toBe(true);
     });
     handler({ type: GET_STORAGE_STATS_MESSAGE }, sendResponse);
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({
-        stats: { cardFacts: 0, classTargets: 0, collectionCards: 0 },
+        stats: { cardFacts: 0, classTargets: 0, hasLegacyIndexData: false },
       });
     });
   });
@@ -182,6 +222,23 @@ describe('createStorageMessageHandler', () => {
 
     makeHandler({ cacheMaintenance: failing })(
       { type: CLEAR_CATEGORIZATION_CACHE_MESSAGE },
+      sendResponse,
+    );
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({ error: STORAGE_UNAVAILABLE_ERROR });
+    });
+  });
+
+  it('should answer an error when the removal of the old data fails', async () => {
+    const failing: LegacyIndexData = {
+      isPresent: (): Promise<boolean> => Promise.resolve(true),
+      remove: (): Promise<void> => Promise.reject(new Error('storage down')),
+    };
+    const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();
+
+    makeHandler({ legacyIndexData: failing })(
+      { type: REMOVE_LEGACY_INDEX_DATA_MESSAGE },
       sendResponse,
     );
 

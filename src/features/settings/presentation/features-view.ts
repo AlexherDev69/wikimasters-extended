@@ -38,10 +38,6 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
     label: 'Lien Letterboxd',
     hint: 'Lien vers Letterboxd dans la modale des films et des personnalités du cinéma.',
   },
-  collectionIndex: {
-    label: 'Index de collection',
-    hint: 'Mémorise les cartes que tu affiches sur ta collection, pour la fenêtre de statistiques.',
-  },
   missingImages: {
     label: 'Images manquantes',
     hint:

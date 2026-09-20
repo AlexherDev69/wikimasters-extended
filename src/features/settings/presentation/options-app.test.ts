@@ -10,17 +10,22 @@ const PRESENTATION_DIR = dirname(fileURLToPath(import.meta.url));
 
 const CORE_DOM_DIR = join(PRESENTATION_DIR, '../../../core/dom');
 
-const STATS: StorageStats = { cardFacts: 12, classTargets: 4, collectionCards: 300 };
+/** An installation upgraded from the version that still had the index. */
+const STATS: StorageStats = { cardFacts: 12, classTargets: 4, hasLegacyIndexData: true };
 
-const EMPTY_STATS: StorageStats = { cardFacts: 0, classTargets: 0, collectionCards: 0 };
+/** The caches emptied, the keys of the old index still there. */
+const EMPTY_STATS: StorageStats = { cardFacts: 0, classTargets: 0, hasLegacyIndexData: true };
+
+/** What the counts say once the old index data has been removed. */
+const CLEANED_STATS: StorageStats = { ...STATS, hasLegacyIndexData: false };
 
 const BADGES_CHECKBOX = 'input[data-wme-setting="categoryBadges"]';
 const HIGHLIGHT_CHECKBOX = 'input[data-wme-setting="categoryHighlight"]';
 const CACHE_BUTTON = 'button[data-wme-action="categorization-cache"]';
 const CACHE_CONFIRM = 'button[data-wme-confirm="categorization-cache"]';
 const CACHE_CANCEL = 'button[data-wme-cancel="categorization-cache"]';
-const INDEX_BUTTON = 'button[data-wme-action="collection-index"]';
-const INDEX_CONFIRM = 'button[data-wme-confirm="collection-index"]';
+const LEGACY_BUTTON = 'button[data-wme-action="legacy-index-data"]';
+const LEGACY_CONFIRM = 'button[data-wme-confirm="legacy-index-data"]';
 
 function makePorts(overrides: Partial<OptionsPorts> = {}): OptionsPorts {
   return {
@@ -28,7 +33,7 @@ function makePorts(overrides: Partial<OptionsPorts> = {}): OptionsPorts {
     writeSettings: (): Promise<void> => Promise.resolve(),
     readStats: (): Promise<StorageStats> => Promise.resolve(STATS),
     clearCategorizationCache: (): Promise<void> => Promise.resolve(),
-    clearCollectionIndex: (): Promise<void> => Promise.resolve(),
+    removeLegacyIndexData: (): Promise<void> => Promise.resolve(),
     ...overrides,
   };
 }
@@ -70,7 +75,7 @@ describe('mountOptions', () => {
     const container = await mount();
 
     expect([...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')]).toHaveLength(
-      5,
+      4,
     );
     expect(
       [...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')].every(
@@ -357,12 +362,24 @@ describe('mountOptions', () => {
     expect(region?.textContent).toBe('');
   });
 
-  it('should show the three counts of the local data', async () => {
+  it('should show the two counts of the local data', async () => {
     const container = await mount();
 
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4', '300']);
+      expect(statCounts(container)).toEqual(['12', '4']);
     });
+  });
+
+  it('should offer no removal when the installation holds no old index data', async () => {
+    const container = await mount(makePorts({ readStats: () => Promise.resolve(CLEANED_STATS) }));
+
+    await vi.waitFor(() => {
+      expect(statCounts(container)).toEqual(['12', '4']);
+    });
+    // Nothing to remove, so neither the button nor anything announcing it.
+    expect(container.querySelector(LEGACY_BUTTON)).toBeNull();
+    expect(container.textContent).not.toContain("l'ancien index");
+    expect(container.querySelector(CACHE_BUTTON)).not.toBeNull();
   });
 
   it('should show an error in place of the counts when the service worker does not answer', async () => {
@@ -407,7 +424,7 @@ describe('mountOptions', () => {
       makePorts({ clearCategorizationCache, readStats: () => Promise.resolve(stats) }),
     );
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4', '300']);
+      expect(statCounts(container)).toEqual(['12', '4']);
     });
 
     click(container, CACHE_BUTTON);
@@ -415,7 +432,7 @@ describe('mountOptions', () => {
     click(container, CACHE_CONFIRM);
 
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['0', '0', '0']);
+      expect(statCounts(container)).toEqual(['0', '0']);
     });
     expect(clearCategorizationCache).toHaveBeenCalledOnce();
   });
@@ -424,7 +441,7 @@ describe('mountOptions', () => {
     let stats = STATS;
     const container = await mount(makePorts({ readStats: () => Promise.resolve(stats) }));
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4', '300']);
+      expect(statCounts(container)).toEqual(['12', '4']);
     });
 
     click(container, CACHE_BUTTON);
@@ -435,34 +452,39 @@ describe('mountOptions', () => {
     // back to the document and the page could not be used with a keyboard.
     expect(document.activeElement).toBe(container.querySelector(CACHE_BUTTON));
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['0', '0', '0']);
+      expect(statCounts(container)).toEqual(['0', '0']);
     });
     expect(document.activeElement).toBe(container.querySelector(CACHE_BUTTON));
   });
 
-  it('should focus the index action again once it has been emptied', async () => {
+  it('should offer the removal of the old index data only once', async () => {
     let stats = STATS;
     const container = await mount(makePorts({ readStats: () => Promise.resolve(stats) }));
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4', '300']);
+      expect(container.querySelector(LEGACY_BUTTON)).not.toBeNull();
     });
 
-    click(container, INDEX_BUTTON);
-    stats = EMPTY_STATS;
-    click(container, INDEX_CONFIRM);
+    click(container, LEGACY_BUTTON);
+    stats = CLEANED_STATS;
+    click(container, LEGACY_CONFIRM);
 
-    expect(document.activeElement).toBe(container.querySelector(INDEX_BUTTON));
+    // There is nothing left to remove, so the action goes for good: the counts
+    // read again are what says so, not the click itself.
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['0', '0', '0']);
+      expect(container.querySelector(LEGACY_BUTTON)).toBeNull();
     });
-    expect(document.activeElement).toBe(container.querySelector(INDEX_BUTTON));
+    expect(container.querySelector(CACHE_BUTTON)).not.toBeNull();
+    // The button that was used left the screen with the action it ran, so the
+    // focus goes to its neighbour: falling back to the document would leave a
+    // user who has only a keyboard with nothing to carry on from.
+    expect(document.activeElement).toBe(container.querySelector(CACHE_BUTTON));
   });
 
   it('should focus the action again when a clear fails', async () => {
     const container = await mount(
       makePorts({
         clearCategorizationCache: () => Promise.reject(new Error('storage down')),
-        clearCollectionIndex: () => Promise.reject(new Error('storage down')),
+        removeLegacyIndexData: () => Promise.reject(new Error('storage down')),
       }),
     );
 
@@ -473,27 +495,27 @@ describe('mountOptions', () => {
     });
     expect(document.activeElement).toBe(container.querySelector(CACHE_BUTTON));
 
-    click(container, INDEX_BUTTON);
-    click(container, INDEX_CONFIRM);
+    click(container, LEGACY_BUTTON);
+    click(container, LEGACY_CONFIRM);
 
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-action-error')?.textContent).toContain(
-        "L'index n'a pas pu être effacé",
+        "Les données de l'ancien index n'ont pas pu être supprimées",
       );
     });
-    expect(document.activeElement).toBe(container.querySelector(INDEX_BUTTON));
+    expect(document.activeElement).toBe(container.querySelector(LEGACY_BUTTON));
   });
 
-  it('should clear the collection index when its own confirmation is confirmed', async () => {
-    const clearCollectionIndex = vi.fn(() => Promise.resolve());
+  it('should remove the old index data when its own confirmation is confirmed', async () => {
+    const removeLegacyIndexData = vi.fn(() => Promise.resolve());
     const clearCategorizationCache = vi.fn(() => Promise.resolve());
-    const container = await mount(makePorts({ clearCollectionIndex, clearCategorizationCache }));
+    const container = await mount(makePorts({ removeLegacyIndexData, clearCategorizationCache }));
 
-    click(container, INDEX_BUTTON);
-    click(container, INDEX_CONFIRM);
+    click(container, LEGACY_BUTTON);
+    click(container, LEGACY_CONFIRM);
 
     await vi.waitFor(() => {
-      expect(clearCollectionIndex).toHaveBeenCalledOnce();
+      expect(removeLegacyIndexData).toHaveBeenCalledOnce();
     });
     expect(clearCategorizationCache).not.toHaveBeenCalled();
   });
@@ -504,8 +526,8 @@ describe('mountOptions', () => {
     click(container, CACHE_BUTTON);
 
     expect(container.querySelector(CACHE_CONFIRM)).not.toBeNull();
-    expect(container.querySelector(INDEX_BUTTON)).not.toBeNull();
-    expect(container.querySelector(INDEX_CONFIRM)).toBeNull();
+    expect(container.querySelector(LEGACY_BUTTON)).not.toBeNull();
+    expect(container.querySelector(LEGACY_CONFIRM)).toBeNull();
   });
 
   it('should call the clear once when the confirmation is clicked twice in a row', async () => {
@@ -535,22 +557,22 @@ describe('mountOptions', () => {
 
   it('should say that the deletion failed, not the reading, when a clear fails', async () => {
     const container = await mount(
-      makePorts({ clearCollectionIndex: () => Promise.reject(new Error('storage down')) }),
+      makePorts({ removeLegacyIndexData: () => Promise.reject(new Error('storage down')) }),
     );
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4', '300']);
+      expect(statCounts(container)).toEqual(['12', '4']);
     });
 
-    click(container, INDEX_BUTTON);
-    click(container, INDEX_CONFIRM);
+    click(container, LEGACY_BUTTON);
+    click(container, LEGACY_CONFIRM);
 
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-action-error')?.textContent).toContain(
-        "n'a pas pu être effacé",
+        "n'ont pas pu être supprimées",
       );
     });
     // Nothing was erased and the counts were never in doubt: they stay.
-    expect(statCounts(container)).toEqual(['12', '4', '300']);
+    expect(statCounts(container)).toEqual(['12', '4']);
     expect(container.textContent).not.toContain("n'ont pas pu être lues");
   });
 
@@ -585,16 +607,16 @@ describe('mountOptions', () => {
       expect(container.querySelector('.wme-action-error')).not.toBeNull();
     });
 
-    click(container, INDEX_BUTTON);
-    stats = EMPTY_STATS;
-    click(container, INDEX_CONFIRM);
+    click(container, LEGACY_BUTTON);
+    stats = CLEANED_STATS;
+    click(container, LEGACY_CONFIRM);
 
-    // Emptying the index says nothing about the cache, which still failed.
+    // Removing the old data says nothing about the cache, which still failed.
     expect(container.querySelector('.wme-action-error')?.textContent).toContain(
       "Le cache n'a pas pu être vidé",
     );
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['0', '0', '0']);
+      expect(container.querySelector(LEGACY_BUTTON)).toBeNull();
     });
     expect(container.querySelector('.wme-action-error')?.textContent).toContain(
       "Le cache n'a pas pu être vidé",

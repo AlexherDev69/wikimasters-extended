@@ -1,7 +1,7 @@
 import type { CardImage } from '../../missing-image/domain/card-image';
 
-/** Exported so a view can give every category a place in a display order. */
-export const CATEGORY_IDS = [
+/** The known categories: the source of both the type and its guard. */
+const CATEGORY_IDS = [
   'person',
   'film_tv',
   'music',
@@ -22,8 +22,8 @@ export const CATEGORY_IDS = [
 
 export type CategoryId = (typeof CATEGORY_IDS)[number];
 
-/** Exported for the same reason as CATEGORY_IDS. */
-export const PERSON_SUBTYPE_IDS = [
+/** Read the same way as CATEGORY_IDS. */
+const PERSON_SUBTYPE_IDS = [
   'cinema',
   'music',
   'sport',

@@ -30,8 +30,9 @@ const PRIVACY_ITEMS: readonly string[] = [
   'Les images manquantes sont chargées par ton navigateur depuis Wikimedia Commons, sans ' +
     "référent, exactement comme les photos d'un article de Wikipédia. L'extension, elle, ne " +
     "contacte toujours que Wikipédia et Wikidata.",
-  'Tout le reste (caches, index de collection, réglages) reste dans le stockage local de ton ' +
-    'navigateur, sur cette machine uniquement.',
+  "L'extension ne garde aucune liste de tes cartes : rien de ta collection n'est enregistré. " +
+    'Tout le reste (caches, réglages) reste dans le stockage local de ton navigateur, sur cette ' +
+    'machine uniquement.',
   'Cette page ne fait aucun appel réseau : elle lit et efface uniquement ce qui est stocké sur ' +
     'ta machine.',
 ];

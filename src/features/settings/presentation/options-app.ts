@@ -6,13 +6,25 @@ import {
   writeStatus,
   type SaveStatus,
 } from './features-view';
-import { actionSelector, cancelSelector, type MaintenanceActionId } from './local-data-view';
+import {
+  actionSelector,
+  CACHE_ACTION,
+  cancelSelector,
+  type MaintenanceActionId,
+} from './local-data-view';
 import {
   renderOptions,
   renderOptionsLoading,
   renderOptionsUnreadable,
   type OptionsCallbacks,
 } from './options-view';
+
+/**
+ * Where the focus goes when the control it was aimed at is not on the screen
+ * the render has just built. The button of the categorization cache is drawn
+ * by every render that holds any control at all.
+ */
+const FOCUS_FALLBACK = actionSelector(CACHE_ACTION);
 
 /**
  * What the options page asks of the extension. Injected so that every screen
@@ -29,7 +41,8 @@ export interface OptionsPorts {
   writeSettings: (settings: Settings) => Promise<void>;
   readStats: () => Promise<StorageStats>;
   clearCategorizationCache: () => Promise<void>;
-  clearCollectionIndex: () => Promise<void>;
+  /** Removes what a previous version left of the collection index. */
+  removeLegacyIndexData: () => Promise<void>;
 }
 
 /**
@@ -119,7 +132,12 @@ export function mountOptions(container: HTMLElement, ports: OptionsPorts): void 
     if (pendingFocus === null) {
       return;
     }
-    container.querySelector<HTMLElement>(pendingFocus)?.focus();
+    // An action that runs once leaves the screen with the render that follows
+    // it, so the control aimed at may no longer exist. The focus then goes to
+    // the neighbour that is always there rather than falling back to the
+    // document, which would strand a user who has only a keyboard.
+    const aimedAt = container.querySelector<HTMLElement>(pendingFocus);
+    (aimedAt ?? container.querySelector<HTMLElement>(FOCUS_FALLBACK))?.focus();
     pendingFocus = null;
   }
 
@@ -172,7 +190,7 @@ export function mountOptions(container: HTMLElement, ports: OptionsPorts): void 
     const clear =
       action === 'categorization-cache'
         ? ports.clearCategorizationCache
-        : ports.clearCollectionIndex;
+        : ports.removeLegacyIndexData;
 
     try {
       await clear();

@@ -1,12 +1,14 @@
 import type { Logger } from '../../../core/logger/logger';
 import type { CategorizationCacheMaintenance } from '../../categorization/domain/ports';
-import type { CollectionIndexRepository } from '../../collection-index/domain/collection-index';
+import type { LegacyIndexData } from '../domain/legacy-index-data';
 import type { StorageStats } from '../domain/storage-stats';
 import {
   isClearCategorizationCacheRequest,
   isGetStorageStatsRequest,
+  isRemoveLegacyIndexDataRequest,
   STORAGE_UNAVAILABLE_ERROR,
   type ClearCategorizationCacheResponse,
+  type RemoveLegacyIndexDataResponse,
   type StorageErrorResponse,
   type StorageStatsResponse,
 } from './storage-messages';
@@ -14,6 +16,7 @@ import {
 export type StorageMessageResponse =
   | StorageStatsResponse
   | ClearCategorizationCacheResponse
+  | RemoveLegacyIndexDataResponse
   | StorageErrorResponse;
 
 type SendStorageResponse = (response: StorageMessageResponse) => void;
@@ -26,8 +29,8 @@ export type StorageMessageHandler = (
 export interface StorageMessageDeps {
   /** Counting and emptying only: reading a cache entry is not needed here. */
   cacheMaintenance: CategorizationCacheMaintenance;
-  /** Only read, and only for its size: the popup owns its reset. */
-  indexRepository: CollectionIndexRepository;
+  /** What an upgraded installation still holds of the removed index. */
+  legacyIndexData: LegacyIndexData;
   logger: Logger;
 }
 
@@ -57,22 +60,22 @@ function answer(
   return true;
 }
 
-/** The three counts, read together: they are shown together. */
+/** Everything the section of the options page shows, read in one go. */
 async function readStats(deps: StorageMessageDeps): Promise<StorageStats> {
-  const [cache, index] = await Promise.all([
+  const [cache, hasLegacyIndexData] = await Promise.all([
     deps.cacheMaintenance.countEntries(),
-    deps.indexRepository.read(),
+    deps.legacyIndexData.isPresent(),
   ]);
 
   return {
     cardFacts: cache.cardFacts,
     classTargets: cache.classTargets,
-    collectionCards: index.size,
+    hasLegacyIndexData,
   };
 }
 
 /**
- * Handles the two maintenance messages of the options page. Returns true so
+ * Handles the three maintenance messages of the options page. Returns true so
  * the caller keeps the message channel open, and false for a message of
  * another feature, which is simply ignored.
  *
@@ -88,12 +91,25 @@ export function createStorageMessageHandler(deps: StorageMessageDeps): StorageMe
     }
 
     if (isClearCategorizationCacheRequest(message)) {
-      // The settings, the collection index and the host cooldowns are stored
-      // under other prefixes, which this maintenance does not touch.
+      // The settings, the keys of the old index and the host cooldowns are
+      // stored under other prefixes, which this maintenance does not touch.
       return answer(
         async () => {
           await deps.cacheMaintenance.clear();
           return { cleared: true };
+        },
+        sendResponse,
+        deps.logger,
+      );
+    }
+
+    if (isRemoveLegacyIndexDataRequest(message)) {
+      // The other way around: exactly the two keys of the removed index, and
+      // neither level of the cache.
+      return answer(
+        async () => {
+          await deps.legacyIndexData.remove();
+          return { removed: true };
         },
         sendResponse,
         deps.logger,
