@@ -1,0 +1,41 @@
+{
+ "batchcomplete": true,
+ "query": {
+  "normalized": [
+   {
+    "fromencoded": false,
+    "from": "albert Einstein",
+    "to": "Albert Einstein"
+   }
+  ],
+  "redirects": [
+   {
+    "from": "Einstein",
+    "to": "Albert Einstein"
+   }
+  ],
+  "pages": [
+   {
+    "ns": 0,
+    "title": "Zzzz article inexistant 8472615",
+    "missing": true
+   },
+   {
+    "pageid": 7856,
+    "ns": 0,
+    "title": "Albert Einstein",
+    "pageprops": {
+     "wikibase_item": "Q937"
+    }
+   },
+   {
+    "pageid": 18461,
+    "ns": 0,
+    "title": "Pulp Fiction",
+    "pageprops": {
+     "wikibase_item": "Q104123"
+    }
+   }
+  ]
+ }
+}

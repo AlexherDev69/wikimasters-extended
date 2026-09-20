@@ -1,0 +1,790 @@
+[
+ {
+  "title": "Jeu d'horreur",
+  "description": "genre de jeu vidéo",
+  "categoryId": "work_culture",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Inspecteur Gadget (série télévisée d'animation, 1983)",
+  "description": "série de dessin animé",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Kim Ji-soo",
+  "description": "chanteuse et actrice sud-coréenne",
+  "categoryId": "person",
+  "primarySubtype": "music",
+  "personSubtypes": [
+   "cinema",
+   "music",
+   "art"
+  ]
+ },
+ {
+  "title": "Afonso Eulálio",
+  "description": "cycliste portugais",
+  "categoryId": "person",
+  "primarySubtype": "sport",
+  "personSubtypes": [
+   "sport"
+  ]
+ },
+ {
+  "title": "Raphaël Astier (pilote automobile)",
+  "description": "pilote de rallye français",
+  "categoryId": "person",
+  "primarySubtype": "sport",
+  "personSubtypes": [
+   "sport"
+  ]
+ },
+ {
+  "title": "McDonald's",
+  "description": "chaîne de restauration rapide",
+  "categoryId": "organization",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Presses de l'Université du Québec",
+  "description": "maison d'édition",
+  "categoryId": "organization",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Ric Flair",
+  "description": "catcheur américain",
+  "categoryId": "person",
+  "primarySubtype": "sport",
+  "personSubtypes": [
+   "sport",
+   "literature",
+   "media"
+  ]
+ },
+ {
+  "title": "Phil Collins",
+  "description": "batteur, chanteur et auteur-compositeur britannique",
+  "categoryId": "person",
+  "primarySubtype": "music",
+  "personSubtypes": [
+   "cinema",
+   "music",
+   "science",
+   "literature"
+  ]
+ },
+ {
+  "title": "Finale de la Coupe du monde de football 2018",
+  "description": "match final de la 21e Coupe du monde de football",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Parti travailliste israélien",
+  "description": "parti politique social-démocrate israélien",
+  "categoryId": "organization",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "McDonnell Douglas A-12 Avenger II",
+  "description": "avion militaire",
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Bentley Batur",
+  "description": "modèle d'automobile",
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Caroline Vigneaux",
+  "description": "avocate française devenue humoriste",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "art"
+  ]
+ },
+ {
+  "title": "Grumman F11F-1F Super Tiger",
+  "description": null,
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Saison 3 de Grown-ish",
+  "description": "saison de série télévisée",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Pachira aquatica",
+  "description": "espèce de plantes",
+  "categoryId": "living",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Siamang",
+  "description": "espèce de mammifères",
+  "categoryId": "living",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Compétitions de clubs français de rugby à XV",
+  "description": "compétition sportive",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "ATP Masters 1000",
+  "description": "catégorie de tournois de tennis masculins, existant depuis 1990",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Hutte",
+  "description": "petite cabane",
+  "categoryId": "monument_building",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Communauté de Madrid",
+  "description": "communauté autonome d'Espagne",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Overijse",
+  "description": "commune du Brabant flamand, Belgique",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Chambre des représentants des États-Unis",
+  "description": "chambre basse du Congrès des États-Unis",
+  "categoryId": "organization",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Boeing X-48",
+  "description": "avion militaire",
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "XXXX (marque de bières australiennes)",
+  "description": "marque de bières",
+  "categoryId": "food_drink",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Cosmicisme",
+  "description": "philosophie littéraire",
+  "categoryId": "work_culture",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Gallus gallus domesticus",
+  "description": "oiseau domestique de l'ordre des Galliformes élevé pour sa chair et ses œufs",
+  "categoryId": "living",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Mohamed Ghannouchi",
+  "description": "homme politique tunisien",
+  "categoryId": "person",
+  "primarySubtype": "politics",
+  "personSubtypes": [
+   "politics"
+  ]
+ },
+ {
+  "title": "Bataille du Volturno (554)",
+  "description": null,
+  "categoryId": "event",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Amenra",
+  "description": "groupe de doom métal belge",
+  "categoryId": "music",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Smoke on the Water",
+  "description": "chanson de Deep Purple",
+  "categoryId": "music",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "10e étape du Tour de France 2009",
+  "description": "étape du Tour de France 2009",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Osmerus eperlanus",
+  "description": "espèce de poissons",
+  "categoryId": "living",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Damien Girard (homme politique)",
+  "description": "homme politique français",
+  "categoryId": "person",
+  "primarySubtype": "politics",
+  "personSubtypes": [
+   "politics"
+  ]
+ },
+ {
+  "title": "Charles de Blois",
+  "description": "prétendant au duché de Bretagne",
+  "categoryId": "person",
+  "primarySubtype": "politics",
+  "personSubtypes": [
+   "politics"
+  ]
+ },
+ {
+  "title": "Bataille d'Old Trafford",
+  "description": "match de football en 2003",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Denitsa Ikonomova",
+  "description": "danseuse professionnelle bulgaro-canadienne",
+  "categoryId": "person",
+  "primarySubtype": "art",
+  "personSubtypes": [
+   "cinema",
+   "art",
+   "media"
+  ]
+ },
+ {
+  "title": "Mercedes-Benz SLS AMG",
+  "description": "automobile",
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Intel Pentium",
+  "description": "microarchitecture de processeur Intel",
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "EPMD",
+  "description": "groupe de hip-hop américain",
+  "categoryId": "music",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Dvorichté",
+  "description": null,
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Foza",
+  "description": "commune italienne",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Pulp Fiction",
+  "description": "film de Quentin Tarantino, sorti en 1994",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Quentin Tarantino",
+  "description": "réalisateur, scénariste, producteur et acteur américain",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "music",
+   "literature",
+   "art"
+  ]
+ },
+ {
+  "title": "Marion Cotillard",
+  "description": "actrice et productrice française",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema"
+  ]
+ },
+ {
+  "title": "Albert Einstein",
+  "description": "physicien helvético-américain d'origine allemande, auteur des théories de la relativité restreinte et de la relativité générale",
+  "categoryId": "person",
+  "primarySubtype": "science",
+  "personSubtypes": [
+   "science",
+   "literature"
+  ]
+ },
+ {
+  "title": "Emmanuel Macron",
+  "description": "homme d'État français",
+  "categoryId": "person",
+  "primarySubtype": "politics",
+  "personSubtypes": [
+   "politics",
+   "science"
+  ]
+ },
+ {
+  "title": "Saint-Malo",
+  "description": "ville et commune française du département d'Ille-et-Vilaine (Bretagne)",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Breaking Bad",
+  "description": "série télévisée dramatique américaine (2008–2013)",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Naufrage du Costa Concordia",
+  "description": "naufrage maritime du XXIe siècle",
+  "categoryId": "event",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Hugo (cocktail)",
+  "description": "cocktail",
+  "categoryId": "food_drink",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Alexia Putellas",
+  "description": "footballeuse espagnole",
+  "categoryId": "person",
+  "primarySubtype": "sport",
+  "personSubtypes": [
+   "sport"
+  ]
+ },
+ {
+  "title": "The Leftovers",
+  "description": "série télévisée américaine",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Langres",
+  "description": "commune française du département de la Haute-Marne",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Georges Mandel",
+  "description": "homme politique français",
+  "categoryId": "person",
+  "primarySubtype": "politics",
+  "personSubtypes": [
+   "politics",
+   "media"
+  ]
+ },
+ {
+  "title": "Caroline Roux",
+  "description": "journaliste française",
+  "categoryId": "person",
+  "primarySubtype": "media",
+  "personSubtypes": [
+   "media"
+  ]
+ },
+ {
+  "title": "Harry Hole (série télévisée)",
+  "description": null,
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Salhia Brakhlia",
+  "description": "journaliste française",
+  "categoryId": "person",
+  "primarySubtype": "media",
+  "personSubtypes": [
+   "cinema",
+   "media"
+  ]
+ },
+ {
+  "title": "Dame blanche (dessert)",
+  "description": "dessert à base de glace à la vanille",
+  "categoryId": "food_drink",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Michael Mann",
+  "description": "réalisateur américain",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "literature",
+   "art"
+  ]
+ },
+ {
+  "title": "Bouddhisme",
+  "description": "religion et philosophie reposant sur les enseignements de Siddhartha Gautama",
+  "categoryId": "religion_ideas",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Bryan Singer",
+  "description": "cinéaste américain",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "art"
+  ]
+ },
+ {
+  "title": "Lillian Gish",
+  "description": "actrice américaine (1893-1993)",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "science",
+   "art"
+  ]
+ },
+ {
+  "title": "Équipe de Nouvelle-Zélande de rugby à XV",
+  "description": "équipe masculine sportive neo-zelandaise",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Les Démons",
+  "description": "roman de Fiodor Dostoïevski",
+  "categoryId": "work_culture",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "The Legend of Zelda: Majora's Mask",
+  "description": "jeu vidéo de 2000",
+  "categoryId": "work_culture",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Ville",
+  "description": "agglomération de grande taille",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Serge Papagalli",
+  "description": "acteur français",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "literature"
+  ]
+ },
+ {
+  "title": "Destination finale 3",
+  "description": "film sorti en 2006",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Lac du Laouzas",
+  "description": "lac français",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Myodésopsie",
+  "description": "opacités de l'humeur vitrée de l’œil",
+  "categoryId": "science_concept",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Mathurin Méheut",
+  "description": "peintre, graveur et illustrateur français (1882-1958)",
+  "categoryId": "person",
+  "primarySubtype": "art",
+  "personSubtypes": [
+   "art"
+  ]
+ },
+ {
+  "title": "Ray Ventura",
+  "description": "musicien français",
+  "categoryId": "person",
+  "primarySubtype": "music",
+  "personSubtypes": [
+   "music"
+  ]
+ },
+ {
+  "title": "Cabrera (îles Baléares)",
+  "description": "île de l'archipel espagnol des Baléares",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "1789 : Les Amants de la Bastille",
+  "description": "comédie musicale de Dove Attia et François Chouquet, sortie en 2012",
+  "categoryId": "music",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Carlos Martens Bilongo",
+  "description": "homme politique français",
+  "categoryId": "person",
+  "primarySubtype": "politics",
+  "personSubtypes": [
+   "politics",
+   "science"
+  ]
+ },
+ {
+  "title": "Constantin de Liechtenstein",
+  "description": "prince de Liechtenstein",
+  "categoryId": "person",
+  "primarySubtype": "other",
+  "personSubtypes": []
+ },
+ {
+  "title": "Mikkel Boe Følsgaard",
+  "description": "acteur danois",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema"
+  ]
+ },
+ {
+  "title": "Championnat de France de football 2017-2018",
+  "description": "80e édition du championnat de France de football",
+  "categoryId": "sport",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Lost River (film)",
+  "description": "film réalisé par Ryan Gosling sortie en 2014",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Saison 1 de Severance",
+  "description": "saison de série télévisée",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Maude Apatow",
+  "description": "actrice américaine",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema"
+  ]
+ },
+ {
+  "title": "Eupen",
+  "description": "ville germanophone de Wallonie (Belgique)",
+  "categoryId": "place",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Colt M1911",
+  "description": "arme à feu",
+  "categoryId": "transport_tech",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Novitchok",
+  "description": "ensemble d'agents innervants développés par l'Union soviétique et la Russie",
+  "categoryId": "science_concept",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "L'Esquive",
+  "description": "film d'Abdellatif Kechiche, sorti en 2003",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Paprika (film, 2006)",
+  "description": "film d'animation japonais de science-fiction réalisé par Satoshi Kon sorti en 2006",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Lieu jaune",
+  "description": "espèce de poissons",
+  "categoryId": "living",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Corinne Hermès",
+  "description": "chanteuse française",
+  "categoryId": "person",
+  "primarySubtype": "music",
+  "personSubtypes": [
+   "music"
+  ]
+ },
+ {
+  "title": "Claude-Henri de Rouvroy de Saint-Simon",
+  "description": "économiste et philosophe français",
+  "categoryId": "person",
+  "primarySubtype": "science",
+  "personSubtypes": [
+   "politics",
+   "science",
+   "literature",
+   "media"
+  ]
+ },
+ {
+  "title": "La Valse des pantins",
+  "description": "film réalisé par Martin Scorsese et sorti en 1982",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Fonds souverain",
+  "description": null,
+  "categoryId": "organization",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Tour de Tokyo",
+  "description": "tour dans l'arrondissement de Minato à Tokyo, au Japon",
+  "categoryId": "monument_building",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Fear Street, partie 2 : 1978",
+  "description": "film réalisé par Leigh Janiak et sorti en 2021",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Amanda Abbington",
+  "description": "actrice britannique",
+  "categoryId": "person",
+  "primarySubtype": "cinema",
+  "personSubtypes": [
+   "cinema",
+   "art"
+  ]
+ },
+ {
+  "title": "Ordre du Carmel",
+  "description": "ordre religieux catholique",
+  "categoryId": "organization",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Frank Morris",
+  "description": "criminel américain",
+  "categoryId": "person",
+  "primarySubtype": "other",
+  "personSubtypes": []
+ },
+ {
+  "title": "Le Garçon au pyjama rayé",
+  "description": "film sorti en 2008",
+  "categoryId": "film_tv",
+  "primarySubtype": null,
+  "personSubtypes": []
+ },
+ {
+  "title": "Dauphin (titre)",
+  "description": "titre des seigneurs du Dauphiné, comtes de Viennois et à partir de 1349 le titre porté par le fils aîné du roi de France",
+  "categoryId": "science_concept",
+  "primarySubtype": null,
+  "personSubtypes": []
+ }
+]

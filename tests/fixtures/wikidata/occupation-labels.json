@@ -1,0 +1,1057 @@
+{
+ "head": {
+  "vars": [
+   "class",
+   "label"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q131062"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "urbaniste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q121594"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "professeur"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q177220"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "chanteur ou chanteuse"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q140686"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "président ou présidente"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q158852"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "chef ou cheffe d'orchestre ou de chœur"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q214917"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "dramaturge"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1227195"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "économiste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1231865"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "pédagogue"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q169470"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "physicien ou physicienne"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q201788"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "historien ou historienne"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q188094"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "économiste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q170790"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "mathématicien ou mathématicienne"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1238570"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "politologue"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q205375"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "inventeur"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q222344"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "directeur ou directrice de la photographie"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2405480"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "acteur ou actrice de voix-off"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2309784"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "coureur ou coureuse cycliste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2306091"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "sociologue"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10798782"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "acteur ou actrice de télévision"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q15077007"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "podcasteur ou podcasteuse"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q245068"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "humoriste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1028181"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "artiste peintre"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2478141"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "aristocrate"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2490358"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "chorégraphe"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1397808"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "résistant ou résistante"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1414443"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "cinéaste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10800557"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "acteur ou actrice de cinéma"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q270389"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "présentateur ou présentatrice de journal"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q12374149"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "musicien de rock"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q12406482"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "auteur comique"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q13474373"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "catcheur"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2526255"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "réalisateur ou réalisatrice de cinéma"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10732476"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "collectionneur ou collectionneuse d'œuvres d'art"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1053574"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "producteur délégué ou productrice déléguée"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1925963"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "artiste graphique"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1622272"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "professeur d'université"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10842936"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "pilote de rallye"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10862983"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "aquafortiste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q15296811"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "dessinateur ou dessinatrice"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q15981151"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "musicien ou musicienne de jazz"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1930187"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "journaliste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16003550"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "pacifiste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16323111"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "militant pour la paix"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16389557"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "philosophe des sciences"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q18814623"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "autobiographe"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19350898"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "physicien théoricien ou physicienne théoricienne"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q12369333"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "lutteur"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2159907"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "criminel ou criminelle"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2259451"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "acteur ou actrice de théâtre"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q13582652"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "ingénieur civil"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q28389"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "scénariste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q901"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "scientifique"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q33999"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "acteur ou actrice"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36180"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "écrivain ou écrivaine"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36834"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "compositeur ou compositrice"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q37226"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "enseignant ou enseignante"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q81096"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "ingénieur ou ingénieure"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q386854"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "batteur ou batteuse"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q482980"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "auteur"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q82955"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "personnalité politique"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q40348"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "avocat ou avocate"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q578109"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "producteur ou productrice de télévision"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q599151"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "fonctionnaire"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q83307"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "ministre"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q486748"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "pianiste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q488205"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "auteur-compositeur-interprète ou auteure-compositrice-interprète"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q639669"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "musicien ou musicienne"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q372436"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "personne d'État"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q753110"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "auteur-compositeur ou autrice-compositrice"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q806349"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "chef de groupe musical"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q806798"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "banquier"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q721834"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "manager"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q937857"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "footballeur ou footballeuse"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q822146"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "parolier ou parolière"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q855091"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "guitariste"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q947873"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "animateur ou animatrice de télévision"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3282637"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "producteur ou productrice de cinéma"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3455803"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "réalisateur ou réalisatrice"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3745071"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "écrivain ou écrivaine scientifique"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3357567"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "modèle photo"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2883465"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "banquier d'affaires"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2896489"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "examinateur de brevet"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q55960555"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "artiste d'enregistrement"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q60723829"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "chanteur de pop"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4610556"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "mannequin"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4964182"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "philosophe"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q47541952"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "producteur ou productrice artistique"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q69423232"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "scénariste de cinéma"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q97768158"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "professeurs, professions scientifiques"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q97768164"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "cadres administratifs et commerciaux d'entreprise"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q97768167"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "ingénieurs et cadres techniques d'entreprise"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q97768170"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "professeurs des écoles, instituteurs et assimilés"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q5716684"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "danseur ou danseuse"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q7042855"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "monteur ou monteuse"
+    }
+   },
+   {
+    "class": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q7541856"
+    },
+    "label": {
+     "xml:lang": "fr",
+     "type": "literal",
+     "value": "céramiste"
+    }
+   }
+  ]
+ }
+}
