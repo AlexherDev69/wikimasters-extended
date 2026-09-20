@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Logger } from '../../../core/logger/logger';
 import { scanCards } from '../../card-detection/data/scan-cards';
-import type { ScheduleRetry } from '../../card-detection/presentation/handle-scan';
 import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
 import { BADGE_SELECTOR, CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
@@ -87,30 +86,44 @@ function makeLogger(): Logger {
   return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 }
 
-interface Harness {
-  overlay: Overlay;
-  categorize: ReturnType<typeof vi.fn>;
-}
+type CategorizeMock = Mock<(cards: readonly CardToCategorize[]) => Promise<CardCategory[]>>;
 
-/** Runs the retry timers at once, as the content script context would later. */
-const runRetryNow: ScheduleRetry = (callback) => {
-  callback();
-};
-
-function mount(settings: Settings = DEFAULT_SETTINGS): Harness {
-  const categorize = vi.fn((cards: readonly CardToCategorize[]): Promise<CardCategory[]> => {
+/** Answers with the results known for the titles asked, as the worker does. */
+function makeCategorize(): CategorizeMock {
+  return vi.fn((cards: readonly CardToCategorize[]): Promise<CardCategory[]> => {
     const wanted = new Set(cards.map((card) => card.title));
     return Promise.resolve(RESULTS.filter((result) => wanted.has(result.title)));
   });
+}
+
+interface Harness {
+  overlay: Overlay;
+  categorize: CategorizeMock;
+  /**
+   * The retries the content script would arm on a timer, held rather than
+   * run: each one releases the titles of a failed batch AND scans the page
+   * again, so running them as they are scheduled would ask, fail and
+   * reschedule without ever giving the test back its turn.
+   */
+  retries: (() => void)[];
+}
+
+function mount(
+  settings: Settings = DEFAULT_SETTINGS,
+  categorize: CategorizeMock = makeCategorize(),
+): Harness {
+  const retries: (() => void)[] = [];
   const deps: OverlayDeps = {
     root: document.body,
     settings,
     logger: makeLogger(),
     categorize,
-    scheduleRetry: runRetryNow,
+    scheduleRetry: (callback) => {
+      retries.push(callback);
+    },
   };
 
-  return { overlay: createOverlay(deps), categorize };
+  return { overlay: createOverlay(deps), categorize, retries };
 }
 
 /** What the content script does on every scan. */
@@ -448,6 +461,28 @@ describe('createOverlay', () => {
     await vi.waitFor(() => {
       expect(categorize).toHaveBeenCalledOnce();
     });
+  });
+
+  it('should scan the page again when the retry of a failed batch comes due', async () => {
+    document.body.innerHTML = GRID_HTML;
+    const categorize = makeCategorize().mockRejectedValueOnce(new Error('Wikidata is unreachable'));
+    const { overlay, retries } = mount(DEFAULT_SETTINGS, categorize);
+
+    scan(overlay);
+
+    await vi.waitFor(() => {
+      expect(retries).toHaveLength(1);
+    });
+    // Nothing mutates the page in between, so no other scan can ever come:
+    // without the one the retry itself raises, the card stays as it is.
+    expect(badges()).toHaveLength(0);
+
+    retries[0]?.();
+
+    await vi.waitFor(() => {
+      expect(badges()).toHaveLength(1);
+    });
+    expect(categorize).toHaveBeenCalledTimes(2);
   });
 
   it('should ask for the addresses of the pictures only while the images are on', async () => {

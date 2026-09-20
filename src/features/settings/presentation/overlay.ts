@@ -58,7 +58,7 @@ export interface OverlayDeps {
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
-  const { root, logger, scheduleRetry } = deps;
+  const { root, logger } = deps;
   let settings = deps.settings;
   // Results of the cards met so far, read by every part of the overlay, and
   // the titles already asked for. Bounded together, so a title dropped from
@@ -69,6 +69,24 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   };
   /** Titles of the last scan, the cards the page shows right now. */
   let visibleTitles: ReadonlySet<string> = new Set<string>();
+
+  /**
+   * The retry of a batch that failed, and the scan without which it never
+   * happens. `handleScan` releases the titles it could not categorize so they
+   * can be asked again, but nothing asks for a title that nobody scans: a page
+   * that has stopped mutating raises no scan of its own, and a detail modal
+   * left open over a card that no longer moves is exactly that. Scanning here
+   * is what turns the release into a second attempt.
+   *
+   * The cards are read again rather than taken from the scan that failed: a
+   * minute has passed, and the page may show anything by now.
+   */
+  const scheduleRetry: ScheduleRetry = (release, delayMs) => {
+    deps.scheduleRetry(() => {
+      release();
+      processScan(scanCards(root));
+    }, delayMs);
+  };
 
   /**
    * Brings every enabled part in line with what is known of the cards given,
