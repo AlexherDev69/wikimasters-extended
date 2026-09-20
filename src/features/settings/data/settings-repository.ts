@@ -9,8 +9,8 @@ import type {
 /**
  * The four switches live under ONE versioned key, so reading them is a single
  * access and a change fires a single notification. The version is part of the
- * key, as for the caches and the index: a change of shape starts again from
- * the defaults instead of reading a value it cannot understand.
+ * key, as for the caches: a change of shape starts again from the defaults
+ * instead of reading a value it cannot understand.
  */
 const SETTINGS_KEY: StorageItemKey = 'local:wme:settings:v1';
 

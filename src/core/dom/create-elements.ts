@@ -1,8 +1,8 @@
 /**
- * The element builders every page of the extension shares: the statistics
- * window and the options page. A node is always created and filled through
- * `textContent`, never through `innerHTML`, because these pages display card
- * titles, which come from a page of the site.
+ * The element builders of the pages of the extension, the options page being
+ * the only one left. A node is always created and filled through `textContent`
+ * and never through `innerHTML`: a page of ours is built from text alone, so
+ * no string can ever become markup in it.
  */
 
 const BLOCK_TAG = 'div';

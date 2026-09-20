@@ -3,7 +3,7 @@
 /*
  * The options page is a page of our own, so the rules below are free to target
  * elements: nothing of the site is ever rendered here. The dark theme and the
- * focus ring come from the shared stylesheet, along with the popup.
+ * focus ring come from the shared stylesheet.
  *
  * It opens embedded in chrome://extensions, which gives it a narrow frame: the
  * layout is a single column that follows the width it is given.

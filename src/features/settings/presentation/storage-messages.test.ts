@@ -5,10 +5,13 @@ import {
   isClearCategorizationCacheRequest,
   isClearCategorizationCacheResponse,
   isGetStorageStatsRequest,
+  isRemoveLegacyIndexDataRequest,
+  isRemoveLegacyIndexDataResponse,
   isStorageStatsResponse,
+  REMOVE_LEGACY_INDEX_DATA_MESSAGE,
 } from './storage-messages';
 
-const STATS = { cardFacts: 12, classTargets: 4, collectionCards: 300 };
+const STATS = { cardFacts: 12, classTargets: 4, hasLegacyIndexData: true };
 
 describe('isGetStorageStatsRequest', () => {
   it('should accept the message the options page sends', () => {
@@ -44,18 +47,27 @@ describe('isClearCategorizationCacheRequest', () => {
 });
 
 describe('isStorageStatsResponse', () => {
-  it('should accept an answer carrying the three counts', () => {
+  it('should accept an answer carrying the counts and the old data', () => {
     expect(isStorageStatsResponse({ stats: STATS })).toBe(true);
   });
 
-  it('should accept counts at zero', () => {
+  it('should accept counts at zero and no old data left', () => {
     expect(
-      isStorageStatsResponse({ stats: { cardFacts: 0, classTargets: 0, collectionCards: 0 } }),
+      isStorageStatsResponse({
+        stats: { cardFacts: 0, classTargets: 0, hasLegacyIndexData: false },
+      }),
     ).toBe(true);
   });
 
   it('should refuse an answer missing one of the counts', () => {
+    expect(
+      isStorageStatsResponse({ stats: { cardFacts: 1, hasLegacyIndexData: false } }),
+    ).toBe(false);
+  });
+
+  it('should refuse an answer that does not say whether old data is left', () => {
     expect(isStorageStatsResponse({ stats: { cardFacts: 1, classTargets: 2 } })).toBe(false);
+    expect(isStorageStatsResponse({ stats: { ...STATS, hasLegacyIndexData: 'true' } })).toBe(false);
   });
 
   it('should refuse a count that is not a whole positive number', () => {
@@ -83,5 +95,34 @@ describe('isClearCategorizationCacheResponse', () => {
     expect(isClearCategorizationCacheResponse({ cleared: 'true' })).toBe(false);
     expect(isClearCategorizationCacheResponse({ error: 'storage-unavailable' })).toBe(false);
     expect(isClearCategorizationCacheResponse(undefined)).toBe(false);
+  });
+});
+
+describe('isRemoveLegacyIndexDataRequest', () => {
+  it('should accept the message the options page sends', () => {
+    expect(isRemoveLegacyIndexDataRequest({ type: REMOVE_LEGACY_INDEX_DATA_MESSAGE })).toBe(true);
+  });
+
+  it('should refuse a message of another type', () => {
+    expect(isRemoveLegacyIndexDataRequest({ type: CLEAR_CATEGORIZATION_CACHE_MESSAGE })).toBe(
+      false,
+    );
+  });
+
+  it('should refuse a value that is not a record', () => {
+    expect(isRemoveLegacyIndexDataRequest(undefined)).toBe(false);
+  });
+});
+
+describe('isRemoveLegacyIndexDataResponse', () => {
+  it('should accept the confirmation of the service worker', () => {
+    expect(isRemoveLegacyIndexDataResponse({ removed: true })).toBe(true);
+  });
+
+  it('should refuse anything else than an explicit confirmation', () => {
+    expect(isRemoveLegacyIndexDataResponse({ removed: false })).toBe(false);
+    expect(isRemoveLegacyIndexDataResponse({ cleared: true })).toBe(false);
+    expect(isRemoveLegacyIndexDataResponse({ error: 'storage-unavailable' })).toBe(false);
+    expect(isRemoveLegacyIndexDataResponse(undefined)).toBe(false);
   });
 });

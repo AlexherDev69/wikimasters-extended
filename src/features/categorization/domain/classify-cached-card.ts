@@ -5,10 +5,10 @@ import type { EntityFacts } from './entity-facts';
 import type { CachedCardFacts, ClassResolution } from './ports';
 
 /**
- * The step shared by every reader of the caches: turning the raw facts of a
- * card and the resolved targets of its classes into a verdict. The
- * categorization of the cards on screen and the summary of the collection go
- * through it, so the two can never disagree on what a card is.
+ * The step every reader of the caches goes through: turning the raw facts of
+ * a card and the resolved targets of its classes into a verdict. It lives on
+ * its own so that a second reader could never disagree with the first on what
+ * a card is.
  */
 
 /** Target of each class id known so far, null for a class leading nowhere. */
@@ -81,7 +81,7 @@ export function resolveOccupations(
  * The category of a card and, for a person, its subtypes.
  *
  * `description` refines the primary subtype of a person and is null when the
- * caller does not have it, which is the case of the collection index: the
+ * caller does not have it, as for a card the site displays without one: the
  * majority vote then decides on its own.
  */
 export function classifyCachedCard(

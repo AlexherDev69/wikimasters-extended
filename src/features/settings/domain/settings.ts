@@ -12,8 +12,6 @@ export interface Settings {
   categoryHighlight: boolean;
   /** Letterboxd link in the detail modal. */
   letterboxdLink: boolean;
-  /** Recording of the cards displayed on the collection pages. */
-  collectionIndex: boolean;
   /** Image of Wikimedia Commons on the cards the site leaves without one. */
   missingImages: boolean;
 }
@@ -23,7 +21,6 @@ export const SETTING_KEYS = [
   'categoryBadges',
   'categoryHighlight',
   'letterboxdLink',
-  'collectionIndex',
   'missingImages',
 ] as const satisfies readonly (keyof Settings)[];
 
@@ -33,7 +30,6 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryBadges: true,
   categoryHighlight: true,
   letterboxdLink: true,
-  collectionIndex: true,
   missingImages: true,
 };
 

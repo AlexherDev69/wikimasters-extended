@@ -5,7 +5,6 @@ const ALL_OFF: Settings = {
   categoryBadges: false,
   categoryHighlight: false,
   letterboxdLink: false,
-  collectionIndex: false,
   missingImages: false,
 };
 
@@ -25,7 +24,6 @@ describe('normalizeSettings', () => {
       categoryBadges: false,
       categoryHighlight: true,
       letterboxdLink: false,
-      collectionIndex: true,
       missingImages: true,
     });
   });
@@ -43,6 +41,15 @@ describe('normalizeSettings', () => {
     });
   });
 
+  it('should ignore the switch of the collection index a previous version saved', () => {
+    // An upgrade reads a record written by the version that still had that
+    // setting: the key is simply not one of ours any more.
+    expect(normalizeSettings({ collectionIndex: false, letterboxdLink: false })).toEqual({
+      ...DEFAULT_SETTINGS,
+      letterboxdLink: false,
+    });
+  });
+
   it('should return a record of its own rather than the shared defaults', () => {
     const settings = normalizeSettings(undefined);
     settings.categoryBadges = false;
@@ -50,7 +57,7 @@ describe('normalizeSettings', () => {
     expect(DEFAULT_SETTINGS.categoryBadges).toBe(true);
   });
 
-  it('should read every saved switch back when all five were written', () => {
+  it('should read every saved switch back when all four were written', () => {
     expect(normalizeSettings(ALL_OFF)).toEqual(ALL_OFF);
   });
 });
@@ -61,7 +68,7 @@ describe('hasEnabledFeature', () => {
   });
 
   it('should be true when a single feature is left on', () => {
-    expect(hasEnabledFeature({ ...ALL_OFF, collectionIndex: true })).toBe(true);
+    expect(hasEnabledFeature({ ...ALL_OFF, letterboxdLink: true })).toBe(true);
   });
 
   it('should be false when every feature is off', () => {

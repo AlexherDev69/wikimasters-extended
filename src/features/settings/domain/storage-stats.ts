@@ -1,6 +1,6 @@
 /**
  * How much the extension holds on this machine, as the options page shows it.
- * Three counts and nothing else: the page says how many entries there are, it
+ * Two counts and nothing else: the page says how many entries there are, it
  * never lists what they are about.
  */
 export interface StorageStats {
@@ -8,6 +8,10 @@ export interface StorageStats {
   cardFacts: number;
   /** Wikidata classes whose category or trade is cached. */
   classTargets: number;
-  /** Cards the collection index holds. */
-  collectionCards: number;
+  /**
+   * True while an installation still holds the keys of the collection index,
+   * a feature this version removed. Not a count: the page offers to delete
+   * those keys, it never says what they held.
+   */
+  hasLegacyIndexData: boolean;
 }

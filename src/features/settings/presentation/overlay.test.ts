@@ -9,8 +9,6 @@ import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
 import { BADGE_SELECTOR, CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
 import { DIM_SELECTOR, PANEL_SELECTOR } from '../../category-highlight/data/highlight-selectors';
-import type { CatalogueTotals } from '../../collection-index/domain/catalogue-totals';
-import type { RecordedCard } from '../../collection-index/domain/collection-index';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
@@ -22,7 +20,6 @@ const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../
 const GRID_HTML = readFileSync(join(FIXTURES_DIR, 'card-grid-with-description.html'), 'utf-8');
 const LARGE_HTML = readFileSync(join(FIXTURES_DIR, 'card-large-with-description.html'), 'utf-8');
 const MODAL_HTML = readFileSync(join(FIXTURES_DIR, 'card-detail-modal.html'), 'utf-8');
-const CATALOGUE_HTML = readFileSync(join(FIXTURES_DIR, 'global-collection-page.html'), 'utf-8');
 
 const PLACEHOLDER_HTML = readFileSync(join(FIXTURES_DIR, 'placeholder-cards.html'), 'utf-8');
 
@@ -36,28 +33,10 @@ const CARD_IMAGE: CardImage = { fileName: 'Adan Canto 2015.jpg', kind: 'picture'
 
 const FILM_URL = 'https://letterboxd.com/film/lost-river/';
 
-const COLLECTION_PATH = '/collection';
-const MARKETPLACE_PATH = '/marketplace';
-const CATALOGUE_PATH = '/global-collection';
-
-/** The six totals the provided fixture of the catalogue page displays. */
-const FIXTURE_TOTALS: CatalogueTotals = {
-  l: 1761,
-  ur: 12_368,
-  sr: 66_788,
-  r: 179_657,
-  pc: 516_762,
-  c: 1_996_125,
-};
-
-/** What `window.location.pathname` gives the overlay, set by `scan` below. */
-let currentPathname = MARKETPLACE_PATH;
-
 const ALL_OFF: Settings = {
   categoryBadges: false,
   categoryHighlight: false,
   letterboxdLink: false,
-  collectionIndex: false,
   missingImages: false,
 };
 
@@ -90,8 +69,6 @@ function makeLogger(): Logger {
 interface Harness {
   overlay: Overlay;
   categorize: ReturnType<typeof vi.fn>;
-  recordCards: ReturnType<typeof vi.fn>;
-  recordCatalogueTotals: ReturnType<typeof vi.fn>;
 }
 
 /** Runs the retry timers at once, as the content script context would later. */
@@ -104,35 +81,25 @@ function mount(settings: Settings = DEFAULT_SETTINGS): Harness {
     const wanted = new Set(cards.map((card) => card.title));
     return Promise.resolve(RESULTS.filter((result) => wanted.has(result.title)));
   });
-  const recordCards = vi.fn<(cards: readonly RecordedCard[]) => Promise<void>>(() =>
-    Promise.resolve(),
-  );
-  const recordCatalogueTotals = vi.fn<(totals: CatalogueTotals) => Promise<void>>(() =>
-    Promise.resolve(),
-  );
   const deps: OverlayDeps = {
     root: document.body,
     settings,
     logger: makeLogger(),
     categorize,
-    recordCards,
-    recordCatalogueTotals,
     scheduleRetry: runRetryNow,
-    readPathname: (): string => currentPathname,
   };
 
-  return { overlay: createOverlay(deps), categorize, recordCards, recordCatalogueTotals };
+  return { overlay: createOverlay(deps), categorize };
 }
 
 /** What the content script does on every scan. */
-function scan(overlay: Overlay, pathname: string = MARKETPLACE_PATH): void {
-  currentPathname = pathname;
+function scan(overlay: Overlay): void {
   overlay.onScan(scanCards(document.body));
 }
 
 /** Two scans: the first asks, the second draws what the answer brought back. */
-async function scanUntilDrawn(overlay: Overlay, pathname: string = MARKETPLACE_PATH): Promise<void> {
-  scan(overlay, pathname);
+async function scanUntilDrawn(overlay: Overlay): Promise<void> {
+  scan(overlay);
   await vi.waitFor(() => {
     expect(document.body.querySelector(BADGE_SELECTOR)).not.toBeNull();
   });
@@ -174,10 +141,9 @@ function observeBody(): MutationObserver {
 describe('createOverlay', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
-    currentPathname = MARKETPLACE_PATH;
   });
 
-  it('should show every part of the overlay when the five settings are on', async () => {
+  it('should show every part of the overlay when the four settings are on', async () => {
     document.body.innerHTML = GRID_HTML + MODAL_HTML;
     const { overlay } = mount();
 
@@ -343,22 +309,13 @@ describe('createOverlay', () => {
     expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).not.toBeNull();
   });
 
-  it('should ask for no categorization at all when the five settings are off', () => {
+  it('should ask for no categorization at all when the four settings are off', () => {
     document.body.innerHTML = GRID_HTML + LARGE_HTML;
     const { overlay, categorize } = mount(ALL_OFF);
 
-    scan(overlay, COLLECTION_PATH);
+    scan(overlay);
 
     expect(categorize).not.toHaveBeenCalled();
-  });
-
-  it('should still categorize when only the collection index is left on', () => {
-    document.body.innerHTML = GRID_HTML;
-    const { overlay, categorize } = mount({ ...ALL_OFF, collectionIndex: true });
-
-    scan(overlay, COLLECTION_PATH);
-
-    expect(categorize).toHaveBeenCalledOnce();
   });
 
   it('should ask for the categories again when a feature is turned back on', async () => {
@@ -402,93 +359,6 @@ describe('createOverlay', () => {
     expect(observer.takeRecords()).toHaveLength(0);
     expect(categorize).toHaveBeenCalledOnce();
     observer.disconnect();
-  });
-
-  it('should record nothing more when the settings are applied again on the collection', () => {
-    document.body.innerHTML = GRID_HTML;
-    const { overlay, recordCards } = mount();
-    scan(overlay, COLLECTION_PATH);
-    expect(recordCards).toHaveBeenCalledOnce();
-
-    overlay.applySettings(DEFAULT_SETTINGS);
-
-    // The scan it runs sees the cards already sent, so nothing travels twice.
-    expect(recordCards).toHaveBeenCalledOnce();
-  });
-
-  it('should record nothing of the collection when its setting is off', () => {
-    document.body.innerHTML = GRID_HTML;
-    const { overlay, recordCards } = mount({ ...DEFAULT_SETTINGS, collectionIndex: false });
-
-    scan(overlay, COLLECTION_PATH);
-    scan(overlay, COLLECTION_PATH);
-
-    expect(recordCards).not.toHaveBeenCalled();
-  });
-
-  it('should record the cards of the collection when its setting is on', () => {
-    document.body.innerHTML = GRID_HTML;
-    const { overlay, recordCards } = mount();
-
-    scan(overlay, COLLECTION_PATH);
-    scan(overlay, COLLECTION_PATH);
-
-    expect(recordCards).toHaveBeenCalledWith([{ title: GRID_CARD_TITLE, rarity: 'pc' }]);
-  });
-
-  it('should record the catalogue totals once when the catalogue page is displayed', () => {
-    document.body.innerHTML = CATALOGUE_HTML;
-    const { overlay, recordCatalogueTotals } = mount();
-
-    scan(overlay, CATALOGUE_PATH);
-    scan(overlay, CATALOGUE_PATH);
-
-    expect(recordCatalogueTotals).toHaveBeenCalledOnce();
-    expect(recordCatalogueTotals).toHaveBeenCalledWith(FIXTURE_TOTALS);
-  });
-
-  it('should record no catalogue totals on a page that is not the catalogue', () => {
-    // The header block of the catalogue is still in the DOM, which the first
-    // scan after a client side navigation can read: the path is what decides.
-    document.body.innerHTML = CATALOGUE_HTML;
-    const { overlay, recordCatalogueTotals } = mount();
-
-    scan(overlay, COLLECTION_PATH);
-    scan(overlay, MARKETPLACE_PATH);
-
-    expect(recordCatalogueTotals).not.toHaveBeenCalled();
-  });
-
-  it('should record no catalogue totals when the collection index setting is off', () => {
-    document.body.innerHTML = CATALOGUE_HTML;
-    const { overlay, recordCatalogueTotals } = mount({
-      ...DEFAULT_SETTINGS,
-      collectionIndex: false,
-    });
-
-    scan(overlay, CATALOGUE_PATH);
-
-    expect(recordCatalogueTotals).not.toHaveBeenCalled();
-  });
-
-  it('should record no card of the catalogue page in the collection index', () => {
-    document.body.innerHTML = CATALOGUE_HTML;
-    const { overlay, recordCards } = mount();
-
-    scan(overlay, CATALOGUE_PATH);
-    scan(overlay, CATALOGUE_PATH);
-
-    expect(recordCards).not.toHaveBeenCalled();
-  });
-
-  it('should write nothing to the catalogue page when its totals are read', () => {
-    document.body.innerHTML = CATALOGUE_HTML;
-    const siteHtml = document.body.innerHTML;
-    const { overlay } = mount({ ...ALL_OFF, collectionIndex: true });
-
-    scan(overlay, CATALOGUE_PATH);
-
-    expect(document.body.innerHTML).toBe(siteHtml);
   });
 
   it('should write nothing on a second scan when every feature is on', async () => {
