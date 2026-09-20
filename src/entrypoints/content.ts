@@ -16,8 +16,13 @@ import {
   rememberCategories,
   type CategoryMemory,
 } from '../features/categorization/presentation/remember-categories';
+import { removeCardBadges } from '../features/category-badge/data/card-badge';
+import { removeModalCategoryLines } from '../features/category-badge/data/modal-category-line';
+import { syncCardBadges } from '../features/category-badge/presentation/sync-card-badges';
+import { syncModalCategory } from '../features/category-badge/presentation/sync-modal-category';
 import { removeModalLink } from '../features/letterboxd/data/modal-link';
 import { syncModalLink } from '../features/letterboxd/presentation/sync-modal-link';
+import '../features/category-badge/presentation/category-badge.css';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
 
@@ -56,21 +61,26 @@ export default defineContentScript({
     let visibleTitles: ReadonlySet<string> = new Set<string>();
 
     /**
-     * Brings the whole overlay in line with what is known of the cards.
+     * Brings the whole overlay in line with what is known of the cards given.
      * Every sync writes only what differs, so running it on every scan costs
      * nothing once the page already shows the right thing.
      */
-    function syncOverlay(): void {
+    function syncOverlay(observedCards: readonly ObservedCard[]): void {
+      syncCardBadges(observedCards, memory.categoriesByTitle);
       // The observer of the cards also fires when the modal opens, so no
-      // observer, no polling and no timer of its own is needed here.
+      // observer, no polling and no timer of its own is needed here. The modal
+      // is looked up once and shared: both features write in the same one.
       const modal = findDetailModal(root);
       syncModalLink(modal, memory.categoriesByTitle);
+      syncModalCategory(modal, memory.categoriesByTitle);
     }
 
     async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
       const results = await requestCategories(cards);
       rememberCategories(memory, visibleTitles, results);
-      syncOverlay();
+      // The page has kept mutating while the answer was on its way, so the
+      // cards are read again rather than taken from the scan that asked.
+      syncOverlay(scanCards(root));
       return results;
     }
 
@@ -79,7 +89,7 @@ export default defineContentScript({
 
       handleScan(observedCards, memory.seenTitles, logger, categorize);
       rememberCategories(memory, visibleTitles);
-      syncOverlay();
+      syncOverlay(observedCards);
     }
 
     onScan(scanCards(root));
@@ -90,6 +100,8 @@ export default defineContentScript({
       // Reloading the extension leaves the page open: everything the overlay
       // added goes away with it, rather than staying behind with nobody to
       // keep it in line with the cards on screen.
+      removeCardBadges(root);
+      removeModalCategoryLines(root);
       removeModalLink(root);
     });
   },
