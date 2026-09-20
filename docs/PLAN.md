@@ -158,7 +158,7 @@ Fonction pure, sans effet de bord, donc entièrement testable.
 
 - Clé : titre frwiki. Valeur : les faits bruts `{ qid, classIds, parentClassIds, occupationIds, externalIds (Letterboxd, IMDb, TMDb), fetchedAt, status }`, environ 300 à 500 octets. La catégorie n'est pas stockée, elle est recalculée à la lecture
 - TTL : 90 jours pour une carte résolue, 7 jours pour une carte non résolue. Une erreur réseau n'est jamais mise en cache
-- Cache par classe : `{ target, label, rootsVersion }`, sans TTL, invalidé par le numéro de version des listes de racines
+- Cache par classe : `{ target, label, matchedRootIds, rootsVersion, fetchedAt }`, invalidé par le numéro de version des listes de racines et par une durée de vie de 90 jours (voir la revue du 2026-09-21 plus bas)
 - Stockage : `chrome.storage.local` (quota de 10 Mo, 10 000 cartes = 3 à 5 Mo). `unlimitedStorage` seulement si le besoin apparaît
 
 ### Garde-fous liés aux règles du site

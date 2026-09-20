@@ -37,7 +37,7 @@ export default defineBackground({
       entityFactsSource: createEntityFactsSource(httpOptions),
       classRootsSource: createClassRootsSource(httpOptions),
       cardFactsCache: createCardFactsCache(systemClock),
-      classTargetCache: createClassTargetCache(),
+      classTargetCache: createClassTargetCache(systemClock),
       // The new source of phase 7d, to the host the titles already go to.
       articleImageSource: createArticleImageSource(httpOptions),
       thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),

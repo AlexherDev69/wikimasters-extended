@@ -141,7 +141,7 @@ function makeDeps(fetchImpl: FetchLike, logger: Logger = makeLogger()): Categori
     entityFactsSource: createEntityFactsSource(httpOptions),
     classRootsSource: createClassRootsSource(httpOptions),
     cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
-    classTargetCache: createClassTargetCache(),
+    classTargetCache: createClassTargetCache(SYSTEM_CLOCK),
     // Every golden card was recorded before this source existed and has no
     // Wikidata image, so a real one here would send it a request the replay
     // fixtures know nothing about. The dedicated tests below give it their own.
