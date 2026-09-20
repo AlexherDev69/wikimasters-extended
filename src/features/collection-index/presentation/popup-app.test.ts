@@ -13,6 +13,7 @@ const SUMMARY: CollectionSummary = {
   totalCards: 3,
   uncategorizedCount: 0,
   lastSeenAt: SEEN_AT,
+  catalogue: null,
   categories: [
     {
       categoryId: 'person',
@@ -37,6 +38,7 @@ const EMPTY_SUMMARY: CollectionSummary = {
   totalCards: 0,
   uncategorizedCount: 0,
   lastSeenAt: null,
+  catalogue: null,
   categories: [],
   rarities: [],
 };

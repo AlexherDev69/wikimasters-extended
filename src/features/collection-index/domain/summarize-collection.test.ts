@@ -23,7 +23,13 @@ import type {
   ClassTargetCache,
   Clock,
 } from '../../categorization/domain/ports';
+import { createCatalogueTotalsRepository } from '../data/catalogue-totals-repository';
 import { createCollectionIndexRepository } from '../data/collection-index-repository';
+import type {
+  CatalogueObservation,
+  CatalogueTotals,
+  CatalogueTotalsRepository,
+} from './catalogue-totals';
 import type {
   CollectionCardEntry,
   CollectionIndex,
@@ -138,20 +144,41 @@ function makeClassTargetCache(
   };
 }
 
+/** The use case only reads the totals, so the write is never reached. */
+function makeTotalsRepository(
+  observation: CatalogueObservation | null = null,
+): CatalogueTotalsRepository {
+  return {
+    read: (): Promise<CatalogueObservation | null> => Promise.resolve(observation),
+    save: (): Promise<void> => Promise.resolve(),
+  };
+}
+
 interface Scenario {
   cards: readonly IndexedCard[];
   facts: ReadonlyMap<string, CachedCardFacts>;
   categories: ReadonlyMap<string, CategoryId | null>;
   occupations?: ReadonlyMap<string, PersonSubtypeId | null>;
+  catalogue?: CatalogueObservation | null;
 }
 
 function makeDeps(scenario: Scenario): SummarizeCollectionDeps {
   return {
     indexRepository: makeIndexRepository(makeIndex(scenario.cards)),
+    catalogueTotalsRepository: makeTotalsRepository(scenario.catalogue ?? null),
     cardFactsCache: makeFactsCache(scenario.facts),
     classTargetCache: makeClassTargetCache(scenario.categories, scenario.occupations),
   };
 }
+
+const CATALOGUE_TOTALS: CatalogueTotals = {
+  l: 1761,
+  ur: 12_368,
+  sr: 66_788,
+  r: 179_657,
+  pc: 516_762,
+  c: 1_996_125,
+};
 
 const RESOLVED_FILM: CachedCardFacts = {
   status: 'resolved',
@@ -185,9 +212,38 @@ describe('summarizeCollection', () => {
       totalCards: 0,
       uncategorizedCount: 0,
       lastSeenAt: null,
+      catalogue: null,
       categories: [],
       rarities: [],
     });
+  });
+
+  it('should report no catalogue totals when the page that displays them was never opened', async () => {
+    const summary = await summarizeCollection(
+      makeDeps({
+        cards: [{ title: 'Alpha', rarity: 'c' }],
+        facts: new Map([['Alpha', RESOLVED_FILM]]),
+        categories: CATEGORY_TARGETS,
+      }),
+    );
+
+    expect(summary.catalogue).toBeNull();
+  });
+
+  it('should report the catalogue totals when they were observed on the site', async () => {
+    const catalogue: CatalogueObservation = { totals: CATALOGUE_TOTALS, observedAt: SEEN_AT };
+
+    const summary = await summarizeCollection(
+      makeDeps({
+        cards: [{ title: 'Alpha', rarity: 'l' }],
+        facts: new Map([['Alpha', RESOLVED_FILM]]),
+        categories: CATEGORY_TARGETS,
+        catalogue,
+      }),
+    );
+
+    expect(summary.catalogue).toEqual(catalogue);
+    expect(summary.rarities).toEqual([{ rarity: 'l', count: 1 }]);
   });
 
   it('should count the cards of each category when the caches answer for them', async () => {
@@ -490,6 +546,7 @@ describe('summarizeCollection over the golden set', () => {
     });
     const summary = await summarizeCollection({
       indexRepository,
+      catalogueTotalsRepository: createCatalogueTotalsRepository(SYSTEM_CLOCK),
       cardFactsCache,
       classTargetCache,
     });

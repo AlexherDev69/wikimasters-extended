@@ -18,6 +18,10 @@ import { syncCardBadges } from '../../category-badge/presentation/sync-card-badg
 import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
 import { createCategoryHighlight } from '../../category-highlight/presentation/category-highlight';
 import {
+  createCatalogueRecorder,
+  type SendCatalogueTotals,
+} from '../../collection-index/presentation/record-catalogue-totals';
+import {
   createCollectionRecorder,
   type SendRecordedCards,
 } from '../../collection-index/presentation/record-collection-cards';
@@ -55,6 +59,8 @@ export interface OverlayDeps {
   categorize: CategorizeCards;
   /** Hands the cards of a collection page to the service worker. */
   recordCards: SendRecordedCards;
+  /** Hands the totals read on the catalogue page to the service worker. */
+  recordCatalogueTotals: SendCatalogueTotals;
   scheduleRetry: ScheduleRetry;
   /**
    * The path of the page right now, asked on every scan rather than passed in:
@@ -88,6 +94,17 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    */
   const recorder = createCollectionRecorder({
     send: deps.recordCards,
+    logger,
+    scheduleRetry,
+    isEnabled: (): boolean => settings.collectionIndex,
+  });
+  /**
+   * Reads, on the catalogue page alone, how many cards the game holds per
+   * rarity. It follows the same setting as the index: those totals are the
+   * denominator of its completion and are worth nothing without it.
+   */
+  const catalogueRecorder = createCatalogueRecorder({
+    send: deps.recordCatalogueTotals,
     logger,
     scheduleRetry,
     isEnabled: (): boolean => settings.collectionIndex,
@@ -148,7 +165,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
     // On every scan, whatever its setting says: the recorder needs to see them
     // all to know when the route changed. It sends nothing while it is off.
-    recorder.record(cards, deps.readPathname());
+    const pathname = deps.readPathname();
+    recorder.record(cards, pathname);
+    // Reads the header block of the catalogue page and writes nothing: the
+    // totals are numbers the site already displays.
+    catalogueRecorder.record(root, pathname);
     rememberCategories(memory, visibleTitles);
     sync(cards);
   }

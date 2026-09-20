@@ -1,5 +1,6 @@
 import type { Logger } from '../../../core/logger/logger';
 import type { CardFactsCache, ClassTargetCache } from '../../categorization/domain/ports';
+import type { CatalogueTotalsRepository } from '../domain/catalogue-totals';
 import type { CollectionIndexRepository } from '../domain/collection-index';
 import { summarizeCollection } from '../domain/summarize-collection';
 import {
@@ -8,15 +9,18 @@ import {
   isClearCollectionIndexRequest,
   isCollectionIndexMessage,
   isGetCollectionSummaryRequest,
+  isRecordCatalogueTotalsRequest,
   isRecordCollectionCardsRequest,
   type ClearCollectionIndexResponse,
   type CollectionIndexErrorResponse,
   type CollectionSummaryResponse,
+  type RecordCatalogueTotalsResponse,
   type RecordCollectionCardsResponse,
 } from './messages';
 
 export type CollectionMessageResponse =
   | RecordCollectionCardsResponse
+  | RecordCatalogueTotalsResponse
   | CollectionSummaryResponse
   | ClearCollectionIndexResponse
   | CollectionIndexErrorResponse;
@@ -30,6 +34,8 @@ export type CollectionMessageHandler = (
 
 export interface CollectionMessageDeps {
   indexRepository: CollectionIndexRepository;
+  /** Totals the content script read on the catalogue page of the site. */
+  catalogueTotalsRepository: CatalogueTotalsRepository;
   cardFactsCache: CardFactsCache;
   classTargetCache: ClassTargetCache;
   logger: Logger;
@@ -62,7 +68,7 @@ function answer(
 }
 
 /**
- * Handles the three messages of the collection index. Returns true so the
+ * Handles the four messages of the collection index. Returns true so the
  * caller keeps the message channel open, and false for a message of another
  * feature, which is simply ignored.
  *
@@ -84,6 +90,17 @@ export function createCollectionMessageHandler(
         async () => {
           await deps.indexRepository.upsert(message.cards);
           return { recorded: message.cards.length };
+        },
+        sendResponse,
+        deps.logger,
+      );
+    }
+
+    if (isRecordCatalogueTotalsRequest(message)) {
+      return answer(
+        async () => {
+          await deps.catalogueTotalsRepository.save(message.totals);
+          return { recorded: true };
         },
         sendResponse,
         deps.logger,

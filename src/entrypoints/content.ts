@@ -11,10 +11,14 @@ import {
   isCategorizeCardsResponse,
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
+import type { CatalogueTotals } from '../features/collection-index/domain/catalogue-totals';
 import type { RecordedCard } from '../features/collection-index/domain/collection-index';
 import {
+  isRecordCatalogueTotalsResponse,
   isRecordCollectionCardsResponse,
+  RECORD_CATALOGUE_TOTALS_MESSAGE,
   RECORD_COLLECTION_CARDS_MESSAGE,
+  type RecordCatalogueTotalsRequest,
   type RecordCollectionCardsRequest,
 } from '../features/collection-index/presentation/messages';
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
@@ -26,6 +30,8 @@ import '../features/category-highlight/presentation/category-highlight.css';
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
 
 const INVALID_RECORD_RESPONSE_MESSAGE = 'Unexpected collection record response';
+
+const INVALID_TOTALS_RESPONSE_MESSAGE = 'Unexpected catalogue totals response';
 
 /**
  * Asks the service worker for the categories. The answer crosses a process
@@ -58,6 +64,22 @@ async function recordCollectionCards(cards: readonly RecordedCard[]): Promise<vo
 
   if (!isRecordCollectionCardsResponse(response)) {
     throw new Error(INVALID_RECORD_RESPONSE_MESSAGE);
+  }
+}
+
+/**
+ * Hands the service worker the totals read on the catalogue page. Rejects on
+ * an unexpected answer, which arms the resend.
+ */
+async function recordCatalogueTotals(totals: CatalogueTotals): Promise<void> {
+  const request: RecordCatalogueTotalsRequest = {
+    type: RECORD_CATALOGUE_TOTALS_MESSAGE,
+    totals,
+  };
+  const response: unknown = await browser.runtime.sendMessage(request);
+
+  if (!isRecordCatalogueTotalsResponse(response)) {
+    throw new Error(INVALID_TOTALS_RESPONSE_MESSAGE);
   }
 }
 
@@ -108,6 +130,7 @@ export default defineContentScript({
       logger,
       categorize: requestCategories,
       recordCards: recordCollectionCards,
+      recordCatalogueTotals,
       scheduleRetry,
       readPathname: (): string => window.location.pathname,
     });

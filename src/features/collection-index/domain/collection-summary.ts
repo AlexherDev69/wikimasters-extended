@@ -4,6 +4,7 @@ import {
   type CategoryId,
   type PersonSubtypeId,
 } from '../../categorization/domain/category';
+import type { CatalogueObservation } from './catalogue-totals';
 
 /**
  * What the popup shows of the collection. Everything here is computed from the
@@ -55,6 +56,12 @@ export interface CollectionSummary {
   uncategorizedCount: number;
   /** Most recent time a card of the index was seen, null when it is empty. */
   lastSeenAt: number | null;
+  /**
+   * Totals of the catalogue as they were last read on the site, null while the
+   * user has never opened the page that displays them. They are what turns the
+   * rarity counts above into a completion.
+   */
+  catalogue: CatalogueObservation | null;
   categories: CategorySummary[];
   rarities: RarityCount[];
 }

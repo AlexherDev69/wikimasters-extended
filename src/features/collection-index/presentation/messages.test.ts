@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MAX_CARDS_PER_REQUEST } from '../../categorization/presentation/messages';
+import { MAX_CATALOGUE_TOTAL, type CatalogueTotals } from '../domain/catalogue-totals';
 import type { CollectionSummary } from '../domain/collection-summary';
 import {
   CLEAR_COLLECTION_INDEX_MESSAGE,
@@ -9,8 +10,11 @@ import {
   isCollectionIndexMessage,
   isCollectionSummaryResponse,
   isGetCollectionSummaryRequest,
+  isRecordCatalogueTotalsRequest,
+  isRecordCatalogueTotalsResponse,
   isRecordCollectionCardsRequest,
   isRecordCollectionCardsResponse,
+  RECORD_CATALOGUE_TOTALS_MESSAGE,
   RECORD_COLLECTION_CARDS_MESSAGE,
 } from './messages';
 
@@ -18,10 +22,24 @@ function makeRecordRequest(cards: unknown): unknown {
   return { type: RECORD_COLLECTION_CARDS_MESSAGE, cards };
 }
 
+function makeTotalsRequest(totals: unknown): unknown {
+  return { type: RECORD_CATALOGUE_TOTALS_MESSAGE, totals };
+}
+
+const VALID_TOTALS: CatalogueTotals = {
+  l: 1761,
+  ur: 12_368,
+  sr: 66_788,
+  r: 179_657,
+  pc: 516_762,
+  c: 1_996_125,
+};
+
 const VALID_SUMMARY: CollectionSummary = {
   totalCards: 3,
   uncategorizedCount: 1,
   lastSeenAt: 1_760_000_000_000,
+  catalogue: { totals: VALID_TOTALS, observedAt: 1_760_000_000_000 },
   categories: [
     {
       categoryId: 'person',
@@ -77,6 +95,56 @@ describe('isRecordCollectionCardsRequest', () => {
   });
 });
 
+describe('isRecordCatalogueTotalsRequest', () => {
+  it('should accept a request holding the six totals of the catalogue', () => {
+    expect(isRecordCatalogueTotalsRequest(makeTotalsRequest(VALID_TOTALS))).toBe(true);
+  });
+
+  it('should reject a message of another type', () => {
+    expect(isRecordCatalogueTotalsRequest({ type: 'other', totals: VALID_TOTALS })).toBe(false);
+    expect(isRecordCatalogueTotalsRequest(null)).toBe(false);
+  });
+
+  it('should reject totals missing a rarity', () => {
+    const withoutCommon = { l: 1761, ur: 12_368, sr: 66_788, r: 179_657, pc: 516_762 };
+
+    expect(isRecordCatalogueTotalsRequest(makeTotalsRequest(withoutCommon))).toBe(false);
+    expect(isRecordCatalogueTotalsRequest({ type: RECORD_CATALOGUE_TOTALS_MESSAGE })).toBe(false);
+  });
+
+  it('should reject a total that is not a safe non-negative whole number', () => {
+    expect(isRecordCatalogueTotalsRequest(makeTotalsRequest({ ...VALID_TOTALS, l: -1 }))).toBe(
+      false,
+    );
+    expect(isRecordCatalogueTotalsRequest(makeTotalsRequest({ ...VALID_TOTALS, l: 1.5 }))).toBe(
+      false,
+    );
+    expect(isRecordCatalogueTotalsRequest(makeTotalsRequest({ ...VALID_TOTALS, l: '1761' }))).toBe(
+      false,
+    );
+  });
+
+  it('should reject a total above the bound the catalogue could ever reach', () => {
+    expect(
+      isRecordCatalogueTotalsRequest(makeTotalsRequest({ ...VALID_TOTALS, c: MAX_CATALOGUE_TOTAL })),
+    ).toBe(true);
+    expect(
+      isRecordCatalogueTotalsRequest(
+        makeTotalsRequest({ ...VALID_TOTALS, c: MAX_CATALOGUE_TOTAL + 1 }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('isRecordCatalogueTotalsResponse', () => {
+  it('should accept the confirmation and reject anything else', () => {
+    expect(isRecordCatalogueTotalsResponse({ recorded: true })).toBe(true);
+    expect(isRecordCatalogueTotalsResponse({ recorded: 1 })).toBe(false);
+    expect(isRecordCatalogueTotalsResponse({ error: 'invalid-request' })).toBe(false);
+    expect(isRecordCatalogueTotalsResponse(undefined)).toBe(false);
+  });
+});
+
 describe('isGetCollectionSummaryRequest', () => {
   it('should accept the summary request and reject anything else', () => {
     expect(isGetCollectionSummaryRequest({ type: GET_COLLECTION_SUMMARY_MESSAGE })).toBe(true);
@@ -96,6 +164,7 @@ describe('isClearCollectionIndexRequest', () => {
 describe('isCollectionIndexMessage', () => {
   it('should recognize a message of this feature even when its payload is invalid', () => {
     expect(isCollectionIndexMessage({ type: RECORD_COLLECTION_CARDS_MESSAGE })).toBe(true);
+    expect(isCollectionIndexMessage({ type: RECORD_CATALOGUE_TOTALS_MESSAGE })).toBe(true);
     expect(isCollectionIndexMessage({ type: GET_COLLECTION_SUMMARY_MESSAGE })).toBe(true);
     expect(isCollectionIndexMessage({ type: CLEAR_COLLECTION_INDEX_MESSAGE })).toBe(true);
   });
@@ -128,11 +197,42 @@ describe('isCollectionSummaryResponse', () => {
           totalCards: 0,
           uncategorizedCount: 0,
           lastSeenAt: null,
+          catalogue: null,
           categories: [],
           rarities: [],
         },
       }),
     ).toBe(true);
+  });
+
+  it('should reject a summary whose catalogue totals are not readable', () => {
+    expect(
+      isCollectionSummaryResponse({
+        summary: { ...VALID_SUMMARY, catalogue: { totals: VALID_TOTALS } },
+      }),
+    ).toBe(false);
+    expect(
+      isCollectionSummaryResponse({
+        summary: {
+          ...VALID_SUMMARY,
+          catalogue: { totals: { ...VALID_TOTALS, l: 'beaucoup' }, observedAt: 1 },
+        },
+      }),
+    ).toBe(false);
+    expect(isCollectionSummaryResponse({ summary: { ...VALID_SUMMARY, catalogue: {} } })).toBe(
+      false,
+    );
+  });
+
+  it('should reject a catalogue reading whose date is not a moment in time', () => {
+    // The popup turns it into a date: none of these would read as one.
+    for (const observedAt of [Number.NaN, Number.POSITIVE_INFINITY, -1]) {
+      expect(
+        isCollectionSummaryResponse({
+          summary: { ...VALID_SUMMARY, catalogue: { totals: VALID_TOTALS, observedAt } },
+        }),
+      ).toBe(false);
+    }
   });
 
   it('should reject an error answer and a missing summary', () => {

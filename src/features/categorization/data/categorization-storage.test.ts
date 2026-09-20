@@ -20,6 +20,9 @@ async function fillStorage(): Promise<void> {
     { key: 'local:wme:class:category:Q484170', value: CLASS_ENTRY },
     { key: 'local:wme:class:occupation:Q33999', value: { ...CLASS_ENTRY, target: 'cinema' } },
     { key: 'local:wme:collection-index:v1', value: {} },
+    // Facts the site displays about the game, neither personal data nor a
+    // cache of Wikimedia: emptying the caches must leave them alone.
+    { key: 'local:wme:catalogue-totals:v1', value: { totals: {}, observedAt: 0 } },
     { key: 'local:wme:settings:v1', value: { categoryBadges: false } },
     // A pause on a rate limited host must survive: losing it would send the
     // next batch straight back to the host that asked us to wait.
@@ -75,6 +78,7 @@ describe('createCategorizationStorage', () => {
 
     expect(await maintenance.countEntries()).toEqual({ cardFacts: 0, classTargets: 0 });
     expect(Object.keys(await storage.snapshot('local')).sort()).toEqual([
+      'wme:catalogue-totals:v1',
       'wme:collection-index:v1',
       'wme:cooldown:v1:query.wikidata.org',
       'wme:settings:v1',

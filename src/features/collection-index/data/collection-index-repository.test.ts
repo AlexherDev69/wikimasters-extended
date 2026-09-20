@@ -133,6 +133,19 @@ describe('createCollectionIndexRepository', () => {
     expect(Object.keys(await storage.snapshot('local'))).toHaveLength(0);
   });
 
+  it('should keep the catalogue totals when the index is cleared', async () => {
+    const { clock } = makeClock();
+    const repository = makeRepository(clock);
+    // What the catalogue announces is a fact about the game, not a card of the
+    // user: resetting their index must not take it away.
+    await storage.setItem('local:wme:catalogue-totals:v1', { totals: {}, observedAt: FIRST_TIME });
+    await repository.upsert([{ title: 'Alpha', rarity: 'c' }]);
+
+    await repository.clear();
+
+    expect(Object.keys(await storage.snapshot('local'))).toEqual(['wme:catalogue-totals:v1']);
+  });
+
   it('should keep serving the next operations when one of them fails', async () => {
     const { clock } = makeClock();
     const repository = makeRepository(clock);

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { CategoryId } from '../../categorization/domain/category';
+import type { CatalogueObservation, CatalogueTotals } from '../domain/catalogue-totals';
 import type { CategorySummary, CollectionSummary } from '../domain/collection-summary';
 import {
   renderEmptySummary,
@@ -10,6 +11,23 @@ import {
 } from './summary-view';
 
 const SEEN_AT = new Date('2026-02-01T12:00:00.000Z').getTime();
+
+/** The totals the catalogue page of the site announced when it was read. */
+const TOTALS: CatalogueTotals = {
+  l: 1761,
+  ur: 12_368,
+  sr: 66_788,
+  r: 179_657,
+  pc: 516_762,
+  c: 1_996_125,
+};
+
+const CATALOGUE: CatalogueObservation = { totals: TOTALS, observedAt: SEEN_AT };
+
+/** French formatting groups the thousands with a narrow no-break space. */
+function withoutSpaces(text: string): string {
+  return text.replace(/\s/g, '');
+}
 
 function makeCategory(
   categoryId: CategoryId,
@@ -24,6 +42,7 @@ function makeSummary(overrides: Partial<CollectionSummary> = {}): CollectionSumm
     totalCards: 4,
     uncategorizedCount: 0,
     lastSeenAt: SEEN_AT,
+    catalogue: null,
     categories: [makeCategory('film_tv', 3), makeCategory('place', 1)],
     rarities: [
       { rarity: 'l', count: 1 },
@@ -113,6 +132,76 @@ describe('renderSummary', () => {
     const screen = renderSummary(makeState(), makeCallbacks());
 
     expect(textsOf(screen, '.wme-rarity-code')).toEqual(['L', 'C']);
+  });
+
+  it('should tell where to find the totals when the catalogue page was never opened', () => {
+    const screen = renderSummary(makeState(), makeCallbacks());
+
+    expect(textOf(screen, '.wme-catalogue')).toBe(
+      'Ouvre la page « Toutes les cartes » du site pour afficher ta complétion par rareté.',
+    );
+    // The strip stays what it is today: the rarities of the index alone.
+    expect(screen.querySelectorAll('.wme-rarity .wme-share')).toHaveLength(0);
+  });
+
+  it('should show one completion line per rarity of the game when the totals are known', () => {
+    const state = makeState({ summary: makeSummary({ catalogue: CATALOGUE }) });
+
+    const screen = renderSummary(state, makeCallbacks());
+
+    expect(textsOf(screen, '.wme-rarity-code')).toEqual(['L', 'UR', 'SR', 'R', 'PC', 'C']);
+  });
+
+  it('should show the owned count against the total of the catalogue in French', () => {
+    const state = makeState({
+      summary: makeSummary({ catalogue: CATALOGUE, rarities: [{ rarity: 'l', count: 3 }] }),
+    });
+
+    const counts = textsOf(renderSummary(state, makeCallbacks()), '.wme-rarity .wme-count');
+
+    expect(withoutSpaces(counts[0] ?? '')).toBe('3/1761');
+    expect(counts[0]).toContain(' / ');
+  });
+
+  it('should show a share with two decimals at most, including zero and a full one', () => {
+    const state = makeState({
+      summary: makeSummary({
+        catalogue: CATALOGUE,
+        rarities: [
+          { rarity: 'l', count: 3 },
+          { rarity: 'ur', count: 12_368 },
+        ],
+      }),
+    });
+
+    const shares = textsOf(renderSummary(state, makeCallbacks()), '.wme-rarity .wme-share');
+
+    // 3 of 1 761 legendaries, every ultra rare, and nothing of the rest.
+    expect(shares[0]).toBe('0,17 %');
+    expect(shares[1]).toBe('100 %');
+    expect(shares[2]).toBe('0 %');
+  });
+
+  it('should show a floor rather than zero when a real share rounds down to nothing', () => {
+    const state = makeState({
+      summary: makeSummary({ catalogue: CATALOGUE, rarities: [{ rarity: 'c', count: 88 }] }),
+    });
+
+    const shares = textsOf(renderSummary(state, makeCallbacks()), '.wme-rarity .wme-share');
+
+    // 88 of 1 996 125 commons is 0,004 %, which two decimals cannot show: "0 %"
+    // is left to mean that not a single card of that rarity is owned.
+    expect(shares[5]).toBe('< 0,01 %');
+    expect(shares[0]).toBe('0 %');
+  });
+
+  it('should say when the totals were read and what the completion is computed on', () => {
+    const state = makeState({ summary: makeSummary({ catalogue: CATALOGUE }) });
+
+    const line = textOf(renderSummary(state, makeCallbacks()), '.wme-catalogue');
+
+    expect(line).toContain('Totaux du catalogue relevés le');
+    expect(line).toContain('Complétion calculée sur les cartes vues dans ta collection.');
   });
 
   it('should open the list of a category when its row is clicked', () => {
