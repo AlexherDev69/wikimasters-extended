@@ -192,7 +192,13 @@ Versions retenues : WXT 0.21, Vitest 5 avec happy-dom, ESLint 10, Knip 6, TypeSc
 - CI GitHub Actions : lint, test, build, knip
 - Vérification : l'extension se charge sur le site et journalise le nombre de cartes détectées
 
-### Phase 2 : détection des cartes (content script)
+### Phase 2 : détection des cartes (content script) (faite le 2026-09-20)
+
+Écarts assumés par rapport à la ligne ci-dessous :
+
+- Le timer du MutationObserver n'est pas réarmé par les mutations suivantes (un scan au plus toutes les 200 ms). Un debounce classique ne se déclencherait jamais sur une page qui mute en continu, comme les comptes à rebours du marché
+- Pas de code dédié à la navigation client : l'observateur posé sur `body` voit déjà le changement de DOM
+- Pas de secours par `img[alt]` pour le titre : la détection exige déjà un `h3`, le secours serait du code mort
 
 - `selectors.ts`, extracteur `{ title, description, rarity }`, MutationObserver avec debounce, suivi de la navigation client
 - Vérification : tests sur fixtures de la phase 0, contrôle manuel sur `/collection` et `/pulls`

@@ -4,7 +4,7 @@ Extension Chrome (Manifest V3) en lecture seule pour [wiki-masters.com](https://
 
 Objectif : afficher sur chaque carte une catégorie (via Wikidata) et un lien Letterboxd pour les films et personnalités du cinéma. Elle ne clique jamais, ne scrolle pas, ne saisit rien et n'intercepte aucun trafic réseau.
 
-État actuel (phase 1) : socle du projet et détection des cartes. L'extension se charge sur le site et journalise le nombre de cartes présentes au chargement de la page. Le suivi des cartes qui arrivent ensuite (rendu React, pagination) relève de la phase 2.
+État actuel (phase 2) : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), et en extrait le titre, la description et la rareté. Elle ne fait encore que les journaliser. La catégorisation via Wikidata relève de la phase 3.
 
 Voir [docs/PLAN.md](docs/PLAN.md) pour l'analyse de faisabilité et la feuille de route complète.
 
@@ -38,7 +38,7 @@ L'extension se charge dans ton Chrome habituel, celui où tu es connecté au sit
 
 ## Journaux
 
-Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l'extension. En développement, tous les niveaux sont affichés. En production, seuls `warn` et `error` le sont : le message "Cards detected" n'est donc visible qu'avec `pnpm dev`.
+Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l'extension. En développement, tous les niveaux sont affichés. En production, seuls `warn` et `error` le sont : le message "New cards detected" n'est donc visible qu'avec `pnpm dev`. Il apparaît une fois par lot de cartes encore jamais vues depuis le chargement de la page, avec leur titre, leur rareté et leur description.
 
 ## Contrainte fondamentale
 
