@@ -1,4 +1,4 @@
-import type { CardImage } from '../../missing-image/domain/card-image';
+import type { CommonsFile } from '../../missing-image/domain/card-image';
 
 /**
  * External identifiers fetched with the rest of the facts because the same
@@ -43,6 +43,9 @@ export interface EntityFacts {
   /**
    * First image property the item holds, in the order of IMAGE_PROPERTIES.
    * Null when Wikidata knows none, which is the case of three cards in four.
+   *
+   * The file only: the address of its thumbnail is resolved and cached apart,
+   * with a lifetime of its own, so it is not one of the facts of the card.
    */
-  image: CardImage | null;
+  image: CommonsFile | null;
 }

@@ -1,10 +1,12 @@
 import { findChildWithAttribute } from '../../../core/dom/find-child-with-attribute';
 import { isCommonsFileName, type CardImage } from '../domain/card-image';
 import { commonsThumbnailUrl } from '../domain/commons-url';
+import { isWikimediaThumbnailUrl } from '../domain/thumbnail-url';
 import { findPictureArea } from './find-placeholder';
 import {
   CARD_IMAGE_ATTRIBUTE,
   CARD_IMAGE_SELECTOR,
+  IMAGE_FAILED_ATTRIBUTE,
   IMAGE_FILE_ATTRIBUTE,
   IMAGE_KIND_ATTRIBUTE,
   IMAGE_LOADED_ATTRIBUTE,
@@ -26,11 +28,21 @@ const IMAGE_CLASS = 'wme-card-image-media';
 const MARK_CLASS = 'wme-card-image-source';
 
 /**
- * What the mark reads. It names the source of the picture, so it doubles as
- * the shortest attribution there is, and it tells at a glance that the picture
- * was added by the extension rather than served by the site.
+ * What the mark reads: the initial of Commons, in a small disc in the corner
+ * of the picture. It says at a glance that the picture was added by the
+ * extension rather than served by the site.
+ *
+ * A single letter rather than the word: the word was wide enough to share its
+ * row with the category badge, which is drawn above ours and covered its
+ * start on a narrow card. The source is spelled out in full, with its author
+ * and its licence, in the credit line of the detail modal, which is the only
+ * place that has the room for it.
+ *
+ * Drawn as a FILLED disc and never as a letter in a thin ring: a ringed C is
+ * the copyright glyph, and these files are under a free licence, so that
+ * shape would say the opposite of the truth.
  */
-const IMAGE_SOURCE_LABEL = 'Commons';
+const IMAGE_SOURCE_LABEL = 'C';
 
 /** The image is decorative: the card already carries its title as text. */
 const IMAGE_ALT = '';
@@ -48,6 +60,7 @@ const DRAGGABLE_ATTRIBUTE = 'draggable';
 const NOT_DRAGGABLE = 'false';
 
 const LOAD_EVENT = 'load';
+const ERROR_EVENT = 'error';
 
 /**
  * The card roots one of our containers was appended in. Three cards out of
@@ -76,14 +89,22 @@ function buildContainer(document: Document, image: CardImage, url: string): HTML
   // No `crossorigin`: the Commons address answers with redirects that carry no
   // CORS header, and a cross origin request would simply fail.
 
-  // The listener is added BEFORE the source, because an image the browser
-  // already holds fires its `load` as soon as the source is set.
+  // Both listeners are added BEFORE the source, because an image the browser
+  // already holds fires its `load` as soon as the source is set, and a source
+  // it knows to be broken fires its `error` just as early.
   //
-  // There is no `error` listener: the container is invisible until this one
-  // marks it, so a file that never arrives leaves the placeholder of the site
-  // in view and there is nothing to undo. An empty listener would be dead code.
+  // Each one marks the container once and for all: the container is built
+  // again rather than patched whenever the card changes, so neither mark can
+  // ever be left over from another picture, and a sync that finds the right
+  // file writes nothing whatever the marks say.
   picture.addEventListener(LOAD_EVENT, () => {
     container.setAttribute(IMAGE_LOADED_ATTRIBUTE, '');
+  });
+  picture.addEventListener(ERROR_EVENT, () => {
+    // Everything of ours goes away with this mark, the loading state included:
+    // what is left on screen is the placeholder of the site, exactly as on a
+    // card the extension knows no picture for.
+    container.setAttribute(IMAGE_FAILED_ATTRIBUTE, '');
   });
   picture.src = url;
 
@@ -102,10 +123,34 @@ function buildContainer(document: Document, image: CardImage, url: string): HTML
 }
 
 /**
+ * Address the picture is asked for at: the one resolved by the service worker
+ * when there is one, and the one built from the file name otherwise. The
+ * resolved address is checked again here, whatever the caller believes it
+ * holds: this is the last step before an `src`.
+ *
+ * The fallback is not a failure, it is the path that shipped before this
+ * phase: the same picture, reached through two redirects the browser is told
+ * not to cache.
+ */
+function thumbnailAddress(image: CardImage): string {
+  return isWikimediaThumbnailUrl(image.thumbnailUrl)
+    ? image.thumbnailUrl
+    : commonsThumbnailUrl(image.fileName);
+}
+
+/**
  * True while the container already shows exactly this image. Its `img` and its
  * mark are read back as well, the way the credit line reads its link back: a
  * container that lost either one would otherwise stay half drawn for as long
  * as the site keeps that card on screen.
+ *
+ * The loading marks are deliberately NOT compared. They are written by our own
+ * events, after the container was built, and the content script observes
+ * document.body: a sync that rebuilt the container because it had just been
+ * marked as loaded would mark the new one as loading, and never come to rest.
+ * The address is not compared either, for the same reason and one more: a
+ * picture already on screen must not be fetched again just because a faster
+ * address for it has arrived in the meantime.
  */
 function showsImage(container: Element, image: CardImage): boolean {
   return (
@@ -168,7 +213,7 @@ export function applyCardImage(cardRoot: HTMLElement, image: CardImage | null): 
   // rather than patched, so the source and the loaded mark can never disagree.
   existing?.remove();
   pictureArea.appendChild(
-    buildContainer(cardRoot.ownerDocument, safeImage, commonsThumbnailUrl(safeImage.fileName)),
+    buildContainer(cardRoot.ownerDocument, safeImage, thumbnailAddress(safeImage)),
   );
   rootsWithContainer.add(cardRoot);
 }

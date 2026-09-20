@@ -8,6 +8,8 @@ export interface StorageStats {
   cardFacts: number;
   /** Wikidata classes whose category or trade is cached. */
   classTargets: number;
+  /** Commons files whose thumbnail address is cached, resolved or not. */
+  thumbnailUrls: number;
   /**
    * True while an installation still holds the keys of the collection index,
    * a feature this version removed. Not a count: the page offers to delete

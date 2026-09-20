@@ -1,6 +1,6 @@
 import { storage, type StorageItemKey } from '#imports';
 import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
-import { isCardImage } from '../../missing-image/domain/card-image';
+import { isCommonsFile } from '../../missing-image/domain/card-image';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
 import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '../domain/ports';
 
@@ -55,7 +55,7 @@ function isEntityFacts(value: unknown): value is EntityFacts {
     isStringArray(value['parentClassIds']) &&
     isStringArray(value['occupationIds']) &&
     isExternalIds(value['externalIds']) &&
-    (value['image'] === null || isCardImage(value['image']))
+    (value['image'] === null || isCommonsFile(value['image']))
   );
 }
 

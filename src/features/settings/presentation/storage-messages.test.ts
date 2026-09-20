@@ -11,7 +11,7 @@ import {
   REMOVE_LEGACY_INDEX_DATA_MESSAGE,
 } from './storage-messages';
 
-const STATS = { cardFacts: 12, classTargets: 4, hasLegacyIndexData: true };
+const STATS = { cardFacts: 12, classTargets: 4, thumbnailUrls: 7, hasLegacyIndexData: true };
 
 describe('isGetStorageStatsRequest', () => {
   it('should accept the message the options page sends', () => {
@@ -54,19 +54,24 @@ describe('isStorageStatsResponse', () => {
   it('should accept counts at zero and no old data left', () => {
     expect(
       isStorageStatsResponse({
-        stats: { cardFacts: 0, classTargets: 0, hasLegacyIndexData: false },
+        stats: { cardFacts: 0, classTargets: 0, thumbnailUrls: 0, hasLegacyIndexData: false },
       }),
     ).toBe(true);
   });
 
   it('should refuse an answer missing one of the counts', () => {
     expect(
-      isStorageStatsResponse({ stats: { cardFacts: 1, hasLegacyIndexData: false } }),
+      isStorageStatsResponse({ stats: { cardFacts: 1, thumbnailUrls: 0, hasLegacyIndexData: false } }),
+    ).toBe(false);
+    expect(
+      isStorageStatsResponse({ stats: { cardFacts: 1, classTargets: 2, hasLegacyIndexData: false } }),
     ).toBe(false);
   });
 
   it('should refuse an answer that does not say whether old data is left', () => {
-    expect(isStorageStatsResponse({ stats: { cardFacts: 1, classTargets: 2 } })).toBe(false);
+    expect(
+      isStorageStatsResponse({ stats: { cardFacts: 1, classTargets: 2, thumbnailUrls: 0 } }),
+    ).toBe(false);
     expect(isStorageStatsResponse({ stats: { ...STATS, hasLegacyIndexData: 'true' } })).toBe(false);
   });
 

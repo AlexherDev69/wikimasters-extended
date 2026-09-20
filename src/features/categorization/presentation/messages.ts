@@ -8,7 +8,7 @@ import {
   isPersonSubtypeId,
   type CardCategory,
 } from '../domain/category';
-import type { CardToCategorize } from '../domain/categorize-cards';
+import type { CardToCategorize, CategorizeCardsOptions } from '../domain/categorize-cards';
 
 export const CATEGORIZE_CARDS_MESSAGE = 'wikimasters-extended:categorize-cards';
 
@@ -21,7 +21,24 @@ export const MAX_TITLE_LENGTH = 300;
 export interface CategorizeCardsRequest {
   type: typeof CATEGORIZE_CARDS_MESSAGE;
   cards: CardToCategorize[];
+  /**
+   * State of the missing images setting when the batch left the content
+   * script. The service worker resolves the addresses of the pictures only for
+   * a page that will draw them, so a feature switched off stops its traffic at
+   * once, which is what the options page promises.
+   */
+  resolveImageUrls: boolean;
 }
+
+/**
+ * Asks the service worker for a batch, from the content script. The options
+ * travel with the cards rather than being read on the other side: only the
+ * page knows what it is going to draw.
+ */
+export type RequestCategories = (
+  cards: readonly CardToCategorize[],
+  options: CategorizeCardsOptions,
+) => Promise<CardCategory[]>;
 
 export interface CategorizeCardsResponse {
   cards: CardCategory[];
@@ -51,7 +68,18 @@ function isCardToCategorize(value: unknown): value is CardToCategorize {
   return isValidTitle(value['title']) && (description === null || typeof description === 'string');
 }
 
-/** Validates a message coming from the content script before it is acted on. */
+/**
+ * Validates a message coming from the content script before it is acted on.
+ *
+ * A message that does not say whether the addresses are wanted is refused like
+ * any other malformed one, rather than read as a yes or as a no: the field
+ * decides whether traffic leaves for a feature that may be switched off, and a
+ * state nobody stated is not a state to guess. Only our own content script
+ * sends this message, and it always sets the field; one left over by an
+ * extension update is torn down by its own context, which cannot reach the new
+ * service worker anyway. A refusal is not a silence either: the content script
+ * validates the answer it gets, logs the failure and retries the batch later.
+ */
 export function isCategorizeCardsRequest(message: unknown): message is CategorizeCardsRequest {
   if (!isRecord(message) || message['type'] !== CATEGORIZE_CARDS_MESSAGE) {
     return false;
@@ -59,7 +87,10 @@ export function isCategorizeCardsRequest(message: unknown): message is Categoriz
   const cards = message['cards'];
 
   return (
-    Array.isArray(cards) && cards.length <= MAX_CARDS_PER_REQUEST && cards.every(isCardToCategorize)
+    typeof message['resolveImageUrls'] === 'boolean' &&
+    Array.isArray(cards) &&
+    cards.length <= MAX_CARDS_PER_REQUEST &&
+    cards.every(isCardToCategorize)
   );
 }
 

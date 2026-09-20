@@ -32,7 +32,7 @@ function makeMaintenance(entries: CategorizationCacheCounts): FakeMaintenance {
       return cleared;
     },
     countEntries: (): Promise<CategorizationCacheCounts> =>
-      Promise.resolve(cleared ? { cardFacts: 0, classTargets: 0 } : entries),
+      Promise.resolve(cleared ? { cardFacts: 0, classTargets: 0, thumbnailUrls: 0 } : entries),
     clear: (): Promise<void> => {
       cleared = true;
       return Promise.resolve();
@@ -70,7 +70,7 @@ describe('createStorageMessageHandler', () => {
 
   beforeEach(() => {
     logger = makeLogger();
-    cacheMaintenance = makeMaintenance({ cardFacts: 12, classTargets: 4 });
+    cacheMaintenance = makeMaintenance({ cardFacts: 12, classTargets: 4, thumbnailUrls: 7 });
     legacyIndexData = makeLegacyData(true);
   });
 
@@ -107,7 +107,7 @@ describe('createStorageMessageHandler', () => {
       expect(sendResponse).toHaveBeenCalledOnce();
     });
     expect(sendResponse).toHaveBeenCalledWith({
-      stats: { cardFacts: 12, classTargets: 4, hasLegacyIndexData: true },
+      stats: { cardFacts: 12, classTargets: 4, thumbnailUrls: 7, hasLegacyIndexData: true },
     });
     expect(isStorageStatsResponse(sendResponse.mock.calls[0]?.[0])).toBe(true);
   });
@@ -122,7 +122,7 @@ describe('createStorageMessageHandler', () => {
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({
-        stats: { cardFacts: 12, classTargets: 4, hasLegacyIndexData: false },
+        stats: { cardFacts: 12, classTargets: 4, thumbnailUrls: 7, hasLegacyIndexData: false },
       });
     });
   });
@@ -188,7 +188,7 @@ describe('createStorageMessageHandler', () => {
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({
-        stats: { cardFacts: 0, classTargets: 0, hasLegacyIndexData: false },
+        stats: { cardFacts: 0, classTargets: 0, thumbnailUrls: 0, hasLegacyIndexData: false },
       });
     });
   });
@@ -215,7 +215,7 @@ describe('createStorageMessageHandler', () => {
   it('should answer an error when the clear fails', async () => {
     const failing: CategorizationCacheMaintenance = {
       countEntries: (): Promise<CategorizationCacheCounts> =>
-        Promise.resolve({ cardFacts: 0, classTargets: 0 }),
+        Promise.resolve({ cardFacts: 0, classTargets: 0, thumbnailUrls: 0 }),
       clear: (): Promise<void> => Promise.reject(new Error('storage down')),
     };
     const sendResponse = vi.fn<(response: StorageMessageResponse) => void>();

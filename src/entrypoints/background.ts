@@ -11,6 +11,8 @@ import { createTitleResolver } from '../features/categorization/data/title-resol
 import type { CategorizeCardsDeps } from '../features/categorization/domain/categorize-cards';
 import type { Clock } from '../features/categorization/domain/ports';
 import { createCategorizeMessageHandler } from '../features/categorization/presentation/handle-categorize-message';
+import { createThumbnailUrlCache } from '../features/missing-image/data/thumbnail-cache';
+import { createThumbnailUrlResolver } from '../features/missing-image/data/thumbnail-resolver';
 import { createLegacyIndexStorage } from '../features/settings/data/legacy-index-storage';
 import { createActionClickHandler } from '../features/settings/presentation/handle-action-click';
 import { createStorageMessageHandler } from '../features/settings/presentation/handle-storage-messages';
@@ -35,6 +37,9 @@ export default defineBackground({
       classRootsSource: createClassRootsSource(httpOptions),
       cardFactsCache: createCardFactsCache(systemClock),
       classTargetCache: createClassTargetCache(),
+      // The one new request of this phase, to the host the titles already go to.
+      thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
+      thumbnailUrlCache: createThumbnailUrlCache(systemClock),
       logger,
     };
     const handleCategorize = createCategorizeMessageHandler(deps);

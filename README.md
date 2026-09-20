@@ -34,7 +34,9 @@ Beaucoup de cartes n'ont pas d'illustration : le site affiche alors son propre l
 
 L'image vient de Wikidata, par les propriétés "image" (P18), "logo" (P154), "affiche" (P3383), "drapeau" (P41), "blason" (P94) et "collage" (P2716), dans cet ordre : la première que possède l'élément est retenue. Elle est demandée avec les autres faits de la carte, dans la requête qui existait déjà : l'extension n'envoie aucune requête supplémentaire. Le fichier lui-même est hébergé par Wikimedia Commons et c'est ton navigateur qui le charge, comme n'importe quelle image d'un article de Wikipédia. Les photos sont cadrées en plein (avec un léger décalage vers le haut, là où se trouvent les visages), les logos, drapeaux et blasons sont affichés en entier sur un fond uni.
 
-Les images posées par l'extension portent une petite mention "Commons" dans un coin : elles se distinguent ainsi des illustrations du site lui-même.
+Les images posées par l'extension portent une petite pastille "C" dans le coin bas droit : elles se distinguent ainsi des illustrations du site lui-même. La source complète, avec son auteur et sa licence, est écrite en toutes lettres dans la modale de détail.
+
+L'adresse exacte de l'image est résolue une seule fois, par l'API de Wikipédia, puis mémorisée sur ta machine : les affichages suivants vont droit à l'image, sans repasser par les deux redirections que le navigateur n'a pas le droit de mettre en cache. Pendant qu'une image est en route, un léger voile animé occupe sa place, et il disparaît dès qu'elle s'affiche. Si elle ne peut pas être chargée, tout ce que l'extension avait posé est retiré : il ne reste que le logo du site, comme si l'extension n'avait rien trouvé. Le voile est remplacé par une teinte fixe, sans animation, si ton système demande de réduire les animations.
 
 Les fichiers de Commons sont sous licence libre et demandent d'attribuer leur auteur : quand la modale de détail affiche une carte dont l'image vient de nous, une ligne "Image : Wikimedia Commons (auteur et licence)" est ajoutée avec un lien vers la page du fichier, où figurent l'auteur et la licence exacte. Le lien s'ouvre dans un nouvel onglet.
 
@@ -59,9 +61,9 @@ Un changement est enregistré immédiatement et un petit message "Enregistré" l
 
 Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Le filtre du panneau de catégories repart de zéro après une désactivation. Quand les quatre réglages sont désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata.
 
-Section "Données locales" : le nombre de cartes en cache de catégorisation et de classes Wikidata en cache, avec une action qui demande une confirmation sur place.
+Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et d'adresses d'images en cache, avec une action qui demande une confirmation sur place.
 
-- "Vider le cache de catégorisation" efface les faits Wikidata gardés par carte et les catégories gardées par classe. Les cartes seront redemandées à `fr.wikipedia.org` et à `query.wikidata.org` la prochaine fois que tu les affiches. Les réglages et les pauses en cours sur un hôte ne sont pas touchés.
+- "Vider le cache de catégorisation" efface les faits Wikidata gardés par carte, les catégories gardées par classe et les adresses gardées par image. Les cartes seront redemandées à `fr.wikipedia.org` et à `query.wikidata.org` la prochaine fois que tu les affiches. Les réglages et les pauses en cours sur un hôte ne sont pas touchés.
 
 Une version précédente de l'extension tenait un index de ta collection. Il a été retiré, et sur une installation mise à jour un second bouton, "Supprimer les données de l'ancien index", apparaît le temps de supprimer ses deux entrées restantes. Il disparaît dès qu'elles ne sont plus là, et une installation neuve ne le voit jamais.
 
@@ -112,7 +114,8 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - Les résultats sont mis en cache localement dans le stockage de l'extension (`chrome.storage.local`), sur ta machine uniquement : 90 jours pour une carte résolue, 7 jours pour une carte introuvable.
 - Les réglages de la page d'options sont stockés au même endroit, sur ta machine uniquement.
 - La page d'options est une page de l'extension : elle lit et efface uniquement ce qui est stocké localement, et ne fait aucun appel réseau.
-- Les images manquantes sont chargées par ton navigateur depuis `commons.wikimedia.org` et les serveurs de vignettes de Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : Wikimedia reçoit une demande de fichier, jamais la page qui l'affiche. Ce sont des requêtes de ton navigateur, comme pour n'importe quelle image d'un article de Wikipédia ; les appels de l'extension elle-même, eux, ne changent pas.
+- Les images manquantes sont chargées par ton navigateur depuis `commons.wikimedia.org` et les serveurs de vignettes de Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : Wikimedia reçoit une demande de fichier, jamais la page qui l'affiche. Ce sont des requêtes de ton navigateur, comme pour n'importe quelle image d'un article de Wikipédia.
+- La résolution de l'adresse de ces images est, elle, un appel de l'extension : il part vers `fr.wikipedia.org`, sans cookie, exactement comme celui qui résout les titres des cartes. Seuls des noms de fichiers publics de Wikimedia Commons y sont envoyés. Aucun autre hôte n'est contacté.
 - Si tu désactives les quatre fonctionnalités dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.
 
 ## Contrainte fondamentale

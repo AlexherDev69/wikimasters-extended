@@ -21,7 +21,11 @@ const REAL_PICTURE_TITLE = 'Dvorichté';
 /** The card put in the modal below, which the site shows its logo for. */
 const PLACEHOLDER_TITLE = 'Adan Canto';
 
-const PORTRAIT: CardImage = { fileName: 'Adan Canto 2015.jpg', kind: 'picture' };
+const PORTRAIT: CardImage = {
+  fileName: 'Adan Canto 2015.jpg',
+  kind: 'picture',
+  thumbnailUrl: null,
+};
 
 const CREDIT_TEXT = 'Image : Wikimedia Commons (auteur et licence)';
 

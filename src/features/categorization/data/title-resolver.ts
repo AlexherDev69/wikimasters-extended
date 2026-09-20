@@ -7,6 +7,7 @@ import {
 } from '../../../core/config/wikimedia';
 import { chunk } from '../../../core/array/chunk';
 import { fetchJson, type FetchJsonOptions } from '../../../core/http/fetch-json';
+import { parseTitleMappings } from '../../../core/mediawiki/title-mappings';
 import { isRecord } from '../../../core/types/guards';
 import type { TitleResolver } from '../domain/ports';
 import { isQid } from './wikidata-uri';
@@ -35,19 +36,6 @@ interface ParsedPages {
   redirects: Map<string, string>;
   /** Final title to QID, null for a missing page or a page without a Wikidata item. */
   qidByTitle: Map<string, string | null>;
-}
-
-function parseTitleMappings(raw: unknown): Map<string, string> {
-  const mappings = new Map<string, string>();
-  if (!Array.isArray(raw)) {
-    return mappings;
-  }
-  for (const entry of raw) {
-    if (isRecord(entry) && typeof entry['from'] === 'string' && typeof entry['to'] === 'string') {
-      mappings.set(entry['from'], entry['to']);
-    }
-  }
-  return mappings;
 }
 
 function parsePages(raw: unknown): Map<string, string | null> {

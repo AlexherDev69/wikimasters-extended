@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   isCardImage,
+  isCommonsFile,
   isCommonsFileName,
   MAX_COMMONS_FILE_NAME_LENGTH,
-  type CardImage,
+  type CommonsFile,
 } from './card-image';
 
 /** Real file names of Commons, taken from cards of the site. */
@@ -15,7 +16,11 @@ const REAL_FILE_NAMES: readonly string[] = [
   'Dharma Wheel (2).svg',
 ];
 
-const VALID_IMAGE: CardImage = { fileName: 'Georges Mandel.jpg', kind: 'picture' };
+const VALID_FILE: CommonsFile = { fileName: 'Georges Mandel.jpg', kind: 'picture' };
+
+/** A real answer of the frwiki API, which the card carries beside the file. */
+const THUMBNAIL_URL =
+  'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Georges_Mandel.jpg/500px-Georges_Mandel.jpg';
 
 /** Written by code point: a raw control character is invisible in a source file. */
 const NUL_CHARACTER = String.fromCodePoint(0x00);
@@ -91,27 +96,71 @@ describe('isCommonsFileName', () => {
   });
 });
 
-describe('isCardImage', () => {
-  it('should accept an image of each kind', () => {
-    expect(isCardImage(VALID_IMAGE)).toBe(true);
-    expect(isCardImage({ fileName: 'Flag of the Azores.svg', kind: 'emblem' })).toBe(true);
+describe('isCommonsFile', () => {
+  it('should accept a file of each kind', () => {
+    expect(isCommonsFile(VALID_FILE)).toBe(true);
+    expect(isCommonsFile({ fileName: 'Flag of the Azores.svg', kind: 'emblem' })).toBe(true);
+  });
+
+  it('should accept a file written before the address was part of the shape', () => {
+    // This is what every entry of the card facts cache holds: the file alone.
+    // Asking those entries for an address would make the whole cache a miss.
+    expect(isCommonsFile({ fileName: 'Georges Mandel.jpg', kind: 'picture' })).toBe(true);
   });
 
   it('should refuse an unknown kind', () => {
-    expect(isCardImage({ ...VALID_IMAGE, kind: 'photo' })).toBe(false);
-    expect(isCardImage({ ...VALID_IMAGE, kind: null })).toBe(false);
+    expect(isCommonsFile({ ...VALID_FILE, kind: 'photo' })).toBe(false);
+    expect(isCommonsFile({ ...VALID_FILE, kind: null })).toBe(false);
   });
 
   it('should refuse a file name the guard rejects', () => {
-    expect(isCardImage({ ...VALID_IMAGE, fileName: 'Georges Mandel.pdf' })).toBe(false);
-    expect(isCardImage({ ...VALID_IMAGE, fileName: 'Georges/Mandel.jpg' })).toBe(false);
+    expect(isCommonsFile({ ...VALID_FILE, fileName: 'Georges Mandel.pdf' })).toBe(false);
+    expect(isCommonsFile({ ...VALID_FILE, fileName: 'Georges/Mandel.jpg' })).toBe(false);
   });
 
   it('should refuse a value that is not a record with both fields', () => {
+    expect(isCommonsFile(null)).toBe(false);
+    expect(isCommonsFile('Georges Mandel.jpg')).toBe(false);
+    expect(isCommonsFile({ fileName: 'Georges Mandel.jpg' })).toBe(false);
+    expect(isCommonsFile({ kind: 'picture' })).toBe(false);
+    expect(isCommonsFile([VALID_FILE])).toBe(false);
+  });
+});
+
+describe('isCardImage', () => {
+  it('should accept an image with a resolved address and one without', () => {
+    expect(isCardImage({ ...VALID_FILE, thumbnailUrl: THUMBNAIL_URL })).toBe(true);
+    expect(isCardImage({ ...VALID_FILE, thumbnailUrl: null })).toBe(true);
+  });
+
+  it('should refuse an address outside the Wikimedia thumbnail hosts', () => {
+    const refused = [
+      'https://upload.wikimedia.org.evil.example/500px-Georges_Mandel.jpg',
+      'http://upload.wikimedia.org/500px-Georges_Mandel.jpg',
+      'javascript:alert(1)',
+      42,
+      undefined,
+    ];
+
+    for (const thumbnailUrl of refused) {
+      expect(isCardImage({ ...VALID_FILE, thumbnailUrl })).toBe(false);
+    }
+  });
+
+  it('should refuse an image carrying no address field at all', () => {
+    expect(isCardImage(VALID_FILE)).toBe(false);
+  });
+
+  it('should refuse a file name or a kind the guard rejects', () => {
+    expect(isCardImage({ ...VALID_FILE, fileName: 'Georges Mandel.pdf', thumbnailUrl: null })).toBe(
+      false,
+    );
+    expect(isCardImage({ ...VALID_FILE, kind: 'photo', thumbnailUrl: null })).toBe(false);
+  });
+
+  it('should refuse a value that is not a record', () => {
     expect(isCardImage(null)).toBe(false);
     expect(isCardImage('Georges Mandel.jpg')).toBe(false);
-    expect(isCardImage({ fileName: 'Georges Mandel.jpg' })).toBe(false);
-    expect(isCardImage({ kind: 'picture' })).toBe(false);
-    expect(isCardImage([VALID_IMAGE])).toBe(false);
+    expect(isCardImage([{ ...VALID_FILE, thumbnailUrl: null }])).toBe(false);
   });
 });

@@ -28,8 +28,9 @@ const PRIVACY_ITEMS: readonly string[] = [
   "Rien n'est envoyé à wiki-masters.com, ni à Letterboxd, ni à aucun autre serveur. Le lien " +
     'Letterboxd est seulement construit à partir des identifiants publics de Wikidata.',
   'Les images manquantes sont chargées par ton navigateur depuis Wikimedia Commons, sans ' +
-    "référent, exactement comme les photos d'un article de Wikipédia. L'extension, elle, ne " +
-    "contacte toujours que Wikipédia et Wikidata.",
+    "référent, exactement comme les photos d'un article de Wikipédia. L'extension, elle, demande " +
+    "l'adresse exacte de ces images à fr.wikipedia.org, sans cookie, et ne contacte toujours que " +
+    'Wikipédia et Wikidata.',
   "L'extension ne garde aucune liste de tes cartes : rien de ta collection n'est enregistré. " +
     'Tout le reste (caches, réglages) reste dans le stockage local de ton navigateur, sur cette ' +
     'machine uniquement.',
