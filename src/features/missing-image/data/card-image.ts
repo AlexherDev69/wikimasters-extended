@@ -53,9 +53,9 @@ const LOAD_EVENT = 'load';
  * The card roots one of our containers was appended in. Three cards out of
  * four carry a picture of their own and have no placeholder at all: without
  * this set, each of them would pay a full subtree query on every scan, looking
- * for a container that was never added. A mark left behind by
+ * for a container that was never added. A card left in `rootsWithContainer` by
  * `removeCardImages` costs one query the next time that card is synced, and is
- * dropped right there.
+ * dropped from the set right there.
  */
 const rootsWithContainer = new WeakSet<HTMLElement>();
 

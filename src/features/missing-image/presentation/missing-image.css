@@ -64,7 +64,23 @@
 [data-wme-card-image] .wme-card-image-source {
   position: absolute;
   right: 4px;
-  bottom: 4px;
+  /*
+   * One row above the bottom of the picture area, which the category badge
+   * already occupies: it sits at `bottom: calc(55% + 4px)` of the card root,
+   * and the picture area ends on that same 45 % line, so inside our container
+   * that badge is exactly 4 px above the bottom. The badge is drawn above our
+   * container, so a long label such as "Science et concept" would cover the
+   * start of the mark on a narrow grid card and leave "mons" to read.
+   *
+   * 4 px is the offset of the badge, 21 px its tallest box (11 px of text at a
+   * line height of 1.35, plus 2 px of padding and 1 px of border on each
+   * side), and 3 px the gap between the two rows.
+   *
+   * The top of the picture area is not free either: the rarity badge holds its
+   * left corner and the favourite button of the large format its right one,
+   * both drawn above our container as well.
+   */
+  bottom: 28px;
   /*
    * Above our own image, and no further: the container is positioned and
    * carries a z-index of its own, so it is a stacking context and this mark
@@ -73,20 +89,21 @@
   z-index: 1;
   /* Shown only once our own load listener marks the container, see below. */
   display: none;
-  box-sizing: border-box;
-  max-width: calc(100% - 8px);
   padding: 1px 4px;
   border-radius: 999px;
   background-color: rgba(9, 12, 17, 0.72);
   /* The card is clickable everywhere: our mark must never take that click. */
   pointer-events: none;
   /*
-   * Smaller than the category badge, and sized on the viewport for the same
-   * reason: a card cannot become a container without restyling a node of the
+   * The stack and the weight of the category badge, so the two marks of the
+   * extension read as one thing whatever font the site gives its cards. The
+   * size is smaller, and follows the viewport for the same reason as the
+   * badge: a card cannot become a container without restyling a node of the
    * site, so the two card formats differ only by the size of their root.
    */
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: clamp(7px, 0.6vw, 9px);
+  font-weight: 500;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.85);
   white-space: nowrap;

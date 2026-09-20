@@ -123,7 +123,7 @@ describe('applyCardImage', () => {
 
     applyCardImage(cardRoot, PORTRAIT);
 
-    expect(cardRoot.querySelectorAll(IMAGE_SOURCE_MARK_SELECTOR)).toHaveLength(1);
+    expect(document.body.querySelectorAll(IMAGE_SOURCE_MARK_SELECTOR)).toHaveLength(1);
     expect(ourMark()?.textContent).toBe(IMAGE_SOURCE_LABEL);
     expect(ourMark()?.closest(CARD_IMAGE_SELECTOR)).toBe(container());
   });
