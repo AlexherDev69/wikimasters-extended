@@ -1,0 +1,2127 @@
+{
+ "head": {
+  "vars": [
+   "item",
+   "classes",
+   "parents",
+   "occupations",
+   "letterboxdFilm",
+   "letterboxdActor",
+   "letterboxdDirector",
+   "letterboxdWriter",
+   "letterboxdProducer",
+   "letterboxdStudio",
+   "imdbId",
+   "tmdbMovieId",
+   "tmdbPersonId"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2238317"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q215380"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2940075"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q28389,http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q40348,http://www.wikidata.org/entity/Q2526255,http://www.wikidata.org/entity/Q12406482"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm2404839"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "1364908"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2990954"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q13406554"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3052772"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q82955,http://www.wikidata.org/entity/Q372436,http://www.wikidata.org/entity/Q599151,http://www.wikidata.org/entity/Q806798,http://www.wikidata.org/entity/Q1238570,http://www.wikidata.org/entity/Q2883465,http://www.wikidata.org/entity/Q4964182"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm6960621"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "1517365"
+    },
+    "letterboxdActor": {
+     "type": "literal",
+     "value": "emmanuel-macron"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3402573"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q2085381"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4115266"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q109623729"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q5217660"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q15056993"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q260838"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q5784097"
+    },
+    "classes": {
+     "type": "literal",
+     "value": ""
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q41176,http://www.wikidata.org/entity/Q699405,http://www.wikidata.org/entity/Q989946"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q11338014"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q659563,http://www.wikidata.org/entity/Q42907216,http://www.wikidata.org/entity/Q108329096"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q50572288,http://www.wikidata.org/entity/Q139304829"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q12353724"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q259864,http://www.wikidata.org/entity/Q811701"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q84308958"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q18590012"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q947873,http://www.wikidata.org/entity/Q2490358,http://www.wikidata.org/entity/Q5716684,http://www.wikidata.org/entity/Q10798782"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm5309263"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "2891941"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q27655361"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q177220,http://www.wikidata.org/entity/Q753110,http://www.wikidata.org/entity/Q3357567,http://www.wikidata.org/entity/Q4610556,http://www.wikidata.org/entity/Q5716684"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm4111621"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "1875840"
+    },
+    "letterboxdActor": {
+     "type": "literal",
+     "value": "jisoo"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q31043671"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q12708896,http://www.wikidata.org/entity/Q17315159"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q97365609"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q3464665"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q110942452"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q2309784"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q113571010"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q3231690"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q126811366"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q82955,http://www.wikidata.org/entity/Q97768164,http://www.wikidata.org/entity/Q97768167"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q141268759"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q10842936"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q780"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q16521,http://www.wikidata.org/entity/Q213907,http://www.wikidata.org/entity/Q55983715"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q178559,http://www.wikidata.org/entity/Q1797813"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q937"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q901,http://www.wikidata.org/entity/Q36180,http://www.wikidata.org/entity/Q121594,http://www.wikidata.org/entity/Q169470,http://www.wikidata.org/entity/Q170790,http://www.wikidata.org/entity/Q205375,http://www.wikidata.org/entity/Q1231865,http://www.wikidata.org/entity/Q1622272,http://www.wikidata.org/entity/Q2896489,http://www.wikidata.org/entity/Q3745071,http://www.wikidata.org/entity/Q4964182,http://www.wikidata.org/entity/Q16003550,http://www.wikidata.org/entity/Q16389557,http://www.wikidata.org/entity/Q19350898"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0251868"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "1317625"
+    },
+    "letterboxdActor": {
+     "type": "literal",
+     "value": "albert-einstein"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1079"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5398426"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0903747"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3772"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q28389,http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q36180,http://www.wikidata.org/entity/Q639669,http://www.wikidata.org/entity/Q1414443,http://www.wikidata.org/entity/Q2526255,http://www.wikidata.org/entity/Q3282637,http://www.wikidata.org/entity/Q3455803,http://www.wikidata.org/entity/Q7042855,http://www.wikidata.org/entity/Q10798782,http://www.wikidata.org/entity/Q10800557,http://www.wikidata.org/entity/Q69423232"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0000233"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "138"
+    },
+    "letterboxdDirector": {
+     "type": "literal",
+     "value": "quentin-tarantino"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q5756"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q10742"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q8927"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0182839"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "8293"
+    },
+    "letterboxdActor": {
+     "type": "literal",
+     "value": "marion-cotillard"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q11701"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q471855,http://www.wikidata.org/entity/Q2145277,http://www.wikidata.org/entity/Q110315658,http://www.wikidata.org/entity/Q115456878"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q38076"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q43229,http://www.wikidata.org/entity/Q167270,http://www.wikidata.org/entity/Q891723,http://www.wikidata.org/entity/Q4830453,http://www.wikidata.org/entity/Q18509232"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "co0057113"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q44546"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q36180,http://www.wikidata.org/entity/Q721834,http://www.wikidata.org/entity/Q12369333,http://www.wikidata.org/entity/Q13474373,http://www.wikidata.org/entity/Q15077007"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0282310"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "569166"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q46304"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q747074"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q104123"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0110912"
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "pulp-fiction"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "680"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q144622"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q36834,http://www.wikidata.org/entity/Q177220,http://www.wikidata.org/entity/Q222344,http://www.wikidata.org/entity/Q386854,http://www.wikidata.org/entity/Q486748,http://www.wikidata.org/entity/Q488205,http://www.wikidata.org/entity/Q639669,http://www.wikidata.org/entity/Q806349,http://www.wikidata.org/entity/Q822146,http://www.wikidata.org/entity/Q855091,http://www.wikidata.org/entity/Q2405480,http://www.wikidata.org/entity/Q3282637,http://www.wikidata.org/entity/Q4610556,http://www.wikidata.org/entity/Q10798782,http://www.wikidata.org/entity/Q10800557,http://www.wikidata.org/entity/Q12374149,http://www.wikidata.org/entity/Q15981151,http://www.wikidata.org/entity/Q18814623,http://www.wikidata.org/entity/Q55960555,http://www.wikidata.org/entity/Q60723829"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0002015"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "110001"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q163108"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q484170"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q170151"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q15056995"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11436"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q210703"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q7278,http://www.wikidata.org/entity/Q848197"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q213889"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q16521"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q221636"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q532"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q291286"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q9212979"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0258316"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q300029"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q50301185"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q7700500"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q310500"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q16521"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q431515"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q82955"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q454063"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q82955,http://www.wikidata.org/entity/Q2478141"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q476636"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q59773381"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q274586"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q599127"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q493522"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q636399"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q105543609"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q650938"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q15056995,http://www.wikidata.org/entity/Q15061018"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q208187,http://www.wikidata.org/entity/Q753283,http://www.wikidata.org/entity/Q1261534"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q664840"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q117467246"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0085033"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q840795"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q16521"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q152"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q924355"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q167270,http://www.wikidata.org/entity/Q15075508"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1159897"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q3326717"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5891"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1458166"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q178561"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2064496"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q20646667"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q826629"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q56256173"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q407752,http://www.wikidata.org/entity/Q2612896"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q940744"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "games-of-love-and-chance"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0338977"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "1549"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1061648"
+    },
+    "classes": {
+     "type": "literal",
+     "value": ""
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q4201895"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1122281"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "the-king-of-comedy"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0085794"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "262"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1137315"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q182940"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1245004"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q906512,http://www.wikidata.org/entity/Q1522772,http://www.wikidata.org/entity/Q2192508,http://www.wikidata.org/entity/Q14920473"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1634763"
+    },
+    "classes": {
+     "type": "literal",
+     "value": ""
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q134768,http://www.wikidata.org/entity/Q1346513"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2809501"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q58483083"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2940048"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q947873,http://www.wikidata.org/entity/Q1930187"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm4292750"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3215717"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q131681"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3479474"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q214917"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0660216"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "225853"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4721366"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q937857"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm7439722"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "3448723"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q5428603"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q140686"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q13553802"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "lost-river"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt2366608"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "167810"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16147452"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q10800557"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm2654829"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "41090"
+    },
+    "letterboxdActor": {
+     "type": "literal",
+     "value": "maude-apatow"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16468818"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5398426"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt2699128"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16855348"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q270389,http://www.wikidata.org/entity/Q1930187,http://www.wikidata.org/entity/Q2526255"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm8166495"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q29042845"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q27020041"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q105369580"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "fear-street-1978"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt9701940"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "591274"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q112245849"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q3464665"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q112641003"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q37226,http://www.wikidata.org/entity/Q82955,http://www.wikidata.org/entity/Q97768158,http://www.wikidata.org/entity/Q97768170"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q126415900"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5398426"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt31810018"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q515"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q98966309,http://www.wikidata.org/entity/Q137018865"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q56061,http://www.wikidata.org/entity/Q7930989,http://www.wikidata.org/entity/Q124250988"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q748"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q9174,http://www.wikidata.org/entity/Q32090,http://www.wikidata.org/entity/Q49447,http://www.wikidata.org/entity/Q2915955,http://www.wikidata.org/entity/Q6957341"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q1651597,http://www.wikidata.org/entity/Q53001749"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q52650"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q23442"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q55801"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q58840819"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q82934"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q36180,http://www.wikidata.org/entity/Q81096,http://www.wikidata.org/entity/Q82955,http://www.wikidata.org/entity/Q131062,http://www.wikidata.org/entity/Q188094,http://www.wikidata.org/entity/Q201788,http://www.wikidata.org/entity/Q1227195,http://www.wikidata.org/entity/Q1930187,http://www.wikidata.org/entity/Q2306091,http://www.wikidata.org/entity/Q4964182,http://www.wikidata.org/entity/Q13582652"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q104183"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q28389,http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q1414443,http://www.wikidata.org/entity/Q2259451,http://www.wikidata.org/entity/Q2526255,http://www.wikidata.org/entity/Q3455803,http://www.wikidata.org/entity/Q10798782,http://www.wikidata.org/entity/Q10800557,http://www.wikidata.org/entity/Q16323111,http://www.wikidata.org/entity/Q18814623"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0001273"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "8828"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q121237"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q2405480,http://www.wikidata.org/entity/Q10798782,http://www.wikidata.org/entity/Q10800557"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm3140538"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "1013156"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q142807"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q112193867"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q18558199"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q151831"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q493522,http://www.wikidata.org/entity/Q15273785"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q157556"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "the-boy-in-the-striped-pyjamas"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0914798"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "14574"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q183536"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q1068623,http://www.wikidata.org/entity/Q1440300,http://www.wikidata.org/entity/Q1440476,http://www.wikidata.org/entity/Q2319498"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q186277"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q43229,http://www.wikidata.org/entity/Q3355498,http://www.wikidata.org/entity/Q95993050"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q192883"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q355567"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q207293,http://www.wikidata.org/entity/Q118183096"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q201419"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q22704163"
+    },
+    "parents": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q1907525,http://www.wikidata.org/entity/Q3389302"
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q203293"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q484170"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q220751"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q28389,http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q578109,http://www.wikidata.org/entity/Q1053574,http://www.wikidata.org/entity/Q2526255,http://www.wikidata.org/entity/Q3282637,http://www.wikidata.org/entity/Q3455803,http://www.wikidata.org/entity/Q10800557"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0001741"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "9032"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q234903"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q177220"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm1486861"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q270097"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q28389,http://www.wikidata.org/entity/Q36180,http://www.wikidata.org/entity/Q482980,http://www.wikidata.org/entity/Q2526255,http://www.wikidata.org/entity/Q3282637,http://www.wikidata.org/entity/Q3455803,http://www.wikidata.org/entity/Q47541952,http://www.wikidata.org/entity/Q69423232"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0000520"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "638"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q329989"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q7725634"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q344806"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q1028181,http://www.wikidata.org/entity/Q1925963,http://www.wikidata.org/entity/Q7541856,http://www.wikidata.org/entity/Q10862983,http://www.wikidata.org/entity/Q15296811"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q453740"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q33999,http://www.wikidata.org/entity/Q245068"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0007893"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "199522"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q513644"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q36834,http://www.wikidata.org/entity/Q158852,http://www.wikidata.org/entity/Q177220,http://www.wikidata.org/entity/Q639669,http://www.wikidata.org/entity/Q806349,http://www.wikidata.org/entity/Q15981151"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "nm0893364"
+    },
+    "tmdbPersonId": {
+     "type": "literal",
+     "value": "1289619"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q578595"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q20650540"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "paprika-2006"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0851578"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "4977"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q669893"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q82955,http://www.wikidata.org/entity/Q83307,http://www.wikidata.org/entity/Q1397808,http://www.wikidata.org/entity/Q1930187,http://www.wikidata.org/entity/Q10732476"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q691127"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q5"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q2159907"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q732943"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q7889"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0264790"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q752683"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q16521"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q820811"
+    },
+    "classes": {
+     "type": "literal",
+     "value": "http://www.wikidata.org/entity/Q11424"
+    },
+    "parents": {
+     "type": "literal",
+     "value": ""
+    },
+    "occupations": {
+     "type": "literal",
+     "value": ""
+    },
+    "letterboxdFilm": {
+     "type": "literal",
+     "value": "final-destination-3"
+    },
+    "imdbId": {
+     "type": "literal",
+     "value": "tt0414982"
+    },
+    "tmdbMovieId": {
+     "type": "literal",
+     "value": "9286"
+    }
+   }
+  ]
+ }
+}
