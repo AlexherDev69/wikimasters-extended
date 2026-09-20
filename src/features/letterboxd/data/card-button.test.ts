@@ -96,15 +96,22 @@ describe('applyCardButton', () => {
     expect(inserted.getAttribute('aria-label')).toBe('Voir Pulp Fiction sur Letterboxd');
   });
 
-  it('should build the button from an anchor and span only, so the scanner ignores it', () => {
+  it('should build the button from an anchor and its drawing only, so the scanner ignores it', () => {
     const cardRoot = showFixture(FIXTURES.grid);
 
     applyCardButton(cardRoot, TITLE, FILM_URL);
 
     const inserted = requireButton();
     expect(inserted.tagName).toBe('A');
-    const tags = [...inserted.querySelectorAll('*')].map((node) => node.tagName);
-    expect(new Set(tags)).toEqual(new Set(['SPAN']));
+    // SVG tag names keep the case they were created with, where HTML ones are
+    // reported upper case, so both are compared in the same case here.
+    const tags = [...inserted.querySelectorAll('*')].map((node) => node.tagName.toUpperCase());
+    expect(new Set(tags)).toEqual(new Set(['SVG', 'CIRCLE', 'PATH']));
+    // The reason for the whitelist above, stated on its own so it survives a
+    // change of drawing: the scanner reads a title in the first `h3` of a card
+    // and a description in its first `p`.
+    expect(inserted.querySelector('h3')).toBeNull();
+    expect(inserted.querySelector('p')).toBeNull();
   });
 
   it('should carry no class that the card detection could take for a card', () => {

@@ -13,12 +13,55 @@ import { findTextArea } from './find-text-area';
  * never be read as a card nor change what one reads from a real card.
  */
 const BUTTON_TAG = 'a';
-const DOT_TAG = 'span';
 
 const BUTTON_CLASS = 'wme-letterboxd-button';
-const DOT_CLASS = 'wme-letterboxd-dot';
-/** One class per disc of the mark, styled in letterboxd.css. */
-const DOT_MODIFIER_CLASSES = ['wme-letterboxd-dot-1', 'wme-letterboxd-dot-2', 'wme-letterboxd-dot-3'];
+const MARK_CLASS = 'wme-letterboxd-mark';
+
+/**
+ * The mark is drawn here rather than laid out in CSS, because the two white
+ * lenses of the real logo are the INTERSECTIONS of its discs, and no stack of
+ * boxes gives that shape. An earlier version stacked three spans inside a
+ * 16px circle, each 60% of its width: at that size they covered one another
+ * almost entirely and only the last one drawn, the blue one, was visible.
+ *
+ * Everything below is in the coordinates of the viewBox, so the drawing does
+ * not care what size the style sheet gives it. Three discs of radius 20 on
+ * one line, 30 apart: each neighbouring pair therefore overlaps by 10, a
+ * quarter of a diameter.
+ */
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const MARK_TAG = 'svg';
+const DISC_TAG = 'circle';
+const LENS_TAG = 'path';
+
+const MARK_VIEW_BOX = '0 0 100 40';
+const DISC_RADIUS = '20';
+const DISC_CENTRE_Y = '20';
+const DISCS = [
+  { centreX: '20', fill: '#ff8000' },
+  { centreX: '50', fill: '#00e054' },
+  { centreX: '80', fill: '#40bcf4' },
+] as const;
+
+/**
+ * One lens as the two arcs that close it: the right side of the disc on the
+ * left, then the left side of the disc on the right. Two discs of radius 20
+ * whose centres are 30 apart cross at their half way point, 13.229 above and
+ * below the line (the square root of 20 squared minus 15 squared), which is
+ * where 6.771 and 33.229 come from.
+ */
+const LENS_PATHS = [
+  'M35,6.771A20,20 0 0 1 35,33.229A20,20 0 0 1 35,6.771Z',
+  'M65,6.771A20,20 0 0 1 65,33.229A20,20 0 0 1 65,6.771Z',
+] as const;
+const LENS_FILL = '#ffffff';
+
+const VIEW_BOX_ATTRIBUTE = 'viewBox';
+const FILL_ATTRIBUTE = 'fill';
+const ARIA_HIDDEN_ATTRIBUTE = 'aria-hidden';
+const FOCUSABLE_ATTRIBUTE = 'focusable';
+const TRUE = 'true';
+const FALSE = 'false';
 
 const LINK_TARGET = '_blank';
 /** No opener and no referrer, as the site does on its own outgoing links. */
@@ -31,6 +74,37 @@ function ariaLabel(title: string): string {
   return `Voir ${title} sur Letterboxd`;
 }
 
+/**
+ * The three discs, then the two lenses their overlaps cut out, on top. Order
+ * is the whole drawing: each disc paints over the one before it, and the
+ * lenses paint over all three. The anchor already carries the label, so the
+ * drawing is hidden from assistive technology and kept out of the tab order,
+ * which SVG in Internet-Explorer-era browsers is not by default.
+ */
+function buildMark(document: Document): SVGElement {
+  const mark = document.createElementNS(SVG_NAMESPACE, MARK_TAG);
+  mark.setAttribute('class', MARK_CLASS);
+  mark.setAttribute(VIEW_BOX_ATTRIBUTE, MARK_VIEW_BOX);
+  mark.setAttribute(ARIA_HIDDEN_ATTRIBUTE, TRUE);
+  mark.setAttribute(FOCUSABLE_ATTRIBUTE, FALSE);
+
+  for (const disc of DISCS) {
+    const circle = document.createElementNS(SVG_NAMESPACE, DISC_TAG);
+    circle.setAttribute('cx', disc.centreX);
+    circle.setAttribute('cy', DISC_CENTRE_Y);
+    circle.setAttribute('r', DISC_RADIUS);
+    circle.setAttribute(FILL_ATTRIBUTE, disc.fill);
+    mark.appendChild(circle);
+  }
+  for (const lens of LENS_PATHS) {
+    const path = document.createElementNS(SVG_NAMESPACE, LENS_TAG);
+    path.setAttribute('d', lens);
+    path.setAttribute(FILL_ATTRIBUTE, LENS_FILL);
+    mark.appendChild(path);
+  }
+  return mark;
+}
+
 function buildButton(document: Document, title: string, url: string): HTMLAnchorElement {
   const button = document.createElement(BUTTON_TAG);
   button.className = BUTTON_CLASS;
@@ -40,11 +114,7 @@ function buildButton(document: Document, title: string, url: string): HTMLAnchor
   button.rel = LINK_REL;
   button.setAttribute(ARIA_LABEL_ATTRIBUTE, ariaLabel(title));
 
-  for (const modifierClass of DOT_MODIFIER_CLASSES) {
-    const dot = document.createElement(DOT_TAG);
-    dot.className = `${DOT_CLASS} ${modifierClass}`;
-    button.appendChild(dot);
-  }
+  button.appendChild(buildMark(document));
 
   button.addEventListener('click', (event) => {
     // Guards against a script dispatching a synthetic click on our own node:
@@ -111,7 +181,7 @@ function removeOurButton(cardRoot: HTMLElement): void {
  * verified on all six fixtures committed for this feature, the text area
  * carries `bottom-0 left-0 right-0`, so its padding box shares its bottom
  * edge and its width with the card root's, which is itself `position:
- * relative`. `bottom: 4px; left: 50%` in letterboxd.css therefore designates
+ * relative`. `bottom: 3px; right: 5px` in letterboxd.css therefore designates
  * the very same pixel whether it ends up read against the text area or
  * against the root, which is why the button would still land correctly even
  * if the text area ever lost `position: absolute`. That property would
