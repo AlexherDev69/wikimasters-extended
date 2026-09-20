@@ -4,9 +4,27 @@ Extension Chrome (Manifest V3) en lecture seule pour [wiki-masters.com](https://
 
 Objectif : afficher sur chaque carte une catégorie (via Wikidata) et un lien Letterboxd pour les films et personnalités du cinéma. Elle ne clique jamais, ne scrolle pas, ne saisit rien et n'intercepte aucun trafic réseau.
 
-État actuel (phases 1 à 3 et 5) : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+## État actuel
 
-Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il n'apparaît que pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une série, une saison, un épisode ou une personnalité sans métier de cinéma n'en reçoivent aucun, même si Wikidata leur connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives). L'affichage de la catégorie sur les cartes relève de la phase 4 : elle n'est pour l'instant que journalisée.
+Phases 1 à 3, 4a et 5 : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+
+### Badge de catégorie sur les cartes
+
+Chaque carte catégorisée reçoit une pastille sombre en bas de sa zone image : un point de la couleur de la catégorie et son libellé, par exemple "Lieu" ou "Personne · Cinéma" pour une personne dont le sous-type principal est connu. La pastille suit toujours la carte affichée à l'instant : si le site réutilise un emplacement pour une autre carte (pagination), le badge est recalculé à partir du titre affiché. Une carte dont l'article est introuvable, dont la catégorisation a échoué ou dont la catégorie n'est pas encore connue ne reçoit aucun badge.
+
+### Catégorie dans la modale de détail
+
+Quand la modale de détail est ouverte, une ligne "Catégorie : ..." est ajoutée sous le lien "Voir l'article sur Wikipédia" (et sous le lien Letterboxd quand il est présent). Pour une personne ayant plusieurs métiers, les autres sous-types sont listés entre parenthèses, par exemple "Catégorie : Personne · Musique (aussi : Cinéma)".
+
+### Mise en évidence par catégorie
+
+Un petit panneau flottant en bas à gauche liste les catégories présentes parmi les cartes actuellement détectées, avec leur nombre, triées par nombre décroissant puis par libellé. Il est replié par défaut ("Catégories (N)") et se déplie d'un clic. Cliquer une catégorie l'active comme filtre : les cartes des autres catégories sont assombries par un voile ajouté par l'extension, qui laisse passer les clics vers la carte. Un second clic sur la même catégorie, ou le bouton "Tout afficher", annule le filtre. Le filtre reste actif quand tu changes de page de la collection : si la page suivante ne contient aucune carte de cette catégorie, elle est entièrement assombrie, et le panneau le dit (ligne de la catégorie active avec un compte de 0, titre "Catégories (N) · Lieu"). Le bouton "Tout afficher" reste accessible même quand le panneau est replié. Le panneau ne compte qu'une fois une carte affichée deux fois (dans la grille et dans la modale), disparaît quand aucune carte n'est détectée (aucun voile n'est alors posé), et son état n'est pas mémorisé : il repart replié et sans filtre à chaque chargement de page.
+
+### Lien Letterboxd
+
+Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il n'apparaît que pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une série, une saison, un épisode ou une personnalité sans métier de cinéma n'en reçoivent aucun, même si Wikidata leur connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives).
+
+Les deux autres réponses au besoin de filtre prévues par la phase 4 restent à faire : la vue "Ma collection par catégorie" dans l'extension, et la synergie avec les étiquettes natives du site.
 
 Voir [docs/PLAN.md](docs/PLAN.md) pour l'analyse de faisabilité et la feuille de route complète.
 
@@ -53,3 +71,5 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 ## Contrainte fondamentale
 
 Cette extension est un overlay en lecture seule. Elle ne clique jamais, ne scrolle pas, ne saisit rien, n'intercepte pas le trafic réseau et n'appelle pas les API du site. Tout contournement de cette règle expose au bannissement du compte.
+
+Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, voile d'atténuation, panneau de catégories) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée ou désactivée.
