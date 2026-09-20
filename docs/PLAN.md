@@ -527,6 +527,17 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Même noeud, même clé de comparaison, donc les mêmes garanties. L'état fait partie de la clé et non des étiquettes, sinon une carte dont la seule proposition serait ce mot garderait le noeud d'attente. Une sync qui retrouve la même attente n'écrit rien
 - Le mot respire par une animation CSS, qui ne touche pas au DOM et ne peut donc pas relancer l'observateur, et s'arrête sur `prefers-reduced-motion`. Il porte `role="status"` : son apparition puis son remplacement sont exactement le changement qu'un lecteur d'écran manquerait
 
+#### Phase 8d : sujet lu sur les racines Wikidata (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture à l'appui : "Pour les voitures, on propose pas etiquette Voitures". La carte "Alfa Romeo 147" ne proposait que "Technique"
+- Le libellé de catégorie dit "Technique" pour une voiture, un navire de guerre, un fusil et un éditeur de texte. C'est vrai, et inutile comme étiquette
+- Les racines qui ont décidé la catégorie sont déjà résolues et déjà en cache pour chaque carte (`matchedRootIds`, depuis ROOTS_VERSION 3) : le mot plus précis ne coûte donc aucune requête, aucune propriété SPARQL et aucune invalidation de cache. Les étiquettes sont recalculées à chaque catégorisation à partir des faits en cache
+- Mesuré sur le service en direct le 2026-09-21 : "Alfa Romeo 147" porte la seule classe Q3231690 ("modèle d'automobile"), qui atteint les racines Q3231690 et Q29048322 ("modèle de véhicule") et aucune autre. Le tableau est donc ordonné du plus précis au plus général, première correspondance gagnante
+- Seules les racines de la catégorie technique portent un sujet. Toutes les autres catégories se nomment déjà bien ("Cinéma et TV", "Musique", "Sport", "Lieu"), et un second mot disant la même chose prendrait une place sur six pour rien
+- Les racines lues sont celles des classes DÉCISIVES, comme `isFilm` : un parent d'une carte déjà élue ne parle pas pour elle
+- Q811701 ("série de modèles") ne porte volontairement aucun sujet : c'est une série de modèles de n'importe quoi, et la carte atteint de toute façon une racine plus précise à côté quand il y en a une
+- Un test garde le tableau aligné sur les listes de racines : une racine absente des groupes ne serait jamais interrogée, donc son sujet ne pourrait jamais sortir
+
 ### Phase 10 : préférences d'affichage
 
 #### Phase 10a : option pour masquer les statistiques des cartes (faite le 2026-09-20, revue indépendante passée)

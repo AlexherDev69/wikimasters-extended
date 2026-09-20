@@ -303,6 +303,22 @@ function isFilm(facts: EntityFacts, categoryId: CategoryId, stage: ClassStage): 
   });
 }
 
+/**
+ * Every root the classes that really voted reach, deduplicated. Read from the
+ * same resolutions as `isFilm` just above, and for the same reason: a parent
+ * of an already elected card must not speak for it.
+ */
+function decisiveRootIds(facts: EntityFacts, stage: ClassStage): string[] {
+  const roots = new Set<string>();
+
+  for (const classId of decisiveClassIds(facts, stage.categoryTargets)) {
+    for (const rootId of stage.categoryResolutions.get(classId)?.matchedRootIds ?? []) {
+      roots.add(rootId);
+    }
+  }
+  return [...roots];
+}
+
 /** Occupations carrying a Letterboxd role, with the label of the tie-break. */
 function cinemaRolesOf(facts: EntityFacts, stage: ClassStage): CinemaRoleOccupation[] {
   const roles: CinemaRoleOccupation[] = [];
@@ -386,6 +402,7 @@ function buildResult(
       categoryId: classification.categoryId,
       primarySubtype: classification.primarySubtype,
       occupationLabels,
+      matchedRootIds: decisiveRootIds(facts, stage),
     }),
   };
 }

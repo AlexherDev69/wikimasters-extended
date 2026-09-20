@@ -12,6 +12,7 @@ function makeCard(overrides: Partial<CardForTagSuggestions> = {}): CardForTagSug
     categoryId: 'place',
     primarySubtype: null,
     occupationLabels: [],
+    matchedRootIds: [],
     ...overrides,
   };
 }
@@ -65,6 +66,22 @@ describe('normalizeTag', () => {
 describe('suggestTags', () => {
   it('should propose the category label alone for a card that is not a person', () => {
     expect(suggestTags(makeCard({ categoryId: 'place' }))).toEqual(['Lieu']);
+  });
+
+  it('should propose the topic of the roots when the category label is too broad', () => {
+    // "Alfa Romeo 147", real roots measured 2026-09-21. "Technique" covers a
+    // car, a warship and a text editor alike, which makes it a poor tag.
+    const tags = suggestTags(
+      makeCard({ categoryId: 'transport_tech', matchedRootIds: ['Q29048322', 'Q3231690'] }),
+    );
+
+    expect(tags).toEqual(['Technique', 'Voitures']);
+  });
+
+  it('should propose the category alone when its roots name no topic', () => {
+    expect(suggestTags(makeCard({ categoryId: 'place', matchedRootIds: ['Q56061'] }))).toEqual([
+      'Lieu',
+    ]);
   });
 
   it('should propose the category then the primary subtype for a person', () => {
