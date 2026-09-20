@@ -52,7 +52,7 @@ Limites connues : environ une carte sans illustration sur quatre a une image sur
 
 Sur la page des échanges, chaque offre nomme les cartes proposées dans de petites pastilles dont le texte est coupé au bout de quelques caractères ("SR · The Backrooms (fil…"). Il fallait ouvrir l'offre pour savoir de quelles cartes il s'agissait.
 
-L'extension dessine la carte à la place de chaque pastille : son image quand Wikidata ou l'article de Wikipédia en connaît une (la même source que pour les images manquantes), la couleur et le code de sa rareté, et son titre entier, jamais coupé. Une carte dont aucune image n'est connue garde le fond plat de sa rareté, son code et son titre complet, ce qui est déjà tout ce que la pastille cachait.
+L'extension dessine la carte à la place de chaque pastille, dans la forme que le site donne à ses propres cartes : format portrait, image dans le haut, badge de rareté dans son coin, et le titre entier en dessous, jamais coupé, sur le fond de la rareté. L'image est celle que Wikidata ou l'article de Wikipédia connaît (la même source que pour les images manquantes), posée sur le fond clair ou sombre des cartes du site selon qu'il s'agit d'un logo ou d'une photographie. Une carte dont aucune image n'est connue garde le fond de sa rareté, son code et son titre complet, ce qui est déjà tout ce que la pastille cachait.
 
 La pastille du site n'est ni modifiée ni retirée : elle reste dans la page exactement comme le site l'a écrite, et c'est une règle de style qui la laisse hors du rendu, uniquement là où une carte de l'extension vient d'être dessinée juste avant elle. Là où l'extension ne dessine rien, la pastille s'affiche comme avant.
 
