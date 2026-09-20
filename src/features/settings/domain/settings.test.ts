@@ -3,7 +3,6 @@ import { DEFAULT_SETTINGS, hasEnabledFeature, normalizeSettings, type Settings }
 
 const ALL_OFF: Settings = {
   categoryBadges: false,
-  categoryHighlight: false,
   letterboxdLink: false,
   missingImages: false,
   hideCardStats: false,
@@ -25,7 +24,6 @@ describe('normalizeSettings', () => {
   it('should keep the saved switches and default the ones the record does not hold', () => {
     expect(normalizeSettings({ categoryBadges: false, letterboxdLink: false })).toEqual({
       categoryBadges: false,
-      categoryHighlight: true,
       letterboxdLink: false,
       missingImages: true,
       hideCardStats: false,
@@ -35,7 +33,7 @@ describe('normalizeSettings', () => {
   });
 
   it('should default a switch whose stored value is not a boolean', () => {
-    expect(normalizeSettings({ categoryBadges: 'false', categoryHighlight: 0 })).toEqual(
+    expect(normalizeSettings({ categoryBadges: 'false', letterboxdLink: 0 })).toEqual(
       DEFAULT_SETTINGS,
     );
   });
@@ -69,6 +67,15 @@ describe('normalizeSettings', () => {
     });
   });
 
+  it('should ignore the switch of the category highlight a previous version saved', () => {
+    // Same case as the collection index below: the highlight was removed, so
+    // an upgraded installation reads a record that still carries its key.
+    expect(normalizeSettings({ categoryHighlight: false, letterboxdLink: false })).toEqual({
+      ...DEFAULT_SETTINGS,
+      letterboxdLink: false,
+    });
+  });
+
   it('should ignore the switch of the collection index a previous version saved', () => {
     // An upgrade reads a record written by the version that still had that
     // setting: the key is simply not one of ours any more.
@@ -85,7 +92,7 @@ describe('normalizeSettings', () => {
     expect(DEFAULT_SETTINGS.categoryBadges).toBe(true);
   });
 
-  it('should read every saved switch back when all seven were written', () => {
+  it('should read every saved switch back when all six were written', () => {
     expect(normalizeSettings(ALL_OFF)).toEqual(ALL_OFF);
   });
 

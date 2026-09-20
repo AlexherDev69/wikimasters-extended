@@ -13,7 +13,6 @@ import { removeCardBadges } from '../../category-badge/data/card-badge';
 import { removeModalCategoryLines } from '../../category-badge/data/modal-category-line';
 import { syncCardBadges } from '../../category-badge/presentation/sync-card-badges';
 import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
-import { createCategoryHighlight } from '../../category-highlight/presentation/category-highlight';
 import { applyHideCardStats, removeHideCardStats } from '../../hide-card-stats/data/hide-stats-style';
 import { removeCardButtons } from '../../letterboxd/data/card-button';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
@@ -70,12 +69,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   };
   /** Titles of the last scan, the cards the page shows right now. */
   let visibleTitles: ReadonlySet<string> = new Set<string>();
-  /**
-   * Rebuilt whenever the feature is switched off: the chosen filter and the
-   * folded state live in the closure of the factory, so a fresh one comes back
-   * exactly as it does when the page loads, without the previous filter.
-   */
-  let highlight = createCategoryHighlight(root);
 
   /**
    * Brings every enabled part in line with what is known of the cards given,
@@ -88,9 +81,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
 
     if (settings.categoryBadges) {
       syncCardBadges(cards, categoriesByTitle);
-    }
-    if (settings.categoryHighlight) {
-      highlight.sync(cards, categoriesByTitle);
     }
     if (settings.letterboxdLink) {
       syncCardButtons(cards, categoriesByTitle);
@@ -170,10 +160,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCardBadges(root);
       removeModalCategoryLines(root);
     }
-    if (previous.categoryHighlight && !settings.categoryHighlight) {
-      highlight.destroy();
-      highlight = createCategoryHighlight(root);
-    }
     if (previous.letterboxdLink && !settings.letterboxdLink) {
       removeModalLink(root);
       removeCardButtons(root);
@@ -208,7 +194,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       // Reloading the extension leaves the page open: everything the overlay
       // added goes away with it, rather than staying behind with nobody to
       // keep it in line with the cards on screen.
-      highlight.destroy();
       removeCardBadges(root);
       removeModalCategoryLines(root);
       removeModalLink(root);
