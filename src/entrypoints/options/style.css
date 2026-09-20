@@ -1,0 +1,198 @@
+@import '../../core/ui/extension-page.css';
+
+/*
+ * The options page is a page of our own, so the rules below are free to target
+ * elements: nothing of the site is ever rendered here. The dark theme and the
+ * focus ring come from the shared stylesheet, along with the popup.
+ *
+ * It opens embedded in chrome://extensions, which gives it a narrow frame: the
+ * layout is a single column that follows the width it is given.
+ */
+
+body {
+  padding: 16px;
+  font-size: 13px;
+}
+
+.wme-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.wme-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wme-app-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.wme-subtitle {
+  margin: 0;
+  color: var(--wme-text-faint);
+}
+
+.wme-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--wme-border);
+}
+
+.wme-section-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wme-text-soft);
+}
+
+.wme-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The label wraps the checkbox, so the whole line switches the feature. */
+.wme-setting-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.wme-setting-head input {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--wme-focus);
+  cursor: pointer;
+}
+
+.wme-setting-label {
+  font-weight: 500;
+}
+
+.wme-setting-hint {
+  margin: 0 0 0 22px;
+  font-size: 12px;
+  color: var(--wme-text-faint);
+}
+
+/* Outside the page, which is rebuilt on every render: a live region announces
+   a change of its text, never its arrival with the text already in it. It
+   follows the bottom of the frame so the answer to a switch is visible
+   wherever the page is scrolled, and takes no room while it is empty. */
+.wme-status {
+  position: sticky;
+  bottom: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 8px 0;
+  background-color: var(--wme-surface);
+  font-size: 12px;
+  color: var(--wme-text-dim);
+}
+
+.wme-status:empty {
+  display: none;
+}
+
+.wme-status[data-wme-status='failed'] {
+  color: var(--wme-danger);
+}
+
+.wme-message {
+  color: var(--wme-text-soft);
+}
+
+.wme-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wme-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wme-stat-label {
+  flex: 1 1 auto;
+  color: var(--wme-text-soft);
+}
+
+.wme-stat-count {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.wme-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wme-action-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wme-text-faint);
+}
+
+/* Next to the action that failed, so it is clear that it is the deletion that
+   did not go through and not the counts that could not be read. */
+.wme-action-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wme-danger);
+}
+
+.wme-action-button,
+.wme-confirm,
+.wme-cancel {
+  padding: 5px 10px;
+  border: 1px solid var(--wme-border);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--wme-text-dim);
+}
+
+.wme-action-button:hover,
+.wme-confirm:hover,
+.wme-cancel:hover {
+  background-color: var(--wme-hover);
+}
+
+.wme-confirm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wme-question {
+  color: var(--wme-text);
+}
+
+.wme-confirm {
+  border-color: rgba(224, 108, 108, 0.5);
+  color: var(--wme-danger);
+}
+
+.wme-privacy-item {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wme-text-faint);
+}

@@ -3,6 +3,7 @@ import type { FetchJsonOptions } from '../core/http/fetch-json';
 import { createLogger } from '../core/logger/logger';
 import { createStoredCooldownStore } from '../core/storage/cooldown-store';
 import { createCardFactsCache } from '../features/categorization/data/card-facts-cache';
+import { createCategorizationStorage } from '../features/categorization/data/categorization-storage';
 import { createClassRootsSource } from '../features/categorization/data/class-roots-source';
 import { createClassTargetCache } from '../features/categorization/data/class-target-cache';
 import { createEntityFactsSource } from '../features/categorization/data/entity-facts-source';
@@ -12,6 +13,7 @@ import type { Clock } from '../features/categorization/domain/ports';
 import { createCategorizeMessageHandler } from '../features/categorization/presentation/handle-categorize-message';
 import { createCollectionIndexRepository } from '../features/collection-index/data/collection-index-repository';
 import { createCollectionMessageHandler } from '../features/collection-index/presentation/handle-collection-messages';
+import { createStorageMessageHandler } from '../features/settings/presentation/handle-storage-messages';
 
 const systemClock: Clock = {
   now(): number {
@@ -30,6 +32,8 @@ export default defineBackground({
     // what the categorization of the cards on screen has written.
     const cardFactsCache = createCardFactsCache(systemClock);
     const classTargetCache = createClassTargetCache();
+    // Shared too: the options page counts what the popup summarizes.
+    const indexRepository = createCollectionIndexRepository(systemClock);
 
     const deps: CategorizeCardsDeps = {
       titleResolver: createTitleResolver(httpOptions),
@@ -41,16 +45,27 @@ export default defineBackground({
     };
     const handleCategorize = createCategorizeMessageHandler(deps);
     const handleCollection = createCollectionMessageHandler({
-      indexRepository: createCollectionIndexRepository(systemClock),
+      indexRepository,
       cardFactsCache,
       classTargetCache,
+      logger,
+    });
+    // The maintenance of the options page receives the counting and emptying
+    // side of the caches only, never the one that reads or writes an entry.
+    const handleStorage = createStorageMessageHandler({
+      cacheMaintenance: createCategorizationStorage(),
+      indexRepository,
       logger,
     });
 
     browser.runtime.onMessage.addListener((message, _sender, sendResponse): boolean => {
       // Each handler answers the message types it knows and returns false for
       // the others, so a message of another origin is simply ignored.
-      return handleCategorize(message, sendResponse) || handleCollection(message, sendResponse);
+      return (
+        handleCategorize(message, sendResponse) ||
+        handleCollection(message, sendResponse) ||
+        handleStorage(message, sendResponse)
+      );
     });
   },
 });
