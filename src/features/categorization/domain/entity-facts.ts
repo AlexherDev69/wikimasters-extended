@@ -3,7 +3,9 @@ import type { CommonsFile } from '../../missing-image/domain/card-image';
 /**
  * External identifiers fetched with the rest of the facts because the same
  * query returns them for free. Phase 5 (Letterboxd links) is their only
- * consumer; nothing reads them in phase 3.
+ * consumer; nothing reads them in phase 3. The IMDb id left on 2026-09-21
+ * with the rung that read it: an id no rule reads is a fact asked of
+ * Wikidata, stored and kept in every cache for nothing.
  */
 export interface ExternalIds {
   letterboxdFilm: string | null;
@@ -12,7 +14,6 @@ export interface ExternalIds {
   letterboxdWriter: string | null;
   letterboxdProducer: string | null;
   letterboxdStudio: string | null;
-  imdbId: string | null;
   tmdbMovieId: string | null;
   tmdbPersonId: string | null;
 }
@@ -25,7 +26,6 @@ export const EXTERNAL_ID_KEYS: readonly (keyof ExternalIds)[] = [
   'letterboxdWriter',
   'letterboxdProducer',
   'letterboxdStudio',
-  'imdbId',
   'tmdbMovieId',
   'tmdbPersonId',
 ];

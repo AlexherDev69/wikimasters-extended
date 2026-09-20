@@ -36,7 +36,6 @@ function makeDeps(): CategorizeCardsDeps {
         letterboxdWriter: null,
         letterboxdProducer: null,
         letterboxdStudio: null,
-        imdbId: null,
         tmdbMovieId: null,
         tmdbPersonId: null,
       },

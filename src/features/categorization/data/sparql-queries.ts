@@ -62,14 +62,14 @@ export function buildEntityFactsQuery(qids: readonly string[]): string {
   (GROUP_CONCAT(DISTINCT ?occupation; separator=",") AS ?occupations)
   (SAMPLE(?lbFilm) AS ?letterboxdFilm) (SAMPLE(?lbActor) AS ?letterboxdActor) (SAMPLE(?lbDirector) AS ?letterboxdDirector)
   (SAMPLE(?lbWriter) AS ?letterboxdWriter) (SAMPLE(?lbProducer) AS ?letterboxdProducer) (SAMPLE(?lbStudio) AS ?letterboxdStudio)
-  (SAMPLE(?imdb) AS ?imdbId) (SAMPLE(?tmdbMovie) AS ?tmdbMovieId) (SAMPLE(?tmdbPerson) AS ?tmdbPersonId)
+  (SAMPLE(?tmdbMovie) AS ?tmdbMovieId) (SAMPLE(?tmdbPerson) AS ?tmdbPersonId)
   ${imageProjections()}
 WHERE {
   VALUES ?item { ${toEntityValues(qids)} }
   OPTIONAL { ?item wdt:P31 ?class. } OPTIONAL { ?item wdt:P279 ?parent. } OPTIONAL { ?item wdt:P106 ?occupation. }
   OPTIONAL { ?item wdt:P6127 ?lbFilm. } OPTIONAL { ?item wdt:P6119 ?lbActor. } OPTIONAL { ?item wdt:P12383 ?lbDirector. }
   OPTIONAL { ?item wdt:P14583 ?lbWriter. } OPTIONAL { ?item wdt:P14196 ?lbProducer. } OPTIONAL { ?item wdt:P13273 ?lbStudio. }
-  OPTIONAL { ?item wdt:P345 ?imdb. } OPTIONAL { ?item wdt:P4947 ?tmdbMovie. } OPTIONAL { ?item wdt:P4985 ?tmdbPerson. }
+  OPTIONAL { ?item wdt:P4947 ?tmdbMovie. } OPTIONAL { ?item wdt:P4985 ?tmdbPerson. }
   ${imagePatterns()}
 } GROUP BY ?item`;
 }

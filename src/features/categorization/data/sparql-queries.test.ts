@@ -20,7 +20,7 @@ describe('buildEntityFactsQuery', () => {
   it('should project every external id property', () => {
     const query = buildEntityFactsQuery(['Q1']);
 
-    for (const property of ['P6127', 'P6119', 'P12383', 'P14583', 'P14196', 'P13273', 'P345', 'P4947', 'P4985']) {
+    for (const property of ['P6127', 'P6119', 'P12383', 'P14583', 'P14196', 'P13273', 'P4947', 'P4985']) {
       expect(query).toContain(`wdt:${property}`);
     }
   });

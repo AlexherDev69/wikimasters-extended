@@ -14,7 +14,6 @@ const NO_EXTERNAL_IDS: ExternalIds = {
   letterboxdWriter: null,
   letterboxdProducer: null,
   letterboxdStudio: null,
-  imdbId: null,
   tmdbMovieId: null,
   tmdbPersonId: null,
 };
@@ -75,21 +74,26 @@ function makePerson(
 
 describe('resolveLetterboxdUrl', () => {
   it('should link to the film page when the film has a Letterboxd id', () => {
-    const card = makeFilm({ letterboxdFilm: 'pulp-fiction', tmdbMovieId: '680', imdbId: 'tt0110912' });
+    const card = makeFilm({ letterboxdFilm: 'pulp-fiction', tmdbMovieId: '680' });
 
     expect(resolveLetterboxdUrl(card)).toBe('https://letterboxd.com/film/pulp-fiction/');
   });
 
   it('should fall back to the TMDb id when the film has no Letterboxd id', () => {
-    const card = makeFilm({ tmdbMovieId: '680', imdbId: 'tt0110912' });
+    const card = makeFilm({ tmdbMovieId: '680' });
 
     expect(resolveLetterboxdUrl(card)).toBe('https://letterboxd.com/tmdb/680/');
   });
 
-  it('should fall back to the IMDb id when the film has neither Letterboxd nor TMDb id', () => {
-    const card = makeFilm({ imdbId: 'tt0110912' });
+  it('should fall back to a search when the film has neither Letterboxd nor TMDb id', () => {
+    // Measured on Wikidata the 2026-09-21: a film carrying neither id is a
+    // film Letterboxd does not have, its catalogue coming from TMDB. The
+    // IMDb rung that used to stand here answered with an empty page.
+    const card = makeFilm({}, 'La Main dans le sac (film, 1916)');
 
-    expect(resolveLetterboxdUrl(card)).toBe('https://letterboxd.com/imdb/tt0110912/');
+    expect(resolveLetterboxdUrl(card)).toBe(
+      'https://letterboxd.com/search/La%20Main%20dans%20le%20sac/',
+    );
   });
 
   it('should fall back to a search when the film has no external id at all', () => {
@@ -106,8 +110,8 @@ describe('resolveLetterboxdUrl', () => {
     }
   });
 
-  it('should ignore a TMDb id that is not made of digits and an IMDb id without its prefix', () => {
-    const card = makeFilm({ tmdbMovieId: '68a', imdbId: 'co0057113' }, 'Lost River (film)');
+  it('should ignore a TMDb id that is not made of digits', () => {
+    const card = makeFilm({ tmdbMovieId: '68a' }, 'Lost River (film)');
 
     expect(resolveLetterboxdUrl(card)).toBe('https://letterboxd.com/search/Lost%20River/');
   });
@@ -117,9 +121,9 @@ describe('resolveLetterboxdUrl', () => {
       title: 'Breaking Bad',
       categoryId: 'film_tv',
       isFilm: false,
-      // Neither of these reaches a Letterboxd page for a series: the ids are
-      // there precisely so the rule cannot loosen without a test failing.
-      externalIds: { ...NO_EXTERNAL_IDS, imdbId: 'tt0903747', tmdbMovieId: '1396' },
+      // This does not reach a Letterboxd page for a series: the id is there
+      // precisely so the rule cannot loosen without a test failing.
+      externalIds: { ...NO_EXTERNAL_IDS, tmdbMovieId: '1396' },
     });
 
     expect(resolveLetterboxdUrl(series)).toBeNull();
@@ -216,7 +220,7 @@ describe('resolveLetterboxdUrl', () => {
       title: 'Albert Einstein',
       categoryId: 'person',
       personSubtypes: ['science'],
-      externalIds: { ...NO_EXTERNAL_IDS, letterboxdActor: 'albert-einstein', imdbId: 'nm0251868' },
+      externalIds: { ...NO_EXTERNAL_IDS, letterboxdActor: 'albert-einstein' },
     });
 
     expect(resolveLetterboxdUrl(einstein)).toBeNull();
@@ -236,7 +240,7 @@ describe('resolveLetterboxdUrl', () => {
     const card = makeCard({
       title: "McDonald's",
       categoryId: 'organization',
-      externalIds: { ...NO_EXTERNAL_IDS, imdbId: 'co0057113' },
+      externalIds: NO_EXTERNAL_IDS,
     });
 
     expect(resolveLetterboxdUrl(card)).toBeNull();
@@ -286,7 +290,6 @@ describe('resolveLetterboxdUrl', () => {
       letterboxdWriter: 'a/../..',
       letterboxdProducer: 'x/?a=b',
       letterboxdStudio: '//evil.example.com',
-      imdbId: 'tt1/../evil',
       tmdbMovieId: '1/evil',
       tmdbPersonId: '1',
     };

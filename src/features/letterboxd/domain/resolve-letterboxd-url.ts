@@ -19,7 +19,6 @@ const LETTERBOXD_URL_PREFIX = `${LETTERBOXD_ORIGIN}/`;
  */
 const LETTERBOXD_SLUG_PATTERN = /^[a-z0-9-]+$/;
 const TMDB_ID_PATTERN = /^\d+$/;
-const IMDB_FILM_ID_PATTERN = /^tt\d+$/;
 
 /** "Paprika (film, 2006)" gives "Paprika", "Lost River (film)" gives "Lost River". */
 const TRAILING_PARENTHETICAL_PATTERN = /\s*\([^()]*\)\s*$/;
@@ -83,20 +82,24 @@ function listedFilmUrl(externalIds: ExternalIds): string | null {
 
 /**
  * Where a film goes when Letterboxd named no page for it. Only a film comes
- * here: each of these guesses at the page from something that is not a
- * Letterboxd id, and on a series all three land on the wrong page or on none.
+ * here: both of these guess at the page from something that is not a
+ * Letterboxd id, and on a series they land on the wrong page or on none.
+ *
+ * The IMDb id used to sit between the two and was taken out on 2026-09-21.
+ * Measured on Wikidata that day: of the frwiki films carrying an IMDb id,
+ * 95.1% also carry the Letterboxd one and 96.0% the TMDB one, so that rung
+ * only ever fired for the 3.9% carrying neither. Those are precisely the
+ * films Letterboxd does not have, its catalogue coming from TMDB, so it
+ * answered "No-one has added tt0427485 yet" for "La Main dans le sac (film,
+ * 1916)" instead of a page. A search of the catalogue says the same thing
+ * when the film is absent, and finds it when Wikidata simply never linked
+ * it.
  */
 function resolveFilmFallback(card: LetterboxdCard): string {
-  const { externalIds } = card;
-
-  // Both redirect to the film page, verified by navigation.
-  const tmdb = validId(externalIds.tmdbMovieId, TMDB_ID_PATTERN);
+  // Redirects to the film page, verified by navigation.
+  const tmdb = validId(card.externalIds.tmdbMovieId, TMDB_ID_PATTERN);
   if (tmdb !== null) {
     return letterboxdUrl(['tmdb', tmdb]);
-  }
-  const imdb = validId(externalIds.imdbId, IMDB_FILM_ID_PATTERN);
-  if (imdb !== null) {
-    return letterboxdUrl(['imdb', imdb]);
   }
   return searchUrl(card.title);
 }

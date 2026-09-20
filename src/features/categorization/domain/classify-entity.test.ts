@@ -12,7 +12,6 @@ const EMPTY_EXTERNAL_IDS: ExternalIds = {
   letterboxdWriter: null,
   letterboxdProducer: null,
   letterboxdStudio: null,
-  imdbId: null,
   tmdbMovieId: null,
   tmdbPersonId: null,
 };

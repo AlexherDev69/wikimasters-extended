@@ -31,7 +31,6 @@ function makeFacts(overrides: Partial<EntityFacts> = {}): EntityFacts {
       letterboxdWriter: null,
       letterboxdProducer: null,
       letterboxdStudio: null,
-      imdbId: null,
       tmdbMovieId: null,
       tmdbPersonId: null,
     },
