@@ -105,6 +105,17 @@ function removeOurButton(cardRoot: HTMLElement): void {
  * positioning context, and it already is one, `position: absolute` by its own
  * classes. The only node touched is ours: the card itself is read, never
  * modified.
+ *
+ * This choice of positioning context is worth naming rather than assuming:
+ * verified on all six fixtures committed for this feature, the text area
+ * carries `bottom-0 left-0 right-0`, so its padding box shares its bottom
+ * edge and its width with the card root's, which is itself `position:
+ * relative`. `bottom: 4px; left: 50%` in letterboxd.css therefore designates
+ * the very same pixel whether it ends up read against the text area or
+ * against the root, which is why the button would still land correctly even
+ * if the text area ever lost `position: absolute`. That property would
+ * disappear if the site moved the text area to something like `bottom-[8px]`
+ * instead, which is exactly why it is called out here.
  */
 export function applyCardButton(cardRoot: HTMLElement, title: string, url: string | null): void {
   // Last check before the DOM, whatever the caller believes it holds: a value
@@ -119,6 +130,14 @@ export function applyCardButton(cardRoot: HTMLElement, title: string, url: strin
 
   const textArea = findTextArea(cardRoot);
   if (textArea === null) {
+    // Unreachable today: the scanner never puts a card into `cards` unless it
+    // holds an `h3`, and findTextArea needs that very heading to find an area
+    // at all, so a card that reaches this point always has one. Kept anyway,
+    // and aligned on the model of missing-image/data/card-image.ts, which
+    // also removes through a branch like this one: if the site ever changed
+    // shape so a card lost its text area while still carrying a stale
+    // button, this takes it back instead of leaving it on screen forever.
+    removeOurButton(cardRoot);
     return;
   }
 

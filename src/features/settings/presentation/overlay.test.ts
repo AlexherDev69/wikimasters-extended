@@ -9,6 +9,7 @@ import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
 import { BADGE_SELECTOR, CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
 import { DIM_SELECTOR, PANEL_SELECTOR } from '../../category-highlight/data/highlight-selectors';
+import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
@@ -311,6 +312,30 @@ describe('createOverlay', () => {
 
     expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).toBeNull();
     expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).not.toBeNull();
+  });
+
+  it('should take back the Letterboxd buttons at once when the link is turned off', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    expect(document.body.querySelector(CARD_BUTTON_SELECTOR)).not.toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, letterboxdLink: false });
+
+    expect(document.body.querySelector(CARD_BUTTON_SELECTOR)).toBeNull();
+  });
+
+  it('should bring the Letterboxd buttons back at once when the link is turned on again', async () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    const drawn = document.body.querySelectorAll(CARD_BUTTON_SELECTOR).length;
+    overlay.applySettings({ ...DEFAULT_SETTINGS, letterboxdLink: false });
+
+    overlay.applySettings(DEFAULT_SETTINGS);
+
+    expect(drawn).toBeGreaterThan(0);
+    expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(drawn);
   });
 
   it('should ask for no categorization at all when the four settings are off', () => {

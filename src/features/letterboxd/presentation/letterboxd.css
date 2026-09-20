@@ -11,11 +11,24 @@
   /*
    * The category badge now sits at the top of the text area, straddling the
    * line between the picture and the text: this button sits at the bottom of
-   * the same area instead, on the padding the text area keeps under its stats
-   * row, so the two can never meet whatever either one shows.
+   * the same area instead, over the empty middle of its stats row, so the two
+   * can never meet whatever either one shows. That middle stays empty because
+   * the row is `justify-between`, with the attack stat on the left and the
+   * defense stat on the right: on the narrowest card (320px viewport, card
+   * 137.6px wide, content 113.6px wide, each stat about 42px wide) the free
+   * middle is about 29.6px for a 16px button, so about 6.8px of clearance on
+   * each side; at 375px and above the card is clamped to 160px and the
+   * clearance grows to about 19px.
    */
   bottom: 4px;
   box-sizing: border-box;
+  /*
+   * A clamp on the viewport cannot tell a grid card from a large one apart: a
+   * card cannot become a container without restyling a node of the site, so
+   * the size follows the viewport instead of the actual size of the card
+   * root. On a wide screen a grid card gets the same large size as a large
+   * card, even though its own root stays exactly as narrow as before.
+   */
   width: clamp(16px, 1.6vw, 20px);
   height: clamp(16px, 1.6vw, 20px);
   border-radius: 999px;

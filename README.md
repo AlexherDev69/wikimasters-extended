@@ -32,6 +32,8 @@ Une série, une saison ou un épisode n'en reçoit pas non plus, sauf si Letterb
 
 Le même lien apparaît aussi sous la forme d'un petit logo Letterboxd sur la carte elle-même, sous la photo, pour les mêmes cartes que ci-dessus. Il s'ouvre dans un nouvel onglet, exactement comme celui de la modale. C'est le seul élément de l'extension qui réagit à un clic fait sur une carte : cliquer dessus ouvre Letterboxd sans ouvrir en plus la modale de détail de la carte, alors qu'un clic n'importe où ailleurs sur la carte ouvre cette modale. Le petit logo est dessiné par l'extension elle-même, avec ses trois pastilles de couleur : rien n'est téléchargé depuis Letterboxd pour l'afficher, et Letterboxd n'apprend rien tant que tu n'as pas cliqué toi-même dessus.
 
+La modale de détail affiche elle-même une copie complète de la carte : le petit logo apparaît donc aussi là, sous la vignette, à côté du lien texte.
+
 ### Images manquantes
 
 Beaucoup de cartes n'ont pas d'illustration : le site affiche alors son propre logo à la place. Quand Wikidata connaît une image pour la carte, l'extension l'affiche par-dessus ce logo, dans la grille comme dans la modale de détail. Tant que l'image n'est pas chargée, ou si elle ne se charge pas, le logo du site reste visible : aucun trou n'apparaît jamais.
