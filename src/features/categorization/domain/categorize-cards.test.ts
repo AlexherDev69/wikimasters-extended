@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { storage } from '#imports';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import {
   createReplayFetch,
@@ -13,6 +14,11 @@ import {
 } from '../../../core/http/fetch-json';
 import type { Logger } from '../../../core/logger/logger';
 import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
+import {
+  createThumbnailUrlCache,
+  THUMBNAIL_URL_KEY_PREFIX,
+} from '../../missing-image/data/thumbnail-cache';
+import { createThumbnailUrlResolver } from '../../missing-image/data/thumbnail-resolver';
 import { createCardFactsCache } from '../data/card-facts-cache';
 import { createClassRootsSource } from '../data/class-roots-source';
 import { createClassTargetCache } from '../data/class-target-cache';
@@ -25,9 +31,16 @@ import {
   FILM_ROOT_IDS,
   type CardToCategorize,
   type CategorizeCardsDeps,
+  type CategorizeCardsOptions,
 } from './categorize-cards';
 import type { EntityFacts } from './entity-facts';
-import type { CachedCardFacts, ClassResolution, Clock } from './ports';
+import type {
+  CachedCardFacts,
+  ClassResolution,
+  Clock,
+  ThumbnailUrlCache,
+  ThumbnailUrlSource,
+} from './ports';
 
 /** Expected output of the 100 real cards, produced independently from the rules. */
 interface GoldenEntry {
@@ -126,9 +139,26 @@ function makeDeps(fetchImpl: FetchLike, logger: Logger = makeLogger()): Categori
     classRootsSource: createClassRootsSource(httpOptions),
     cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
     classTargetCache: createClassTargetCache(),
+    thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
+    thumbnailUrlCache: createThumbnailUrlCache(SYSTEM_CLOCK),
     logger,
   };
 }
+
+/** Where the Wikimedia thumbnail servers answer from, and nowhere else. */
+const THUMBNAIL_ORIGIN = 'https://upload.wikimedia.org/';
+
+/** The addresses stored on this machine right now, whatever they say. */
+async function imageCacheKeys(): Promise<string[]> {
+  const snapshot = await storage.snapshot('local');
+  return Object.keys(snapshot).filter((key) => key.startsWith(THUMBNAIL_URL_KEY_PREFIX));
+}
+
+/** What the content script asks for while the missing images feature is on. */
+const WITH_IMAGE_URLS: CategorizeCardsOptions = { resolveImageUrls: true };
+
+/** And what it asks for once the user has switched that feature off. */
+const WITHOUT_IMAGE_URLS: CategorizeCardsOptions = { resolveImageUrls: false };
 
 function byTitle(results: readonly CardCategory[]): Map<string, CardCategory> {
   return new Map(results.map((result) => [result.title, result]));
@@ -236,7 +266,63 @@ function makeStubDeps(cachedTargets: Map<string, CategoryId | null>): Categorize
         Promise.resolve(new Map()),
       putOccupationTargets: (): Promise<void> => Promise.resolve(),
     },
+    // The stub card has no image, so this stage is never reached.
+    thumbnailUrlSource: emptyThumbnailUrlSource(),
+    thumbnailUrlCache: emptyThumbnailUrlCache(),
     logger: makeLogger(),
+  };
+}
+
+/**
+ * A picture for the stub card. The recording of the entity facts was made
+ * before the image properties were part of the query, so no card of the golden
+ * set carries one: the stage that resolves addresses is exercised here instead,
+ * with the real resolver and the real cache over a controlled answer.
+ */
+const STUB_IMAGE: EntityFacts['image'] = {
+  fileName: 'Gallus gallus domesticus.jpg',
+  kind: 'picture',
+};
+
+/** Both classes of the stub card resolved, so it is categorized whatever happens next. */
+const STUB_CLASSES_RESOLVED = new Map<string, CategoryId | null>([
+  [STUB_INSTANCE_CLASS_ID, 'living'],
+  [STUB_PARENT_CLASS_ID, 'living'],
+]);
+
+function makeImageDeps(
+  fetchImpl: FetchLike,
+  image: EntityFacts['image'],
+  logger: Logger = makeLogger(),
+): CategorizeCardsDeps {
+  const httpOptions: FetchJsonOptions = {
+    fetchImpl,
+    sleep: (): Promise<void> => Promise.resolve(),
+    cooldownStore: createMemoryCooldownStore(),
+  };
+
+  return {
+    ...makeStubDeps(STUB_CLASSES_RESOLVED),
+    entityFactsSource: {
+      fetchFacts: (): Promise<Map<string, EntityFacts>> =>
+        Promise.resolve(new Map([[STUB_QID, { ...STUB_FACTS, image }]])),
+    },
+    thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
+    thumbnailUrlCache: createThumbnailUrlCache(SYSTEM_CLOCK),
+    logger,
+  };
+}
+
+function emptyThumbnailUrlSource(): ThumbnailUrlSource {
+  return {
+    resolveThumbnailUrls: (): Promise<Map<string, string | null>> => Promise.resolve(new Map()),
+  };
+}
+
+function emptyThumbnailUrlCache(): ThumbnailUrlCache {
+  return {
+    getFresh: (): Promise<Map<string, string | null>> => Promise.resolve(new Map()),
+    putMany: (): Promise<void> => Promise.resolve(),
   };
 }
 
@@ -248,7 +334,7 @@ describe('categorizeCards', () => {
   it('should return the expected category of every card of the golden set', async () => {
     const replay = createReplayFetch();
 
-    const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl));
+    const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
     const resultByTitle = byTitle(results);
 
     expect(results).toHaveLength(GOLDEN_EXPECTATIONS.length);
@@ -273,7 +359,7 @@ describe('categorizeCards', () => {
   it('should return the expected Letterboxd link of every card of the golden set', async () => {
     const replay = createReplayFetch();
 
-    const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl));
+    const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
     const resultByTitle = byTitle(results);
 
     expect(GOLDEN_LETTERBOXD).toHaveLength(GOLDEN_EXPECTATIONS.length);
@@ -288,7 +374,11 @@ describe('categorizeCards', () => {
   it('should perform one frwiki request and one entity facts request for 50 unknown cards', async () => {
     const replay = createReplayFetch();
 
-    await categorizeCards(GOLDEN_CARDS.slice(0, TITLES_PER_REQUEST), makeDeps(replay.fetchImpl));
+    await categorizeCards(
+      GOLDEN_CARDS.slice(0, TITLES_PER_REQUEST),
+      makeDeps(replay.fetchImpl),
+      WITH_IMAGE_URLS,
+    );
 
     expect(replay.countOf('frwiki')).toBe(1);
     expect(replay.countOf('entity-facts')).toBe(1);
@@ -297,7 +387,7 @@ describe('categorizeCards', () => {
   it('should perform two requests of each kind for 100 unknown cards', async () => {
     const replay = createReplayFetch();
 
-    await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl));
+    await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
 
     expect(GOLDEN_CARDS).toHaveLength(2 * TITLES_PER_REQUEST);
     expect(replay.countOf('frwiki')).toBe(2);
@@ -306,10 +396,14 @@ describe('categorizeCards', () => {
 
   it('should perform no request at all on a second identical call', async () => {
     const firstReplay = createReplayFetch();
-    await categorizeCards(GOLDEN_CARDS, makeDeps(firstReplay.fetchImpl));
+    await categorizeCards(GOLDEN_CARDS, makeDeps(firstReplay.fetchImpl), WITH_IMAGE_URLS);
 
     const secondReplay = createReplayFetch();
-    const results = await categorizeCards(GOLDEN_CARDS, makeDeps(secondReplay.fetchImpl));
+    const results = await categorizeCards(
+      GOLDEN_CARDS,
+      makeDeps(secondReplay.fetchImpl),
+      WITH_IMAGE_URLS,
+    );
 
     expect(secondReplay.calls).toHaveLength(0);
     expect(results.every((result) => result.status === 'categorized')).toBe(true);
@@ -321,6 +415,7 @@ describe('categorizeCards', () => {
     const results = await categorizeCards(
       [{ title: MISSING_TITLE, description: null }],
       makeDeps(replay.fetchImpl),
+      WITH_IMAGE_URLS,
     );
 
     expect(results[0]).toEqual({
@@ -342,7 +437,11 @@ describe('categorizeCards', () => {
     }
     const replay = createReplayFetch();
 
-    const results = await categorizeCards([card], makeDeps(factlessEntityFetch(replay)));
+    const results = await categorizeCards(
+      [card],
+      makeDeps(factlessEntityFetch(replay)),
+      WITH_IMAGE_URLS,
+    );
 
     expect(results[0]).toMatchObject({
       status: 'categorized',
@@ -355,7 +454,7 @@ describe('categorizeCards', () => {
   it('should categorize the card when a parent is unresolved but its classes elect a category', async () => {
     const deps = makeStubDeps(new Map([[STUB_INSTANCE_CLASS_ID, 'living']]));
 
-    const results = await categorizeCards([STUB_CARD], deps);
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
 
     expect(results[0]).toMatchObject({ status: 'categorized', categoryId: 'living' });
   });
@@ -363,7 +462,7 @@ describe('categorizeCards', () => {
   it('should report an error when a parent is unresolved and the classes elect nobody', async () => {
     const deps = makeStubDeps(new Map([[STUB_INSTANCE_CLASS_ID, null]]));
 
-    const results = await categorizeCards([STUB_CARD], deps);
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
 
     expect(results[0]?.status).toBe('error');
   });
@@ -371,7 +470,7 @@ describe('categorizeCards', () => {
   it('should report an error when one of the P31 classes is unresolved', async () => {
     const deps = makeStubDeps(new Map([[STUB_PARENT_CLASS_ID, 'living']]));
 
-    const results = await categorizeCards([STUB_CARD], deps);
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
 
     expect(results[0]?.status).toBe('error');
   });
@@ -384,13 +483,14 @@ describe('categorizeCards', () => {
     }
 
     const replay = createReplayFetch();
-    await categorizeCards([cachedCard], makeDeps(replay.fetchImpl));
+    await categorizeCards([cachedCard], makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
 
     const logger = makeLogger();
     const failingFetch: FetchLike = () => Promise.reject(new Error('network down'));
     const results = await categorizeCards(
       [cachedCard, { title: MISSING_TITLE, description: null }],
       makeDeps(failingFetch, logger),
+      WITH_IMAGE_URLS,
     );
     const resultByTitle = byTitle(results);
 
@@ -412,7 +512,7 @@ describe('categorizeCards', () => {
     }
     const replay = createReplayFetch();
 
-    const results = await categorizeCards([card, card], makeDeps(replay.fetchImpl));
+    const results = await categorizeCards([card, card], makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
 
     expect(results).toHaveLength(1);
   });
@@ -420,7 +520,7 @@ describe('categorizeCards', () => {
   it('should return nothing and perform no request when there is no card', async () => {
     const replay = createReplayFetch();
 
-    const results = await categorizeCards([], makeDeps(replay.fetchImpl));
+    const results = await categorizeCards([], makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
 
     expect(results).toEqual([]);
     expect(replay.calls).toHaveLength(0);
@@ -436,6 +536,146 @@ describe('categorizeCards', () => {
     for (const rootId of FILM_ROOT_IDS) {
       expect(queriedRootIds).toContain(rootId);
     }
+  });
+
+  it('should resolve the address of the picture of a card that has one', async () => {
+    const replay = createReplayFetch();
+
+    const results = await categorizeCards(
+      [STUB_CARD],
+      makeImageDeps(replay.fetchImpl, STUB_IMAGE),
+      WITH_IMAGE_URLS,
+    );
+
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image?.fileName).toBe(STUB_IMAGE?.fileName);
+    const thumbnailUrl = results[0]?.image?.thumbnailUrl ?? '';
+    expect(thumbnailUrl.startsWith(THUMBNAIL_ORIGIN)).toBe(true);
+    expect(thumbnailUrl).toContain(encodeURIComponent(STUB_IMAGE?.fileName ?? ''));
+    expect(replay.countOf('frwiki-images')).toBe(1);
+  });
+
+  it('should perform no request for the addresses when no card has a picture', async () => {
+    const replay = createReplayFetch();
+
+    const results = await categorizeCards(
+      [STUB_CARD],
+      makeImageDeps(replay.fetchImpl, null),
+      WITH_IMAGE_URLS,
+    );
+
+    expect(results[0]?.image).toBeNull();
+    expect(replay.calls).toHaveLength(0);
+  });
+
+  it('should perform no request for the addresses when the images are switched off', async () => {
+    const replay = createReplayFetch();
+
+    const results = await categorizeCards(
+      [STUB_CARD],
+      makeImageDeps(replay.fetchImpl, STUB_IMAGE),
+      WITHOUT_IMAGE_URLS,
+    );
+
+    // The card keeps its category and its picture: only the address of that
+    // picture is left unresolved, because nothing on the page would draw it.
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image?.fileName).toBe(STUB_IMAGE?.fileName);
+    expect(results[0]?.image?.thumbnailUrl).toBeNull();
+    expect(replay.countOf('frwiki-images')).toBe(0);
+    // And nothing was written for it either: a feature that is off fills no
+    // storage of its own.
+    expect(await imageCacheKeys()).toHaveLength(0);
+  });
+
+  it('should perform no request for an address that is already cached', async () => {
+    const firstReplay = createReplayFetch();
+    await categorizeCards(
+      [STUB_CARD],
+      makeImageDeps(firstReplay.fetchImpl, STUB_IMAGE),
+      WITH_IMAGE_URLS,
+    );
+    expect(firstReplay.countOf('frwiki-images')).toBe(1);
+
+    const secondReplay = createReplayFetch();
+    const results = await categorizeCards(
+      [STUB_CARD],
+      makeImageDeps(secondReplay.fetchImpl, STUB_IMAGE),
+      WITH_IMAGE_URLS,
+    );
+
+    expect(secondReplay.countOf('frwiki-images')).toBe(0);
+    // And the address is still there, read back from the cache.
+    expect(results[0]?.image?.thumbnailUrl?.startsWith(THUMBNAIL_ORIGIN)).toBe(true);
+  });
+
+  it('should keep the card categorized and warn when the address cannot be resolved', async () => {
+    const logger = makeLogger();
+    const failingFetch: FetchLike = () => Promise.reject(new Error('imageinfo unavailable'));
+
+    const results = await categorizeCards(
+      [STUB_CARD],
+      makeImageDeps(failingFetch, STUB_IMAGE, logger),
+      WITH_IMAGE_URLS,
+    );
+
+    // Categorized, with its picture, and simply without a resolved address:
+    // the content script then builds the slower one itself.
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.categoryId).toBe('living');
+    expect(results[0]?.image?.fileName).toBe(STUB_IMAGE?.fileName);
+    expect(results[0]?.image?.thumbnailUrl).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Thumbnail request failed',
+      expect.objectContaining({ error: 'imageinfo unavailable' }),
+    );
+  });
+
+  it('should keep the card categorized and warn when the address cache cannot be read', async () => {
+    const logger = makeLogger();
+    const replay = createReplayFetch();
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(replay.fetchImpl, STUB_IMAGE, logger),
+      thumbnailUrlCache: {
+        getFresh: (): Promise<Map<string, string | null>> =>
+          Promise.reject(new Error('storage unavailable')),
+        putMany: (): Promise<void> => Promise.resolve(),
+      },
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    // The cache is a shortcut and nothing else: an unreadable one costs one
+    // request, never the address and certainly never the category.
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image?.thumbnailUrl?.startsWith(THUMBNAIL_ORIGIN)).toBe(true);
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Thumbnail cache read failed',
+      expect.objectContaining({ error: 'storage unavailable' }),
+    );
+  });
+
+  it('should keep the card categorized and warn when the address cannot be stored', async () => {
+    const logger = makeLogger();
+    const replay = createReplayFetch();
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(replay.fetchImpl, STUB_IMAGE, logger),
+      thumbnailUrlCache: {
+        getFresh: (): Promise<Map<string, string | null>> => Promise.resolve(new Map()),
+        putMany: (): Promise<void> => Promise.reject(new Error('quota exceeded')),
+      },
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    // A full local storage is the likely one here, and the address just
+    // resolved is delivered anyway: only the next batch pays for it again.
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image?.thumbnailUrl?.startsWith(THUMBNAIL_ORIGIN)).toBe(true);
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Thumbnail cache write failed',
+      expect.objectContaining({ error: 'quota exceeded' }),
+    );
   });
 
   it('should report an error when the class roots request fails for an uncached class', async () => {
@@ -455,7 +695,11 @@ describe('categorizeCards', () => {
       return replay.fetchImpl(url, init);
     };
 
-    const results = await categorizeCards([card], makeDeps(partiallyFailingFetch, logger));
+    const results = await categorizeCards(
+      [card],
+      makeDeps(partiallyFailingFetch, logger),
+      WITH_IMAGE_URLS,
+    );
 
     expect(results[0]?.status).toBe('error');
     expect(logger.warn).toHaveBeenCalledWith(

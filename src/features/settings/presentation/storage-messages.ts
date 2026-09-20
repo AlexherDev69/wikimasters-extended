@@ -79,6 +79,7 @@ function isStorageStats(value: unknown): value is StorageStats {
     isRecord(value) &&
     isCount(value['cardFacts']) &&
     isCount(value['classTargets']) &&
+    isCount(value['thumbnailUrls']) &&
     typeof value['hasLegacyIndexData'] === 'boolean'
   );
 }

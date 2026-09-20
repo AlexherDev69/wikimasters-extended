@@ -52,27 +52,52 @@ export interface CardFactsCache {
   putMany(entries: ReadonlyMap<string, CachedCardFacts>): Promise<void>;
 }
 
+/**
+ * The final address of a Commons file on the Wikimedia thumbnail servers. The
+ * address the extension builds itself answers with two redirects the browser is
+ * told not to cache, so it is walked again on every single display; resolving it
+ * once and remembering it is what this port is for.
+ *
+ * Null is an answer: the file has no usable thumbnail, and the card falls back
+ * to the address built from its name.
+ */
+export interface ThumbnailUrlSource {
+  resolveThumbnailUrls(fileNames: readonly string[]): Promise<Map<string, string | null>>;
+}
+
+export interface ThumbnailUrlCache {
+  /**
+   * Only returns entries that are present, of the current schema and not
+   * expired. An entry holding null is a remembered "no usable thumbnail", which
+   * is why it is an entry at all rather than a miss.
+   */
+  getFresh(fileNames: readonly string[]): Promise<Map<string, string | null>>;
+  putMany(entries: ReadonlyMap<string, string | null>): Promise<void>;
+}
+
 /** How many entries each level of the categorization cache holds. */
 export interface CategorizationCacheCounts {
   /** Cards, whatever their age or their schema version. */
   cardFacts: number;
   /** Wikidata classes, of both kinds and whatever their roots version. */
   classTargets: number;
+  /** Commons files whose thumbnail address is known, resolved or not. */
+  thumbnailUrls: number;
 }
 
 /**
- * Counting and emptying the two levels of the categorization cache, kept apart
+ * Counting and emptying the levels of the categorization cache, kept apart
  * from the ports that read and write their entries. The categorization use
  * case receives those and only those, so it cannot empty a cache; the
  * maintenance of the options page holds this one and knows nothing of what the
  * entries mean.
  *
- * Both levels are counted together and emptied together, so each operation
+ * Every level is counted together and emptied together, so each operation
  * lists the storage area exactly once.
  */
 export interface CategorizationCacheMaintenance {
   countEntries(): Promise<CategorizationCacheCounts>;
-  /** Removes every entry of both levels, and nothing else. */
+  /** Removes every entry of every level, and nothing else. */
   clear(): Promise<void>;
 }
 

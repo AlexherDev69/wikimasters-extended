@@ -5,7 +5,10 @@ import { observeCards } from '../features/card-detection/data/card-observer';
 import { scanCards, type ObservedCard } from '../features/card-detection/data/scan-cards';
 import type { ScheduleRetry } from '../features/card-detection/presentation/handle-scan';
 import type { CardCategory } from '../features/categorization/domain/category';
-import type { CardToCategorize } from '../features/categorization/domain/categorize-cards';
+import type {
+  CardToCategorize,
+  CategorizeCardsOptions,
+} from '../features/categorization/domain/categorize-cards';
 import {
   CATEGORIZE_CARDS_MESSAGE,
   isCategorizeCardsResponse,
@@ -25,10 +28,14 @@ const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
  * boundary, so it is validated: an invalid one rejects, which lets the caller
  * schedule a retry.
  */
-async function requestCategories(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
+async function requestCategories(
+  cards: readonly CardToCategorize[],
+  options: CategorizeCardsOptions,
+): Promise<CardCategory[]> {
   const request: CategorizeCardsRequest = {
     type: CATEGORIZE_CARDS_MESSAGE,
     cards: [...cards],
+    resolveImageUrls: options.resolveImageUrls,
   };
   const response: unknown = await browser.runtime.sendMessage(request);
 

@@ -65,6 +65,9 @@ function makeDeps(): CategorizeCardsDeps {
         Promise.resolve(new Map()),
       putOccupationTargets: (): Promise<void> => Promise.resolve(),
     },
+    // The test card has no image, so neither of these is ever reached.
+    thumbnailUrlSource: { resolveThumbnailUrls: vi.fn() },
+    thumbnailUrlCache: { getFresh: vi.fn(), putMany: vi.fn() },
     logger,
   };
 }
@@ -75,7 +78,11 @@ describe('createCategorizeMessageHandler', () => {
     const sendResponse = vi.fn();
 
     const handled = handler(
-      { type: CATEGORIZE_CARDS_MESSAGE, cards: [{ title: 'Pulp Fiction', description: null }] },
+      {
+        type: CATEGORIZE_CARDS_MESSAGE,
+        cards: [{ title: 'Pulp Fiction', description: null }],
+        resolveImageUrls: true,
+      },
       sendResponse,
     );
 

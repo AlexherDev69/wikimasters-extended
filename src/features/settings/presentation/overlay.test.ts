@@ -29,7 +29,11 @@ const MODAL_CARD_TITLE = 'Dvorichté';
 /** A card of the catalogue export the site shows its own logo for. */
 const PLACEHOLDER_CARD_TITLE = 'Adan Canto';
 
-const CARD_IMAGE: CardImage = { fileName: 'Adan Canto 2015.jpg', kind: 'picture' };
+const CARD_IMAGE: CardImage = {
+  fileName: 'Adan Canto 2015.jpg',
+  kind: 'picture',
+  thumbnailUrl: null,
+};
 
 const FILM_URL = 'https://letterboxd.com/film/lost-river/';
 
@@ -330,6 +334,36 @@ describe('createOverlay', () => {
 
     await vi.waitFor(() => {
       expect(categorize).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('should ask for the addresses of the pictures only while the images are on', async () => {
+    document.body.innerHTML = GRID_HTML;
+    const { overlay, categorize } = mount({ ...DEFAULT_SETTINGS, missingImages: false });
+
+    scan(overlay);
+
+    await vi.waitFor(() => {
+      expect(categorize).toHaveBeenCalledOnce();
+    });
+    // The badges are on, so the batch leaves anyway: what a switched off
+    // feature must cost is its own traffic, here one request to Wikipedia per
+    // batch and the entries it would have stored.
+    expect(categorize).toHaveBeenNthCalledWith(1, expect.anything(), {
+      resolveImageUrls: false,
+    });
+
+    // Switched back on between two batches: the setting is read when a batch
+    // leaves, not when the overlay was built, so the next one resolves again.
+    overlay.applySettings(DEFAULT_SETTINGS);
+    document.body.innerHTML = GRID_HTML + LARGE_HTML;
+    scan(overlay);
+
+    await vi.waitFor(() => {
+      expect(categorize).toHaveBeenCalledTimes(2);
+    });
+    expect(categorize).toHaveBeenNthCalledWith(2, expect.anything(), {
+      resolveImageUrls: true,
     });
   });
 

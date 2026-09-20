@@ -70,6 +70,7 @@ async function readStats(deps: StorageMessageDeps): Promise<StorageStats> {
   return {
     cardFacts: cache.cardFacts,
     classTargets: cache.classTargets,
+    thumbnailUrls: cache.thumbnailUrls,
     hasLegacyIndexData,
   };
 }

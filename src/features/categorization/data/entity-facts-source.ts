@@ -1,7 +1,7 @@
 import { chunk } from '../../../core/array/chunk';
 import { ENTITY_BATCH_SIZE } from '../../../core/config/wikimedia';
 import type { FetchJsonOptions } from '../../../core/http/fetch-json';
-import type { CardImage } from '../../missing-image/domain/card-image';
+import type { CommonsFile } from '../../missing-image/domain/card-image';
 import { fileNameFromFilePathUri } from '../../missing-image/domain/commons-url';
 import { IMAGE_PROPERTIES } from '../../missing-image/domain/image-properties';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
@@ -43,7 +43,7 @@ function readExternalIds(binding: SparqlBinding): ExternalIds {
  * that yields no usable file name is skipped and the next property is tried:
  * one unusable URI must not cost the card its image.
  */
-function readImage(binding: SparqlBinding): CardImage | null {
+function readImage(binding: SparqlBinding): CommonsFile | null {
   for (const property of IMAGE_PROPERTIES) {
     const uri = binding[property.variable];
     const fileName = uri === undefined ? null : fileNameFromFilePathUri(uri);

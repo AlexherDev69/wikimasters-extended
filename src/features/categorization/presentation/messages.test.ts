@@ -8,9 +8,14 @@ import {
   MAX_TITLE_LENGTH,
 } from './messages';
 
-function makeRequest(cards: unknown): unknown {
-  return { type: CATEGORIZE_CARDS_MESSAGE, cards };
+function makeRequest(cards: unknown, resolveImageUrls: unknown = true): unknown {
+  return { type: CATEGORIZE_CARDS_MESSAGE, cards, resolveImageUrls };
 }
+
+/** A real answer of the frwiki API, tracking parameters included. */
+const THUMBNAIL_URL =
+  'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Pulp_Fiction.jpg/500px-Pulp_Fiction.jpg' +
+  '?utm_source=fr.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail';
 
 const VALID_CARD_CATEGORY: CardCategory = {
   title: 'Pulp Fiction',
@@ -20,7 +25,7 @@ const VALID_CARD_CATEGORY: CardCategory = {
   primarySubtype: null,
   personSubtypes: [],
   letterboxdUrl: 'https://letterboxd.com/film/pulp-fiction/',
-  image: { fileName: 'Pulp Fiction poster.jpg', kind: 'picture' },
+  image: { fileName: 'Pulp Fiction poster.jpg', kind: 'picture', thumbnailUrl: THUMBNAIL_URL },
 };
 
 function makeResponse(cards: unknown): unknown {
@@ -45,9 +50,24 @@ describe('isCategorizeCardsRequest', () => {
     expect(isCategorizeCardsRequest('text')).toBe(false);
   });
 
+  it('should accept a request that wants no address for the pictures', () => {
+    expect(
+      isCategorizeCardsRequest(makeRequest([{ title: 'Pulp Fiction', description: null }], false)),
+    ).toBe(true);
+  });
+
+  it('should reject a request that does not say whether the addresses are wanted', () => {
+    // An absent field is read neither as a yes nor as a no: it decides whether
+    // a request leaves for a feature the user may have switched off.
+    expect(isCategorizeCardsRequest({ type: CATEGORIZE_CARDS_MESSAGE, cards: [] })).toBe(false);
+    expect(isCategorizeCardsRequest(makeRequest([], 'false'))).toBe(false);
+  });
+
   it('should reject a request whose cards are not an array', () => {
     expect(isCategorizeCardsRequest(makeRequest({ title: 'A' }))).toBe(false);
-    expect(isCategorizeCardsRequest({ type: CATEGORIZE_CARDS_MESSAGE })).toBe(false);
+    expect(
+      isCategorizeCardsRequest({ type: CATEGORIZE_CARDS_MESSAGE, resolveImageUrls: true }),
+    ).toBe(false);
   });
 
   it('should reject a batch larger than the maximum', () => {
@@ -105,7 +125,11 @@ describe('isCategorizeCardsResponse', () => {
       primarySubtype: 'cinema',
       personSubtypes: ['cinema', 'media'],
       letterboxdUrl: 'https://letterboxd.com/director/quentin-tarantino/',
-      image: { fileName: 'Quentin Tarantino by Gage Skidmore.jpg', kind: 'picture' },
+      image: {
+        fileName: 'Quentin Tarantino by Gage Skidmore.jpg',
+        kind: 'picture',
+        thumbnailUrl: null,
+      },
     };
 
     expect(isCategorizeCardsResponse(makeResponse([person]))).toBe(true);
@@ -181,26 +205,55 @@ describe('isCategorizeCardsResponse', () => {
 
   it('should accept an image of each kind', () => {
     for (const kind of ['picture', 'emblem']) {
-      const image = { fileName: 'Logo.svg', kind };
+      const image = { fileName: 'Logo.svg', kind, thumbnailUrl: null };
       expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image }]))).toBe(
         true,
       );
     }
   });
 
+  it('should accept an image whose address was not resolved', () => {
+    const image = { fileName: 'Pulp Fiction poster.jpg', kind: 'picture', thumbnailUrl: null };
+
+    expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image }]))).toBe(true);
+  });
+
   it('should reject an image whose file name or kind is not usable', () => {
     const refused = [
-      { fileName: 'Pulp Fiction poster.jpg', kind: 'photo' },
-      { fileName: '../secret.jpg', kind: 'picture' },
-      { fileName: 'Pulp Fiction poster.ogv', kind: 'picture' },
-      { fileName: '', kind: 'picture' },
-      { fileName: 'Pulp Fiction poster.jpg' },
+      { fileName: 'Pulp Fiction poster.jpg', kind: 'photo', thumbnailUrl: null },
+      { fileName: '../secret.jpg', kind: 'picture', thumbnailUrl: null },
+      { fileName: 'Pulp Fiction poster.ogv', kind: 'picture', thumbnailUrl: null },
+      { fileName: '', kind: 'picture', thumbnailUrl: null },
+      { fileName: 'Pulp Fiction poster.jpg', thumbnailUrl: null },
+      // The file alone, as the facts of a card hold it: the address is part of
+      // what crosses the boundary, so it cannot simply be left out.
+      { fileName: 'Pulp Fiction poster.jpg', kind: 'picture' },
       'Pulp Fiction poster.jpg',
       42,
       undefined,
     ];
 
     for (const image of refused) {
+      expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image }]))).toBe(
+        false,
+      );
+    }
+  });
+
+  it('should reject a thumbnail address outside the Wikimedia thumbnail hosts', () => {
+    // This one ends up in the `src` of an image the extension adds to the page.
+    const foreign = [
+      'https://upload.wikimedia.org.evil.example/500px-Pulp_Fiction.jpg',
+      'https://evil.example/500px-Pulp_Fiction.jpg',
+      'http://upload.wikimedia.org/500px-Pulp_Fiction.jpg',
+      'https://user:secret@upload.wikimedia.org/500px-Pulp_Fiction.jpg',
+      'javascript:alert(1)',
+      '/500px-Pulp_Fiction.jpg',
+      42,
+    ];
+
+    for (const thumbnailUrl of foreign) {
+      const image = { ...VALID_CARD_CATEGORY.image, thumbnailUrl };
       expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image }]))).toBe(
         false,
       );

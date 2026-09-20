@@ -30,11 +30,21 @@ export const IMAGE_FILE_ATTRIBUTE = 'data-wme-image-file';
 export const IMAGE_KIND_ATTRIBUTE = 'data-wme-image-kind';
 
 /**
- * Set by our own `load` listener, and the only thing that makes the container
- * visible: an image that never arrives leaves the placeholder of the site in
- * view rather than a hole.
+ * Set by our own `load` listener, and the only thing that shows the picture and
+ * the mark naming its source: an image that never arrives leaves the
+ * placeholder of the site in view rather than a hole.
  */
 export const IMAGE_LOADED_ATTRIBUTE = 'data-wme-image-loaded';
+
+/**
+ * Set by our own `error` listener. It hides everything of ours, so a picture
+ * that cannot be loaded leaves exactly what the site shows on a card the
+ * extension found nothing for: a failure must never look like a broken card.
+ *
+ * Neither attribute means the picture is still on its way, which is the state
+ * the style sheet draws the loading state in.
+ */
+export const IMAGE_FAILED_ATTRIBUTE = 'data-wme-image-failed';
 
 /**
  * Marks the small node naming where the picture comes from, inside the

@@ -28,7 +28,9 @@ export function createCategorizeMessageHandler(
     // The rejection handler is the second argument of `then` and not a `catch`
     // after it: a `catch` would also run when `sendResponse` itself throws, and
     // answer a second time for a categorization that had succeeded.
-    void categorizeCards(message.cards, deps).then(
+    void categorizeCards(message.cards, deps, {
+      resolveImageUrls: message.resolveImageUrls,
+    }).then(
       (cards) => {
         sendResponse({ cards });
       },

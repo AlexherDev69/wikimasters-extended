@@ -17,8 +17,19 @@ const SECOND_TITLE = 'Affaire Romand';
 const REAL_PICTURE_TITLE = 'Airbus A400M Atlas';
 const OTHER_TITLE = 'Pulp Fiction';
 
-const PORTRAIT: CardImage = { fileName: 'Adan Canto 2015.jpg', kind: 'picture' };
-const EMBLEM: CardImage = { fileName: 'Logo - République française.svg', kind: 'emblem' };
+const RESOLVED_URL =
+  'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Adan_Canto.jpg/500px-Adan_Canto.jpg';
+
+const PORTRAIT: CardImage = {
+  fileName: 'Adan Canto 2015.jpg',
+  kind: 'picture',
+  thumbnailUrl: RESOLVED_URL,
+};
+const EMBLEM: CardImage = {
+  fileName: 'Logo - République française.svg',
+  kind: 'emblem',
+  thumbnailUrl: null,
+};
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
   return {
@@ -85,6 +96,23 @@ describe('syncCardImages', () => {
     );
 
     expect(shownFiles()).toEqual([PORTRAIT.fileName, EMBLEM.fileName]);
+  });
+
+  it('should ask for the resolved address when there is one and build it otherwise', () => {
+    sync(
+      makeCategories(
+        makeCategory(FIRST_TITLE, { image: PORTRAIT }),
+        makeCategory(SECOND_TITLE, { image: EMBLEM }),
+      ),
+    );
+
+    const sources = containers().map(
+      (container) => container.querySelector('img')?.getAttribute('src'),
+    );
+    expect(sources).toEqual([
+      RESOLVED_URL,
+      'https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20-%20R%C3%A9publique%20fran%C3%A7aise.svg?width=500',
+    ]);
   });
 
   it('should show nothing on a card the site shows a real picture for', () => {

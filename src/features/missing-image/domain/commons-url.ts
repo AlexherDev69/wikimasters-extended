@@ -23,8 +23,18 @@ const FILE_PATH_URI_PREFIXES: readonly string[] = [
 /**
  * A standard Wikimedia thumbnail step, wide enough for the big card of the
  * detail modal and small enough to stay light on a page of a hundred cards.
+ *
+ * Exported because the request that resolves the final address asks for that
+ * same width: the address we build and the address we are given must name the
+ * same file, or Wikimedia would render a second thumbnail of every picture.
+ *
+ * The two are still two entries in the cache of the browser: the resolved
+ * address carries the tracking parameters the API appends to it, which the
+ * address our redirect ends on does not. A picture first shown through the
+ * built address and later through the resolved one is therefore downloaded
+ * once more, once per file and never again.
  */
-const THUMBNAIL_WIDTH = 500;
+export const THUMBNAIL_WIDTH = 500;
 
 const WIDTH_PARAMETER = 'width';
 

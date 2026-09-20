@@ -1,13 +1,10 @@
 import type { Logger } from '../../../core/logger/logger';
 import { findDetailModal } from '../../card-detection/data/detail-modal';
 import { scanCards, type ObservedCard } from '../../card-detection/data/scan-cards';
-import {
-  handleScan,
-  type CategorizeCards,
-  type ScheduleRetry,
-} from '../../card-detection/presentation/handle-scan';
+import { handleScan, type ScheduleRetry } from '../../card-detection/presentation/handle-scan';
 import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
+import type { RequestCategories } from '../../categorization/presentation/messages';
 import {
   rememberCategories,
   type CategoryMemory,
@@ -52,7 +49,7 @@ export interface OverlayDeps {
   settings: Settings;
   logger: Logger;
   /** Asks the service worker for the categories of a batch of cards. */
-  categorize: CategorizeCards;
+  categorize: RequestCategories;
   scheduleRetry: ScheduleRetry;
 }
 
@@ -112,7 +109,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   }
 
   async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
-    const results = await deps.categorize(cards);
+    // The setting is read here, when the batch leaves, and not captured when
+    // the overlay was built: a user who switches the images off stops the
+    // requests for their addresses from the very next batch, and switching
+    // them back on resolves again.
+    const results = await deps.categorize(cards, { resolveImageUrls: settings.missingImages });
     rememberCategories(memory, visibleTitles, results);
     // The page has kept mutating while the answer was on its way, so the cards
     // are read again rather than taken from the scan that asked.

@@ -52,12 +52,13 @@ const OCCUPATION_LABELS = readFixture('occupation-labels.json');
 
 export type ReplayCallKind =
   | 'frwiki'
+  | 'frwiki-images'
   | 'entity-facts'
   | 'class-roots'
   | 'occupation-roots'
   | 'class-labels';
 
-type SparqlCallKind = Exclude<ReplayCallKind, 'frwiki'>;
+type SparqlCallKind = Exclude<ReplayCallKind, 'frwiki' | 'frwiki-images'>;
 
 export interface ReplayCall {
   kind: ReplayCallKind;
@@ -218,6 +219,48 @@ function requestedTitles(url: string): string[] {
   return titles === null || titles === '' ? [] : titles.split('|');
 }
 
+/** The property that tells the two frwiki requests of the extension apart. */
+const IMAGE_INFO_PROPERTY = 'imageinfo';
+
+const FILE_PREFIX = 'File:';
+const NORMALIZED_FILE_PREFIX = 'Fichier:';
+const THUMBNAIL_ORIGIN = 'https://upload.wikimedia.org';
+const THUMBNAIL_PATH = '/wikipedia/commons/thumb/';
+
+/**
+ * The imageinfo answer. It is BUILT and not recorded, because no fixture holds
+ * the addresses of the thumbnail servers, but its shape is the one measured on
+ * the live API on 2026-09-20: every title is normalized from `File:` to
+ * `Fichier:`, every page is `missing` from frwiki while carrying a full
+ * imageinfo block (the files live on Commons), and the pages come back in an
+ * order that is not the order of the request.
+ */
+function serveImageInfo(titles: readonly string[]): unknown {
+  const normalized = titles.map((title) => {
+    if (!title.startsWith(FILE_PREFIX)) {
+      throw new Error(`An imageinfo request must ask for the File namespace: ${title}`);
+    }
+    return { from: title, to: `${NORMALIZED_FILE_PREFIX}${title.slice(FILE_PREFIX.length)}` };
+  });
+
+  const pages = normalized
+    .map(({ to }) => {
+      const fileName = to.slice(NORMALIZED_FILE_PREFIX.length);
+      return {
+        title: to,
+        missing: true,
+        imageinfo: [
+          {
+            thumburl: `${THUMBNAIL_ORIGIN}${THUMBNAIL_PATH}500px-${encodeURIComponent(fileName)}`,
+          },
+        ],
+      };
+    })
+    .reverse();
+
+  return { batchcomplete: true, query: { normalized, pages } };
+}
+
 /** Serves only the pages that were asked for, as the real API does. */
 function serveFrwikiPages(titles: readonly string[]): unknown {
   const query = asRecord(asRecord(FRWIKI_TITLES)['query']);
@@ -245,8 +288,9 @@ export function createReplayFetch(): ReplayFetch {
         throw new Error(`Unexpected frwiki host: ${url}`);
       }
       const titles = requestedTitles(url);
+      const isImageInfo = new URL(url).searchParams.get('prop') === IMAGE_INFO_PROPERTY;
       calls.push({
-        kind: 'frwiki',
+        kind: isImageInfo ? 'frwiki-images' : 'frwiki',
         url,
         method,
         headers,
@@ -254,6 +298,9 @@ export function createReplayFetch(): ReplayFetch {
         query: null,
         titles,
       });
+      if (isImageInfo) {
+        return Promise.resolve(jsonResponse(serveImageInfo(titles)));
+      }
       const useEdgeCases = titles.some((title) => EDGE_CASE_TITLES.includes(title));
       return Promise.resolve(
         jsonResponse(useEdgeCases ? FRWIKI_TITLES_EDGE_CASES : serveFrwikiPages(titles)),

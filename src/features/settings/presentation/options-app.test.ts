@@ -11,10 +11,20 @@ const PRESENTATION_DIR = dirname(fileURLToPath(import.meta.url));
 const CORE_DOM_DIR = join(PRESENTATION_DIR, '../../../core/dom');
 
 /** An installation upgraded from the version that still had the index. */
-const STATS: StorageStats = { cardFacts: 12, classTargets: 4, hasLegacyIndexData: true };
+const STATS: StorageStats = {
+  cardFacts: 12,
+  classTargets: 4,
+  thumbnailUrls: 7,
+  hasLegacyIndexData: true,
+};
 
 /** The caches emptied, the keys of the old index still there. */
-const EMPTY_STATS: StorageStats = { cardFacts: 0, classTargets: 0, hasLegacyIndexData: true };
+const EMPTY_STATS: StorageStats = {
+  cardFacts: 0,
+  classTargets: 0,
+  thumbnailUrls: 0,
+  hasLegacyIndexData: true,
+};
 
 /** What the counts say once the old index data has been removed. */
 const CLEANED_STATS: StorageStats = { ...STATS, hasLegacyIndexData: false };
@@ -362,11 +372,11 @@ describe('mountOptions', () => {
     expect(region?.textContent).toBe('');
   });
 
-  it('should show the two counts of the local data', async () => {
+  it('should show every count of the local data', async () => {
     const container = await mount();
 
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4']);
+      expect(statCounts(container)).toEqual(['12', '4', '7']);
     });
   });
 
@@ -374,7 +384,7 @@ describe('mountOptions', () => {
     const container = await mount(makePorts({ readStats: () => Promise.resolve(CLEANED_STATS) }));
 
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4']);
+      expect(statCounts(container)).toEqual(['12', '4', '7']);
     });
     // Nothing to remove, so neither the button nor anything announcing it.
     expect(container.querySelector(LEGACY_BUTTON)).toBeNull();
@@ -424,7 +434,7 @@ describe('mountOptions', () => {
       makePorts({ clearCategorizationCache, readStats: () => Promise.resolve(stats) }),
     );
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4']);
+      expect(statCounts(container)).toEqual(['12', '4', '7']);
     });
 
     click(container, CACHE_BUTTON);
@@ -432,7 +442,7 @@ describe('mountOptions', () => {
     click(container, CACHE_CONFIRM);
 
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['0', '0']);
+      expect(statCounts(container)).toEqual(['0', '0', '0']);
     });
     expect(clearCategorizationCache).toHaveBeenCalledOnce();
   });
@@ -441,7 +451,7 @@ describe('mountOptions', () => {
     let stats = STATS;
     const container = await mount(makePorts({ readStats: () => Promise.resolve(stats) }));
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4']);
+      expect(statCounts(container)).toEqual(['12', '4', '7']);
     });
 
     click(container, CACHE_BUTTON);
@@ -452,7 +462,7 @@ describe('mountOptions', () => {
     // back to the document and the page could not be used with a keyboard.
     expect(document.activeElement).toBe(container.querySelector(CACHE_BUTTON));
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['0', '0']);
+      expect(statCounts(container)).toEqual(['0', '0', '0']);
     });
     expect(document.activeElement).toBe(container.querySelector(CACHE_BUTTON));
   });
@@ -560,7 +570,7 @@ describe('mountOptions', () => {
       makePorts({ removeLegacyIndexData: () => Promise.reject(new Error('storage down')) }),
     );
     await vi.waitFor(() => {
-      expect(statCounts(container)).toEqual(['12', '4']);
+      expect(statCounts(container)).toEqual(['12', '4', '7']);
     });
 
     click(container, LEGACY_BUTTON);
@@ -572,7 +582,7 @@ describe('mountOptions', () => {
       );
     });
     // Nothing was erased and the counts were never in doubt: they stay.
-    expect(statCounts(container)).toEqual(['12', '4']);
+    expect(statCounts(container)).toEqual(['12', '4', '7']);
     expect(container.textContent).not.toContain("n'ont pas pu être lues");
   });
 

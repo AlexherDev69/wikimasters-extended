@@ -22,6 +22,8 @@ import type {
   ClassRootsSource,
   ClassTargetCache,
   EntityFactsSource,
+  ThumbnailUrlCache,
+  ThumbnailUrlSource,
   TitleResolver,
 } from './ports';
 
@@ -30,12 +32,26 @@ export interface CardToCategorize {
   description: string | null;
 }
 
+/** What a batch asks for beyond the categories themselves. */
+export interface CategorizeCardsOptions {
+  /**
+   * Whether the addresses of the pictures are resolved for this batch. It
+   * carries the state of the missing images setting, read when the batch
+   * leaves: the content script draws nothing with those addresses while the
+   * feature is off, so not one request is sent and not one entry is stored for
+   * a feature the user has switched off.
+   */
+  resolveImageUrls: boolean;
+}
+
 export interface CategorizeCardsDeps {
   titleResolver: TitleResolver;
   entityFactsSource: EntityFactsSource;
   classRootsSource: ClassRootsSource;
   cardFactsCache: CardFactsCache;
   classTargetCache: ClassTargetCache;
+  thumbnailUrlSource: ThumbnailUrlSource;
+  thumbnailUrlCache: ThumbnailUrlCache;
   logger: Logger;
 }
 
@@ -349,8 +365,90 @@ function buildResult(
     primarySubtype: classification.primarySubtype,
     personSubtypes: classification.personSubtypes,
     letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, classification, stage)),
-    image: facts.image,
+    // The address of the picture is resolved by the stage below, once the whole
+    // batch is known: one request for every file rather than one per card.
+    image: facts.image === null ? null : { ...facts.image, thumbnailUrl: null },
   };
+}
+
+/** The distinct Commons files the results of a batch name, in no order. */
+function fileNamesOf(results: readonly CardCategory[]): string[] {
+  const fileNames = new Set<string>();
+
+  for (const result of results) {
+    if (result.image !== null) {
+      fileNames.add(result.image.fileName);
+    }
+  }
+  return [...fileNames];
+}
+
+/**
+ * The address of each file, cache first and one request for what is left.
+ * Every failure here is logged and swallowed: a card whose address is unknown
+ * keeps its category and shows its picture through the address the content
+ * script builds itself, which is the path that shipped before this stage.
+ */
+async function loadThumbnailUrls(
+  fileNames: readonly string[],
+  deps: CategorizeCardsDeps,
+): Promise<Map<string, string | null>> {
+  let urlByFileName = new Map<string, string | null>();
+  try {
+    urlByFileName = await deps.thumbnailUrlCache.getFresh(fileNames);
+  } catch (error) {
+    deps.logger.warn('Thumbnail cache read failed', { error: toErrorMessage(error) });
+  }
+
+  const missingFileNames = fileNames.filter((fileName) => !urlByFileName.has(fileName));
+  if (missingFileNames.length === 0) {
+    return urlByFileName;
+  }
+
+  let resolved: Map<string, string | null>;
+  try {
+    resolved = await deps.thumbnailUrlSource.resolveThumbnailUrls(missingFileNames);
+  } catch (error) {
+    deps.logger.warn('Thumbnail request failed', {
+      error: toErrorMessage(error),
+      missingCount: missingFileNames.length,
+    });
+    return urlByFileName;
+  }
+
+  try {
+    await deps.thumbnailUrlCache.putMany(resolved);
+  } catch (error) {
+    deps.logger.warn('Thumbnail cache write failed', { error: toErrorMessage(error) });
+  }
+
+  for (const [fileName, url] of resolved) {
+    urlByFileName.set(fileName, url);
+  }
+  return urlByFileName;
+}
+
+/** The same results, each known picture carrying the address resolved for it. */
+async function withThumbnailUrls(
+  results: CardCategory[],
+  deps: CategorizeCardsDeps,
+): Promise<CardCategory[]> {
+  const fileNames = fileNamesOf(results);
+  // Not one card of the batch has a picture, which is the common case: nothing
+  // is read, nothing is asked and nothing is written.
+  if (fileNames.length === 0) {
+    return results;
+  }
+
+  const urlByFileName = await loadThumbnailUrls(fileNames, deps);
+
+  return results.map((result) => {
+    const thumbnailUrl = result.image === null ? null : urlByFileName.get(result.image.fileName);
+    if (result.image === null || thumbnailUrl === undefined || thumbnailUrl === null) {
+      return result;
+    }
+    return { ...result, image: { ...result.image, thumbnailUrl } };
+  });
 }
 
 /**
@@ -358,10 +456,16 @@ function buildResult(
  * first appearance. Never rejects: a failing stage is logged and downgrades the
  * affected cards to the `error` status, while the cards served by the caches
  * are still categorized.
+ *
+ * The address of the pictures is resolved last, because it is the only stage
+ * whose failure costs nothing: it never downgrades a card, it only leaves the
+ * slow address in place. It is also the only one the caller can decline, and
+ * the whole stage is then skipped rather than made to fail.
  */
 export async function categorizeCards(
   cards: readonly CardToCategorize[],
   deps: CategorizeCardsDeps,
+  options: CategorizeCardsOptions,
 ): Promise<CardCategory[]> {
   const uniqueCards = deduplicateByTitle(cards);
   if (uniqueCards.length === 0) {
@@ -370,6 +474,12 @@ export async function categorizeCards(
 
   const factsByTitle = await loadFacts(uniqueCards, deps);
   const stage = await loadClassStage(factsByTitle, deps);
+  const results = uniqueCards.map((card) =>
+    buildResult(card, factsByTitle.get(card.title), stage),
+  );
+  if (!options.resolveImageUrls) {
+    return results;
+  }
 
-  return uniqueCards.map((card) => buildResult(card, factsByTitle.get(card.title), stage));
+  return withThumbnailUrls(results, deps);
 }

@@ -26,11 +26,12 @@ export const CACHE_ACTION: MaintenanceActionId = 'categorization-cache';
 const CACHE_ONLY: readonly MaintenanceActionId[] = [CACHE_ACTION];
 
 /** The members of the stats the section shows as a number. */
-type CountKey = 'cardFacts' | 'classTargets';
+type CountKey = 'cardFacts' | 'classTargets' | 'thumbnailUrls';
 
 const COUNT_LABELS: readonly { key: CountKey; label: string }[] = [
   { key: 'cardFacts', label: 'Cartes en cache de catégorisation' },
   { key: 'classTargets', label: 'Classes Wikidata en cache' },
+  { key: 'thumbnailUrls', label: "Adresses d'images en cache" },
 ];
 
 interface ActionText {
@@ -41,7 +42,8 @@ interface ActionText {
 }
 
 const CACHE_HINT =
-  'Efface les faits Wikidata gardés pour chaque carte et la catégorie gardée pour chaque classe. ' +
+  'Efface les faits Wikidata gardés pour chaque carte, la catégorie gardée pour chaque classe et ' +
+  "l'adresse gardée pour chaque image. " +
   'Les cartes seront redemandées à fr.wikipedia.org et à query.wikidata.org la prochaine fois que tu les affiches.';
 
 const LEGACY_HINT =

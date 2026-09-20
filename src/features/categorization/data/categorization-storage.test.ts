@@ -11,14 +11,21 @@ const CLASS_ENTRY = {
   label: null,
   matchedRootIds: [],
 };
+const IMAGE_ENTRY = {
+  schemaVersion: 1,
+  url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Flag.svg/500px-Flag.svg.png',
+  fetchedAt: 0,
+};
 
-/** Every key the extension may hold, of both cache levels and of the rest. */
+/** Every key the extension may hold, of the three cache levels and of the rest. */
 async function fillStorage(): Promise<void> {
   await storage.setItems([
     { key: 'local:wme:card:Albert Einstein', value: CARD_ENTRY },
     { key: 'local:wme:card:Inexistant', value: { ...CARD_ENTRY, status: 'not_found' } },
     { key: 'local:wme:class:category:Q484170', value: CLASS_ENTRY },
     { key: 'local:wme:class:occupation:Q33999', value: { ...CLASS_ENTRY, target: 'cinema' } },
+    { key: 'local:wme:image:Flag of the Azores.svg', value: IMAGE_ENTRY },
+    { key: 'local:wme:image:Introuvable.jpg', value: { ...IMAGE_ENTRY, url: null } },
     { key: 'local:wme:collection-index:v1', value: {} },
     // Facts the site displays about the game, neither personal data nor a
     // cache of Wikimedia: emptying the caches must leave them alone.
@@ -41,6 +48,7 @@ describe('createCategorizationStorage', () => {
     expect(await createCategorizationStorage().countEntries()).toEqual({
       cardFacts: 2,
       classTargets: 2,
+      thumbnailUrls: 2,
     });
   });
 
@@ -50,6 +58,7 @@ describe('createCategorizationStorage', () => {
     expect(await createCategorizationStorage().countEntries()).toEqual({
       cardFacts: 0,
       classTargets: 0,
+      thumbnailUrls: 0,
     });
   });
 
@@ -60,6 +69,7 @@ describe('createCategorizationStorage', () => {
         key: 'local:wme:class:category:Q484170',
         value: { ...CLASS_ENTRY, rootsVersion: ROOTS_VERSION + 1 },
       },
+      { key: 'local:wme:image:Flag.svg', value: { ...IMAGE_ENTRY, schemaVersion: 0 } },
     ]);
 
     // What the options page announces is what the storage holds, whether the
@@ -67,16 +77,21 @@ describe('createCategorizationStorage', () => {
     expect(await createCategorizationStorage().countEntries()).toEqual({
       cardFacts: 1,
       classTargets: 1,
+      thumbnailUrls: 1,
     });
   });
 
-  it('should empty both levels and leave every other key when it is cleared', async () => {
+  it('should empty every level and leave every other key when it is cleared', async () => {
     await fillStorage();
     const maintenance = createCategorizationStorage();
 
     await maintenance.clear();
 
-    expect(await maintenance.countEntries()).toEqual({ cardFacts: 0, classTargets: 0 });
+    expect(await maintenance.countEntries()).toEqual({
+      cardFacts: 0,
+      classTargets: 0,
+      thumbnailUrls: 0,
+    });
     expect(Object.keys(await storage.snapshot('local')).sort()).toEqual([
       'wme:catalogue-totals:v1',
       'wme:collection-index:v1',

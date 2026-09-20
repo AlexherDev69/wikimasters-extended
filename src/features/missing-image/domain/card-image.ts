@@ -1,4 +1,5 @@
 import { isRecord } from '../../../core/types/guards';
+import { isWikimediaThumbnailUrl } from './thumbnail-url';
 
 /**
  * The image Wikidata knows for a card that the site leaves without one: a file
@@ -15,9 +16,25 @@ export type CardImageKind = 'picture' | 'emblem';
 
 const CARD_IMAGE_KINDS: readonly CardImageKind[] = ['picture', 'emblem'];
 
-export interface CardImage {
+/**
+ * What Wikidata knows, and nothing else. This is the shape cached with the
+ * facts of a card, for ninety days: the address of the thumbnail is NOT part of
+ * it, because it is resolved apart, cached apart and expires apart. Holding it
+ * here would mean two entries for the same fact, each with its own lifetime.
+ */
+export interface CommonsFile {
   fileName: string;
   kind: CardImageKind;
+}
+
+/** The same file, plus the address resolved for it, as the card shows it. */
+export interface CardImage extends CommonsFile {
+  /**
+   * Final address of the thumbnail on the Wikimedia servers, null while it is
+   * unknown. Null is not a failure: the content script then builds the address
+   * itself, which is the slower path but shows the very same picture.
+   */
+  thumbnailUrl: string | null;
 }
 
 /** The longest names observed on Commons stay far below this bound. */
@@ -120,9 +137,23 @@ function isCardImageKind(value: unknown): value is CardImageKind {
   return typeof value === 'string' && CARD_IMAGE_KINDS.some((candidate) => candidate === value);
 }
 
-/** Narrows a value read back from storage or received in a message. */
-export function isCardImage(value: unknown): value is CardImage {
+/** Narrows the facts of a card read back from storage. */
+export function isCommonsFile(value: unknown): value is CommonsFile {
   return (
     isRecord(value) && isCommonsFileName(value['fileName']) && isCardImageKind(value['kind'])
   );
+}
+
+/**
+ * Narrows a value received in a message. The address is narrowed with it: it
+ * ends up in a `src`, so it is untrusted exactly like the file name beside it.
+ */
+export function isCardImage(value: unknown): value is CardImage {
+  if (!isRecord(value)) {
+    return false;
+  }
+  // Read before the narrowing below, which leaves a shape this key is not in.
+  const thumbnailUrl = value['thumbnailUrl'];
+
+  return isCommonsFile(value) && (thumbnailUrl === null || isWikimediaThumbnailUrl(thumbnailUrl));
 }
