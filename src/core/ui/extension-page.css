@@ -1,0 +1,47 @@
+/*
+ * The colours and the base rules the pages of the extension share: the
+ * statistics window and the options page. Both are pages of our own, so the
+ * rules below are free to target elements.
+ *
+ * Nothing here ever reaches a page of the site: the content script loads its
+ * own stylesheets, whose every selector starts with one of our data
+ * attributes, and none of them is this file.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --wme-surface: #090c11;
+  --wme-text: rgba(255, 255, 255, 0.88);
+  --wme-text-soft: rgba(255, 255, 255, 0.72);
+  --wme-text-dim: rgba(255, 255, 255, 0.6);
+  --wme-text-faint: rgba(255, 255, 255, 0.45);
+  --wme-border: rgba(255, 255, 255, 0.12);
+  --wme-hover: rgba(255, 255, 255, 0.08);
+  --wme-focus: #6cb7e0;
+  --wme-danger: #e06c6c;
+  --wme-font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--wme-surface);
+  font-family: var(--wme-font);
+  line-height: 1.4;
+  color: var(--wme-text);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* The focus stays visible on every control: both pages are usable with a
+   keyboard alone, and they rebuild their screen on every action. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--wme-focus);
+  outline-offset: 1px;
+}
