@@ -3,6 +3,13 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   srcDir: 'src',
   imports: false,
+  // The popup is an HTML page, so Vite would add its modulepreload polyfill to
+  // it. That polyfill calls `fetch`, which an extension that performs no
+  // request of its own in the popup has no reason to ship. Chrome supports
+  // modulepreload natively, so the preload links keep working without it.
+  vite: () => ({
+    build: { modulePreload: { polyfill: false } },
+  }),
   // The site's Turnstile check rejects automated browser profiles, so the dev
   // build is loaded manually into the developer's own Chrome instead.
   webExt: {

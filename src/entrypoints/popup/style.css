@@ -1,0 +1,300 @@
+/*
+ * The popup is a page of our own, so the rules below are free to target
+ * elements: nothing of the site is ever rendered here. The dark theme is the
+ * one of the badge and of the category panel.
+ */
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  width: 360px;
+  margin: 0;
+  padding: 10px;
+  background-color: #090c11;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #6cb7e0;
+  outline-offset: 1px;
+}
+
+.wme-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wme-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wme-app-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wme-total {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.wme-updated,
+.wme-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.wme-message {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.wme-rarities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.wme-rarity {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.wme-rarity-code {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* The list of categories scrolls on its own, so the header and the reset
+   button stay where they are whatever the size of the collection. */
+.wme-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.wme-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.wme-row-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wme-row-main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background-color: transparent;
+  text-align: left;
+}
+
+.wme-row-main:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wme-row-static {
+  padding: 5px 6px 2px;
+}
+
+.wme-row-static .wme-row-head {
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.wme-row-toggle {
+  flex: 0 0 auto;
+  width: 22px;
+  padding: 3px 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background-color: transparent;
+  text-align: center;
+}
+
+.wme-row-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wme-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #8b949e;
+}
+
+.wme-label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wme-count {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.wme-share {
+  flex: 0 0 auto;
+  min-width: 34px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.wme-bar {
+  display: block;
+  height: 2px;
+  margin: 0 6px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wme-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.wme-subtypes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 6px 2px 26px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.wme-subtype {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wme-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wme-reset,
+.wme-cancel,
+.wme-confirm,
+.wme-back {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+.wme-reset:hover,
+.wme-cancel:hover,
+.wme-confirm:hover,
+.wme-back:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wme-reset,
+.wme-question {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.wme-question {
+  flex: 1 1 auto;
+}
+
+.wme-confirm {
+  border-color: rgba(224, 108, 108, 0.5);
+  color: #e06c6c;
+}
+
+.wme-back {
+  align-self: flex-start;
+}
+
+.wme-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.wme-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.wme-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 2px;
+}
+
+.wme-chip {
+  flex: 0 0 auto;
+  min-width: 22px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.wme-card-link {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+}
+
+.wme-card-link:hover {
+  text-decoration: underline;
+}
+
+.wme-card-subtype {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
