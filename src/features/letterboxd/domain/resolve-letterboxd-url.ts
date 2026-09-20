@@ -70,13 +70,25 @@ function searchUrl(title: string): string {
   return letterboxdUrl(['search', encodeURIComponent(text)]);
 }
 
-function resolveFilm(card: LetterboxdCard): string {
+/**
+ * The page Letterboxd itself declares, or null. P6127 is only set on an item
+ * Letterboxd lists, so this is not a guess about what the card is: it is the
+ * site saying the page exists, and it holds for a web series as much as for a
+ * film.
+ */
+function listedFilmUrl(externalIds: ExternalIds): string | null {
+  const film = validId(externalIds.letterboxdFilm, LETTERBOXD_SLUG_PATTERN);
+  return film === null ? null : letterboxdUrl(['film', film]);
+}
+
+/**
+ * Where a film goes when Letterboxd named no page for it. Only a film comes
+ * here: each of these guesses at the page from something that is not a
+ * Letterboxd id, and on a series all three land on the wrong page or on none.
+ */
+function resolveFilmFallback(card: LetterboxdCard): string {
   const { externalIds } = card;
 
-  const film = validId(externalIds.letterboxdFilm, LETTERBOXD_SLUG_PATTERN);
-  if (film !== null) {
-    return letterboxdUrl(['film', film]);
-  }
   // Both redirect to the film page, verified by navigation.
   const tmdb = validId(externalIds.tmdbMovieId, TMDB_ID_PATTERN);
   if (tmdb !== null) {
@@ -148,8 +160,17 @@ function resolveStudio(externalIds: ExternalIds): string | null {
 export function resolveLetterboxdUrl(card: LetterboxdCard): string | null {
   switch (card.categoryId) {
     case 'film_tv':
-      // A television series, season or episode is not a film: no link in v1.
-      return card.isFilm ? resolveFilm(card) : null;
+      /*
+       * A television series, season or episode is not a film, and its
+       * fallbacks lead nowhere useful: a TMDb or IMDb id of a series does not
+       * redirect to a Letterboxd page, and a title search finds the wrong one.
+       *
+       * Unless Letterboxd itself lists it. "Backrooms (web-série)" carries
+       * `P6127 = the-backrooms-found-footage` while reaching this category
+       * through a television root, so it used to lose a page that exists. An
+       * id the site assigned wins over what the classification decided.
+       */
+      return listedFilmUrl(card.externalIds) ?? (card.isFilm ? resolveFilmFallback(card) : null);
     case 'person':
       return resolvePerson(card);
     case 'organization':

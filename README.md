@@ -26,7 +26,9 @@ Un petit panneau flottant en bas à gauche liste les catégories présentes parm
 
 ### Lien Letterboxd
 
-Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il n'apparaît que pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une série, une saison, un épisode ou une personnalité sans métier de cinéma n'en reçoivent aucun, même si Wikidata leur connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives).
+Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il apparaît pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une personnalité sans métier de cinéma n'en reçoit aucun, même si Wikidata lui connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives).
+
+Une série, une saison ou un épisode n'en reçoit pas non plus, sauf si Letterboxd le référence lui-même : quand Wikidata porte un identifiant de film Letterboxd pour l'oeuvre, le lien est affiché, car c'est Letterboxd qui indique alors que la page existe. C'est le cas de certaines web-séries, comme "The Backrooms". En l'absence de cet identifiant, aucun repli n'est tenté : un identifiant IMDb ou TMDb de série ne mène à aucune page Letterboxd, et une recherche par titre mènerait à la mauvaise.
 
 ### Images manquantes
 

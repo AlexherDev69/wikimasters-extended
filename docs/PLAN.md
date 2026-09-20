@@ -132,7 +132,7 @@ Table statique classe vers catégorie : reportée. Les mesures montrent que la r
 | Film | P6127 `/film/<id>/`, sinon P4947 `/tmdb/<id>/`, sinon P345 `/imdb/<id>/`, sinon `/search/<titre sans parenthèse>/` |
 | Personne avec métier cinéma | ID du métier dominant (réalisateur P12383 `/director/`, acteur P6119 `/actor/`, scénariste P14583 `/writer/`, producteur P14196 `/producer/`), sinon ID d'un autre métier de cinéma de la personne, sinon `/search/<nom>/` |
 | Studio | P13273 `/studio/<id>/` (vérifié), sinon pas de lien |
-| Série TV | Pas de lien en v1 (Letterboxd couvre très peu de séries) |
+| Série TV | P6127 `/film/<id>/` si Letterboxd la référence, sinon pas de lien (corrigé le 2026-09-20, voir ci-dessous) |
 | Personne hors cinéma avec un ID Letterboxd | Pas de lien |
 
 Condition d'affichage pour une personne : au moins un métier de cinéma dans P106 (pas forcément le principal). Phil Collins, acteur occasionnel, a donc un lien. Einstein et Macron n'en ont pas.
@@ -143,6 +143,8 @@ Précisions apportées par les données réelles :
 - Le métier dominant se lit dans la description de la carte, comme le sous-type principal (Tarantino : "réalisateur, scénariste..." donne `/director/`). Seuls comptent les métiers dont le sous-type est Cinéma : "présentateur de journal" est une sous-classe d'"acteur" dans Wikidata, mais ne fait pas d'une journaliste une actrice
 - Les identifiants Wikidata sont traités comme non fiables : format strict exigé, origine `https://letterboxd.com/` imposée par construction et revérifiée avant de poser le lien
 - Wikidata connaît peu d'identifiants Letterboxd de personnes (absents pour Michael Mann ou Bryan Singer) : la recherche par nom est donc le cas courant pour les personnes. Sur 100 cartes réelles : 22 liens, dont 12 directs et 10 par recherche
+- Correction du 2026-09-20, signalée par l'utilisateur sur la carte "The Backrooms (film, 2022)" : un identifiant P6127 valide l'emporte désormais sur la règle "film". L'article redirige vers "Backrooms (web-série)", item Q125131315, dont le P31 est "web-série" (Q526877) : la carte atteint donc "Cinéma et TV" par une racine de série, `isFilm` est faux, et le lien était coupé alors que Wikidata porte `P6127 = the-backrooms-found-footage` et que la page existe. Letterboxd n'attribue un identifiant de film qu'à ce qu'il référence : c'est Letterboxd lui-même qui dit que la page existe, il n'y a aucune supposition. La propriété était déjà récupérée par la requête SPARQL pour tous les items, sa valeur était simplement ignorée
+- Les replis restent derrière `isFilm`, inchangés : sur une série, un identifiant TMDb ou IMDb ne redirige vers aucune page Letterboxd et la recherche par titre trouve la mauvaise oeuvre. Un identifiant mal formé continue de se comporter comme un identifiant absent, donc une série au P6127 invalide ne reçoit toujours aucun lien
 
 Emplacements :
 

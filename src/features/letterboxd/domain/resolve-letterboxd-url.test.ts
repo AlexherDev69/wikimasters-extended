@@ -117,10 +117,42 @@ describe('resolveLetterboxdUrl', () => {
       title: 'Breaking Bad',
       categoryId: 'film_tv',
       isFilm: false,
-      externalIds: { ...NO_EXTERNAL_IDS, imdbId: 'tt0903747' },
+      // Neither of these reaches a Letterboxd page for a series: the ids are
+      // there precisely so the rule cannot loosen without a test failing.
+      externalIds: { ...NO_EXTERNAL_IDS, imdbId: 'tt0903747', tmdbMovieId: '1396' },
     });
 
     expect(resolveLetterboxdUrl(series)).toBeNull();
+  });
+
+  it('should link to the film page when a television item carries a Letterboxd film id', () => {
+    // "Backrooms (web-série)", Q125131315: reaches the category through a
+    // television root while Wikidata carries P6127 for it. Letterboxd assigns
+    // that id only to something it lists, so the page exists.
+    const webSeries = makeCard({
+      title: 'The Backrooms (film, 2022)',
+      categoryId: 'film_tv',
+      isFilm: false,
+      externalIds: { ...NO_EXTERNAL_IDS, letterboxdFilm: 'the-backrooms-found-footage' },
+    });
+
+    expect(resolveLetterboxdUrl(webSeries)).toBe(
+      'https://letterboxd.com/film/the-backrooms-found-footage/',
+    );
+  });
+
+  it('should return no link when a television item carries a malformed Letterboxd film id', () => {
+    for (const id of MALICIOUS_IDS) {
+      const series = makeCard({
+        title: 'Breaking Bad',
+        categoryId: 'film_tv',
+        isFilm: false,
+        externalIds: { ...NO_EXTERNAL_IDS, letterboxdFilm: id },
+      });
+
+      // A rejected id behaves as an absent one, and a series has no fallback.
+      expect(resolveLetterboxdUrl(series)).toBeNull();
+    }
   });
 
   it('should link to the id of the dominant role when the description names it', () => {
