@@ -10,6 +10,8 @@ import { createTitleResolver } from '../features/categorization/data/title-resol
 import type { CategorizeCardsDeps } from '../features/categorization/domain/categorize-cards';
 import type { Clock } from '../features/categorization/domain/ports';
 import { createCategorizeMessageHandler } from '../features/categorization/presentation/handle-categorize-message';
+import { createCollectionIndexRepository } from '../features/collection-index/data/collection-index-repository';
+import { createCollectionMessageHandler } from '../features/collection-index/presentation/handle-collection-messages';
 
 const systemClock: Clock = {
   now(): number {
@@ -23,19 +25,32 @@ export default defineBackground({
     // Shared by every source so that one rate limited host pauses the whole
     // pipeline, and keeps pausing it after the worker has been restarted.
     const httpOptions: FetchJsonOptions = { cooldownStore: createStoredCooldownStore() };
+    const logger = createLogger('background');
+    // The two caches are shared: the summary of the collection reads exactly
+    // what the categorization of the cards on screen has written.
+    const cardFactsCache = createCardFactsCache(systemClock);
+    const classTargetCache = createClassTargetCache();
 
     const deps: CategorizeCardsDeps = {
       titleResolver: createTitleResolver(httpOptions),
       entityFactsSource: createEntityFactsSource(httpOptions),
       classRootsSource: createClassRootsSource(httpOptions),
-      cardFactsCache: createCardFactsCache(systemClock),
-      classTargetCache: createClassTargetCache(),
-      logger: createLogger('background'),
+      cardFactsCache,
+      classTargetCache,
+      logger,
     };
-    const handleMessage = createCategorizeMessageHandler(deps);
+    const handleCategorize = createCategorizeMessageHandler(deps);
+    const handleCollection = createCollectionMessageHandler({
+      indexRepository: createCollectionIndexRepository(systemClock),
+      cardFactsCache,
+      classTargetCache,
+      logger,
+    });
 
     browser.runtime.onMessage.addListener((message, _sender, sendResponse): boolean => {
-      return handleMessage(message, sendResponse);
+      // Each handler answers the message types it knows and returns false for
+      // the others, so a message of another origin is simply ignored.
+      return handleCategorize(message, sendResponse) || handleCollection(message, sendResponse);
     });
   },
 });
