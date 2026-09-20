@@ -52,6 +52,30 @@ export interface CardFactsCache {
   putMany(entries: ReadonlyMap<string, CachedCardFacts>): Promise<void>;
 }
 
+/** How many entries each level of the categorization cache holds. */
+export interface CategorizationCacheCounts {
+  /** Cards, whatever their age or their schema version. */
+  cardFacts: number;
+  /** Wikidata classes, of both kinds and whatever their roots version. */
+  classTargets: number;
+}
+
+/**
+ * Counting and emptying the two levels of the categorization cache, kept apart
+ * from the ports that read and write their entries. The categorization use
+ * case receives those and only those, so it cannot empty a cache; the
+ * maintenance of the options page holds this one and knows nothing of what the
+ * entries mean.
+ *
+ * Both levels are counted together and emptied together, so each operation
+ * lists the storage area exactly once.
+ */
+export interface CategorizationCacheMaintenance {
+  countEntries(): Promise<CategorizationCacheCounts>;
+  /** Removes every entry of both levels, and nothing else. */
+  clear(): Promise<void>;
+}
+
 export interface ClassTargetCache {
   getCategoryTargets(
     classIds: readonly string[],
