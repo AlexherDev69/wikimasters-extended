@@ -1,5 +1,6 @@
 import { CATEGORY_LABELS, PERSON_SUBTYPE_LABELS } from '../../category-badge/domain/category-display';
 import type { CategoryId, PersonSubtypeId } from '../../categorization/domain/category';
+import { topicTagFromRoots } from './root-topic';
 
 /**
  * What a card needs to propose tags from, decoupled from the shape the
@@ -18,6 +19,12 @@ export interface CardForTagSuggestions {
    * occupations, and otherwise thrown away.
    */
   occupationLabels: readonly (string | null)[];
+  /**
+   * The Wikidata roots the classes that decided the category actually reach,
+   * already resolved and cached for every card. A few of them name a topic
+   * the category label is too broad to name: see root-topic.ts.
+   */
+  matchedRootIds: readonly string[];
 }
 
 /** The `maxlength` of the tag field of the site: a proposal never overflows it. */
@@ -58,10 +65,11 @@ export function normalizeTag(raw: string): string | null {
 
 /**
  * The tags to propose for a categorized card, in order: the French label of
- * the category, then the label of the primary person subtype, then the
- * French labels of the occupations the class cache already resolved.
- * Expect "Footballeur", not "Football": an occupation is a profession, and
- * guessing a topic from it is left alone.
+ * the category, then the topic its matched roots name when the category is
+ * too broad to name it ("Voitures" under "Technique"), then the label of the
+ * primary person subtype, then the French labels of the occupations the class
+ * cache already resolved. Expect "Footballeur", not "Football": an occupation
+ * is a profession, and guessing a topic from it is left alone.
  *
  * Deduplicated case-insensitively, keeping the first spelling, and capped at
  * MAX_SUGGESTED_TAGS: the user picks from the list, so showing several
@@ -70,6 +78,10 @@ export function normalizeTag(raw: string): string | null {
 export function suggestTags(card: CardForTagSuggestions): string[] {
   const candidates: string[] = [CATEGORY_LABELS[card.categoryId]];
 
+  const topic = topicTagFromRoots(card.matchedRootIds);
+  if (topic !== null) {
+    candidates.push(topic);
+  }
   if (card.primarySubtype !== null && card.primarySubtype !== 'other') {
     candidates.push(PERSON_SUBTYPE_LABELS[card.primarySubtype]);
   }
