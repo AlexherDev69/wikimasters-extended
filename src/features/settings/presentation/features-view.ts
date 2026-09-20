@@ -64,10 +64,11 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
   tagAutoFill: {
     label: "Remplir l'étiquette au clic",
     hint:
-      "Un clic sur une étiquette suggérée l'écrit et la valide dans le champ du site, à ta place. " +
-      'Les règles de wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, ' +
-      'échanger ou interagir à votre place", sanction possible : bannissement sans préavis. Laisse ' +
-      'cette case décochée sauf accord explicite des auteurs du site.',
+      "Un clic sur une étiquette suggérée l'écrit et la valide dans le champ du site, à ta place : " +
+      'le site ne peut pas distinguer cela de ta propre frappe au clavier. Les règles de ' +
+      'wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou ' +
+      'interagir à votre place", sanction annoncée : bannissement de TON compte wiki-masters.com, ' +
+      'sans préavis. Laisse cette case décochée sauf accord explicite des auteurs du site.',
     warning: true,
   },
 };

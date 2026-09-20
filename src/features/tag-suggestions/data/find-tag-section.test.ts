@@ -84,6 +84,32 @@ describe('findTagSection', () => {
     expect(section?.tags).toEqual(['Football']);
   });
 
+  it('should choose the tag field and not another combobox placed before it', () => {
+    // This selector decides where a tag is eventually WRITTEN, so the
+    // placeholder prefix that narrows it is held here: without it, any
+    // combobox the site adds higher in the modal becomes the target.
+    const modal = openModal(TAGGED_MODAL_HTML);
+    const decoy = document.createElement('input');
+    decoy.setAttribute('role', 'combobox');
+    decoy.setAttribute('placeholder', 'Rechercher une carte');
+    modal.root.insertBefore(decoy, modal.root.firstChild);
+
+    const section = findTagSection(modal);
+
+    expect(section?.input).not.toBe(decoy);
+    expect(section?.input.getAttribute('placeholder')).toBe('Ajouter une étiquette…');
+  });
+
+  it('should return null when the only combobox of the modal is for something else', () => {
+    const modal = openModalWithoutTagField();
+    const decoy = document.createElement('input');
+    decoy.setAttribute('role', 'combobox');
+    decoy.setAttribute('placeholder', 'Rechercher une carte');
+    modal.root.appendChild(decoy);
+
+    expect(findTagSection(modal)).toBeNull();
+  });
+
   it('should return the input wrapper as the parent of the input', () => {
     const modal = openModal(TAGGED_MODAL_HTML);
 

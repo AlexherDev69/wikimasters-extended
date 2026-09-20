@@ -168,6 +168,22 @@ describe('applyTagProposals', () => {
     expect(ourNode()).not.toBe(first);
   });
 
+  it('should rebuild the node when the site swaps the input while the card and the tags stay the same', () => {
+    // A re-render of the site replaces the field without the title or the
+    // proposals changing. The key alone cannot see it, and the buttons would
+    // go on writing into a field that is no longer on the page.
+    const section = openSection();
+    applyTagProposals(target(section), ['Lieu'], enabledCallbacks());
+    const replacement = section.input.cloneNode(true) as HTMLInputElement;
+    section.input.replaceWith(replacement);
+    const refreshed = { ...section, input: replacement };
+
+    applyTagProposals(findTagProposalsTarget(TITLE, refreshed), ['Lieu'], enabledCallbacks());
+    dispatchTrustedClick(buttons()[0] as HTMLButtonElement);
+
+    expect(replacement.value).toBe('Lieu');
+  });
+
   it('should never be moved once inserted', () => {
     const section = openSection();
     applyTagProposals(target(section), TAGS, enabledCallbacks());

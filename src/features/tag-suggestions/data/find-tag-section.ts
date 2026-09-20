@@ -22,8 +22,10 @@ export interface TagSection {
  *
  * Falls back to the chip text minus the button's own text only when the label
  * does not start with the expected prefix, for a shape the site might one day
- * ship without this reader being updated for it: reading a tag wrong there
- * only costs one redundant proposal, never a wrong write.
+ * ship without this reader being updated for it. A tag read wrong there is
+ * only ever compared against the proposals, so the worst it can do is hide a
+ * proposal that would have been useful, never add one and never cause a
+ * write: a card is left with one proposal fewer, and nothing else.
  */
 function tagFromButton(button: Element): string | null {
   const label = button.getAttribute(ARIA_LABEL_ATTRIBUTE);

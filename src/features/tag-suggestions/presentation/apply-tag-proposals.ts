@@ -45,6 +45,15 @@ export function findTagProposalsTarget(title: string | null, section: TagSection
 }
 
 /**
+ * The input each drawn node's buttons captured. The key below cannot see a
+ * re-render that swaps the input while the title and the proposals stay the
+ * same: the buttons would then keep writing into a node the site has taken
+ * off the page. Holding the element itself is the only exact comparison, and
+ * a WeakMap keeps nothing alive once the node is gone.
+ */
+const inputByNode = new WeakMap<HTMLElement, HTMLInputElement>();
+
+/**
  * The comparison key of the whole node: the card title together with the
  * proposals, so a sync writes nothing when the section already shows this
  * very list for this very card, and rebuilds when either changes.
@@ -153,13 +162,18 @@ export function applyTagProposals(
   }
 
   const key = proposalsKey(target.title, tags);
-  if (ourNode !== null && ourNode.getAttribute(TAG_PROPOSALS_KEY_ATTRIBUTE) === key) {
+  if (
+    ourNode !== null &&
+    ourNode.getAttribute(TAG_PROPOSALS_KEY_ATTRIBUTE) === key &&
+    inputByNode.get(ourNode) === target.section.input
+  ) {
     return;
   }
 
   ourNode?.remove();
   const document = target.section.inputWrapper.ownerDocument;
   const node = buildNode(document, tags, key, target.section.input, callbacks);
+  inputByNode.set(node, target.section.input);
   target.section.inputWrapper.insertAdjacentElement('afterend', node);
 }
 

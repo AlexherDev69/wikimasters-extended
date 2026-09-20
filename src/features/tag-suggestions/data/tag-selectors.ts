@@ -37,9 +37,10 @@ export const TAG_PROPOSALS_SELECTOR = `[${TAG_PROPOSALS_ATTRIBUTE}]`;
  * Holds the proposals a previous sync already wrote, serialized together with
  * the title of the card. Comparing this key against the one just computed is
  * what lets a sync write nothing when the section already shows the right
- * thing, and what forces a rebuild when the site swaps in another card whose
- * input the click handlers of a stale button would otherwise keep pointing
- * at.
+ * thing, and what forces a rebuild when the site swaps in another card. It
+ * cannot see a re-render that replaces the input while the title and the
+ * proposals stay the same: the identity of the input is compared separately,
+ * see apply-tag-proposals.ts.
  */
 export const TAG_PROPOSALS_KEY_ATTRIBUTE = 'data-wme-tag-suggestions-key';
 

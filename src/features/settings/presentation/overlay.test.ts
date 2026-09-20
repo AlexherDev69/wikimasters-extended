@@ -18,7 +18,11 @@ import {
 } from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
-import { TAG_PROPOSALS_SELECTOR } from '../../tag-suggestions/data/tag-selectors';
+import {
+  TAG_INPUT_SELECTOR,
+  TAG_PROPOSAL_BUTTON_SELECTOR,
+  TAG_PROPOSALS_SELECTOR,
+} from '../../tag-suggestions/data/tag-selectors';
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
 
@@ -649,6 +653,29 @@ describe('createOverlay', () => {
     await scanUntilDrawn(overlay);
 
     expect(tagProposals()).not.toBeNull();
+  });
+
+  it('should stop filling the field from the very next click when the auto-fill is turned off', async () => {
+    // The button already drawn keeps its handler and is NOT rebuilt, since
+    // neither the card nor the proposals changed: what must stop it is the
+    // setting being read again at click time, here through the wiring of the
+    // overlay itself and not through a stub of the unit test.
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, tagAutoFill: true });
+    await scanUntilDrawn(overlay);
+    const proposal = document.body.querySelector<HTMLButtonElement>(TAG_PROPOSAL_BUTTON_SELECTOR);
+    const input = document.body.querySelector<HTMLInputElement>(TAG_INPUT_SELECTOR);
+    expect(proposal).not.toBeNull();
+    expect(input).not.toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, tagAutoFill: false });
+    const click = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(click, 'isTrusted', { value: true });
+    proposal?.dispatchEvent(click);
+
+    // Still on the page, and still writing nothing.
+    expect(document.body.querySelector(TAG_PROPOSAL_BUTTON_SELECTOR)).toBe(proposal);
+    expect(input?.value).toBe('');
   });
 
   it('should add no tag proposal when the tag suggestions are off at load', async () => {

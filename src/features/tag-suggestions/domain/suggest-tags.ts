@@ -36,14 +36,24 @@ const INNER_WHITESPACE_PATTERN = /\s+/g;
  * the `maxlength` of the site's own field. Only the first letter is put in
  * upper case, the rest is left exactly as Wikidata spells it: a name must
  * never be lower-cased. Null once nothing usable is left.
+ *
+ * The cap is applied AFTER the upper case and never before: upper casing can
+ * make a string longer (the German eszett becomes two letters), so capping
+ * first can hand back MAX_TAG_LENGTH + 1 characters, which the guard of the
+ * message then refuses, and refusing a message costs the whole batch of
+ * cards its categorization, not just one proposal. Trimmed again after the
+ * cap, so the cut cannot leave a trailing space in the middle of a word.
  */
 export function normalizeTag(raw: string): string | null {
-  const collapsed = raw.trim().replace(INNER_WHITESPACE_PATTERN, ' ').slice(0, MAX_TAG_LENGTH);
+  const collapsed = raw.trim().replace(INNER_WHITESPACE_PATTERN, ' ');
 
   if (collapsed === '') {
     return null;
   }
-  return collapsed.charAt(0).toUpperCase() + collapsed.slice(1);
+  const capitalized = collapsed.charAt(0).toUpperCase() + collapsed.slice(1);
+  const capped = capitalized.slice(0, MAX_TAG_LENGTH).trim();
+
+  return capped === '' ? null : capped;
 }
 
 /**

@@ -17,6 +17,24 @@ function makeCard(overrides: Partial<CardForTagSuggestions> = {}): CardForTagSug
 }
 
 describe('normalizeTag', () => {
+
+  it('should still fit the field when putting the first letter in upper case makes it longer', () => {
+    // The German eszett upper cases to two letters, so capping before that
+    // step hands back one character more than the field accepts, and the
+    // guard of the message then refuses the whole batch of cards.
+    const raw = 'ß' + 'a'.repeat(MAX_TAG_LENGTH - 1);
+
+    const normalized = normalizeTag(raw);
+
+    expect(normalized).not.toBeNull();
+    expect((normalized as string).length).toBeLessThanOrEqual(MAX_TAG_LENGTH);
+  });
+
+  it('should leave no trailing space when the cap falls between two words', () => {
+    const raw = 'a'.repeat(MAX_TAG_LENGTH - 1) + ' bcd';
+
+    expect(normalizeTag(raw)).toBe('A' + 'a'.repeat(MAX_TAG_LENGTH - 2));
+  });
   it('should trim and collapse inner whitespace', () => {
     expect(normalizeTag('  footballeur   professionnel  ')).toBe('Footballeur professionnel');
   });

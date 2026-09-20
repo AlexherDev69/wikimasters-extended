@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MAX_TAG_LENGTH } from '../domain/suggest-tags';
 import { fillTagField, type FillTagFieldDeps } from './fill-tag-field';
 
 const TAG = 'Footballeur';
@@ -45,6 +46,39 @@ describe('fillTagField', () => {
     fillTagField(trustedClick(), input, TAG, enabledDeps());
 
     expect(input.value).toBe(TAG);
+  });
+
+  it('should do nothing when the site has disabled the field', () => {
+    // Everything below refuses what the user could not have typed by hand.
+    input.disabled = true;
+
+    fillTagField(trustedClick(), input, TAG, enabledDeps());
+
+    expect(input.value).toBe('');
+  });
+
+  it('should do nothing when the site has made the field read only', () => {
+    input.readOnly = true;
+
+    fillTagField(trustedClick(), input, TAG, enabledDeps());
+
+    expect(input.value).toBe('');
+  });
+
+  it('should do nothing when the field is no longer on the page', () => {
+    input.remove();
+
+    fillTagField(trustedClick(), input, TAG, enabledDeps());
+
+    expect(input.value).toBe('');
+  });
+
+  it('should do nothing when the tag is longer than the field accepts', () => {
+    // The native setter ignores the `maxlength` of the field entirely, so a
+    // tag too long would be written whole where a keyboard could not.
+    fillTagField(trustedClick(), input, 'a'.repeat(MAX_TAG_LENGTH + 1), enabledDeps());
+
+    expect(input.value).toBe('');
   });
 
   it('should focus the field before writing the value', () => {

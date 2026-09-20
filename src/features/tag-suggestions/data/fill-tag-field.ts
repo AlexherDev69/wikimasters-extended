@@ -21,6 +21,8 @@ const KEY_UP_EVENT = 'keyup';
 const ENTER_KEY = 'Enter';
 const ENTER_KEY_CODE = 13;
 
+import { MAX_TAG_LENGTH } from '../domain/suggest-tags';
+
 const VALUE_PROPERTY = 'value';
 const KEY_CODE_PROPERTY = 'keyCode';
 const WHICH_PROPERTY = 'which';
@@ -68,6 +70,10 @@ function createEnterKeyEvent(type: string): KeyboardEvent {
  * else: no click on a site node, no synthetic mouse event, no attribute,
  * class or style changed on it, and the field is never cleared.
  *
+ * It refuses outright anything the user could not have typed themselves: a
+ * disabled or read only field, a field no longer on the page, and a tag
+ * longer than the `maxlength` the field carries.
+ *
  * The extension never reads the site's answer, so it never fakes a
  * confirmation either: the proposal this button belongs to simply disappears
  * on the next sync if the tag really landed, and stays otherwise.
@@ -79,6 +85,14 @@ export function fillTagField(
   deps: FillTagFieldDeps,
 ): void {
   if (!event.isTrusted || !deps.isAutoFillEnabled()) {
+    return;
+  }
+  // What the user could not do by hand, this must not do either. A field the
+  // site has disabled, made read only or taken off the page is exactly the
+  // case where typing is refused, and a tag longer than the `maxlength` of
+  // the field is one the keyboard could never have produced: the native
+  // setter ignores `maxlength` entirely, so the length is checked here.
+  if (input.disabled || input.readOnly || !input.isConnected || tag.length > MAX_TAG_LENGTH) {
     return;
   }
 
