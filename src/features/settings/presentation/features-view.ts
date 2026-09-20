@@ -32,10 +32,6 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
     label: 'Badge de catégorie',
     hint: 'Pastille de catégorie sur les cartes, et ligne "Catégorie" dans la modale de détail.',
   },
-  categoryHighlight: {
-    label: 'Mise en évidence par catégorie',
-    hint: 'Panneau flottant des catégories de la page, et voile sur les cartes hors du filtre choisi.',
-  },
   letterboxdLink: {
     label: 'Lien Letterboxd',
     hint:

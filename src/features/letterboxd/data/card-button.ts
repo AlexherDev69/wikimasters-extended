@@ -55,8 +55,9 @@ function buildButton(document: Document, title: string, url: string): HTMLAnchor
     /*
      * The single deliberate exception to "the site owns its own events".
      * Every other node the extension adds stays `pointer-events: none`, and
-     * the one other place that listens for a click of its own, the category
-     * panel, lets it bubble because nothing of the site sits above it. This
+     * the one other place that listens for a click of its own, the tag
+     * proposal of the detail modal, lets it bubble: nothing of the site opens
+     * on a click there, so there is nothing to stop. This
      * button sits INSIDE a card, and the whole card opens the detail modal on
      * a click anywhere on it: without stopping this one, a click aimed at
      * Letterboxd would also open the modal behind it, which the user never

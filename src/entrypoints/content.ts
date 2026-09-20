@@ -18,7 +18,6 @@ import { createSettingsRepository } from '../features/settings/data/settings-rep
 import type { Settings } from '../features/settings/domain/settings';
 import { createOverlay } from '../features/settings/presentation/overlay';
 import '../features/category-badge/presentation/category-badge.css';
-import '../features/category-highlight/presentation/category-highlight.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/missing-image/presentation/missing-image.css';
 import '../features/tag-suggestions/presentation/tag-suggestions.css';

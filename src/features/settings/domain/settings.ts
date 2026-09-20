@@ -16,8 +16,6 @@ import { isRecord } from '../../../core/types/guards';
 export interface Settings {
   /** Badge on the cards, and category line in the detail modal. */
   categoryBadges: boolean;
-  /** Floating panel of the page, and the veils of the filter it drives. */
-  categoryHighlight: boolean;
   /** Letterboxd link in the detail modal, and the button on the card itself. */
   letterboxdLink: boolean;
   /** Image of Wikimedia Commons on the cards the site leaves without one. */
@@ -38,7 +36,6 @@ export interface Settings {
 /** Exported so a view can give every switch a place in a display order. */
 export const SETTING_KEYS = [
   'categoryBadges',
-  'categoryHighlight',
   'letterboxdLink',
   'missingImages',
   'hideCardStats',
@@ -50,7 +47,6 @@ export type SettingKey = (typeof SETTING_KEYS)[number];
 
 export const DEFAULT_SETTINGS: Settings = {
   categoryBadges: true,
-  categoryHighlight: true,
   letterboxdLink: true,
   missingImages: true,
   hideCardStats: false,
@@ -70,7 +66,6 @@ export const DEFAULT_SETTINGS: Settings = {
  */
 const CATEGORIZATION_SETTING_KEYS = [
   'categoryBadges',
-  'categoryHighlight',
   'letterboxdLink',
   'missingImages',
   'tagSuggestions',

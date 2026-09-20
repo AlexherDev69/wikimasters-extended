@@ -31,7 +31,7 @@ const EMPTY_STATS: StorageStats = {
 const CLEANED_STATS: StorageStats = { ...STATS, hasLegacyIndexData: false };
 
 const BADGES_CHECKBOX = 'input[data-wme-setting="categoryBadges"]';
-const HIGHLIGHT_CHECKBOX = 'input[data-wme-setting="categoryHighlight"]';
+const LETTERBOXD_CHECKBOX = 'input[data-wme-setting="letterboxdLink"]';
 const CACHE_BUTTON = 'button[data-wme-action="categorization-cache"]';
 const CACHE_CONFIRM = 'button[data-wme-confirm="categorization-cache"]';
 const CACHE_CANCEL = 'button[data-wme-cancel="categorization-cache"]';
@@ -227,7 +227,7 @@ describe('mountOptions', () => {
     );
 
     checkbox(container, BADGES_CHECKBOX)?.click();
-    checkbox(container, HIGHLIGHT_CHECKBOX)?.click();
+    checkbox(container, LETTERBOXD_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toBe('Enregistré');
     });
@@ -241,11 +241,11 @@ describe('mountOptions', () => {
     // The second write held both switches and went through: going back to the
     // state from before the first one would undo it on screen only.
     expect(checkbox(container, BADGES_CHECKBOX)?.checked).toBe(false);
-    expect(checkbox(container, HIGHLIGHT_CHECKBOX)?.checked).toBe(false);
+    expect(checkbox(container, LETTERBOXD_CHECKBOX)?.checked).toBe(false);
     expect(stored).toEqual({
       ...DEFAULT_SETTINGS,
       categoryBadges: false,
-      categoryHighlight: false,
+      letterboxdLink: false,
     });
   });
 
@@ -274,7 +274,7 @@ describe('mountOptions', () => {
     await vi.waitFor(() => {
       expect(reads).toBe(2);
     });
-    checkbox(container, HIGHLIGHT_CHECKBOX)?.click();
+    checkbox(container, LETTERBOXD_CHECKBOX)?.click();
     releaseRead();
 
     await vi.waitFor(() => {
@@ -284,7 +284,7 @@ describe('mountOptions', () => {
     });
     // The read answers with the state from before that toggle: it is older
     // than the screen, so showing it would undo the toggle.
-    expect(checkbox(container, HIGHLIGHT_CHECKBOX)?.checked).toBe(false);
+    expect(checkbox(container, LETTERBOXD_CHECKBOX)?.checked).toBe(false);
   });
 
   it('should undo only the switch concerned when the settings cannot be read back', async () => {
@@ -311,7 +311,7 @@ describe('mountOptions', () => {
     const container = await mount(makePorts({ writeSettings, readSettings }));
 
     checkbox(container, BADGES_CHECKBOX)?.click();
-    checkbox(container, HIGHLIGHT_CHECKBOX)?.click();
+    checkbox(container, LETTERBOXD_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toBe('Enregistré');
     });
@@ -322,7 +322,7 @@ describe('mountOptions', () => {
     });
     // Nothing is known of the storage, so only the switch whose write failed
     // goes back: the other one was written and answered for.
-    expect(checkbox(container, HIGHLIGHT_CHECKBOX)?.checked).toBe(false);
+    expect(checkbox(container, LETTERBOXD_CHECKBOX)?.checked).toBe(false);
   });
 
   it('should keep the focus on the switch that was used', async () => {

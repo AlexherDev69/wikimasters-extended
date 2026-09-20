@@ -7,7 +7,7 @@ import type {
 } from '../domain/settings-repository';
 
 /**
- * The five switches live under ONE versioned key, so reading them is a single
+ * The switches live under ONE versioned key, so reading them is a single
  * access and a change fires a single notification. The version is part of the
  * key, as for the caches: a change of shape starts again from the defaults
  * instead of reading a value it cannot understand.

@@ -2,8 +2,8 @@ import type { CategoryId, PersonSubtypeId } from '../../categorization/domain/ca
 
 /**
  * How a category is named and coloured, in one place: the labels the user
- * reads and the accent colour that carries the category on the badge, in the
- * modal and in the highlight panel.
+ * reads, on the badge, in the modal and in the tag proposals, and the accent
+ * colour that carries the category on the badge and in the modal.
  */
 
 /** Short French labels. A badge sits on a card, so they must stay short. */

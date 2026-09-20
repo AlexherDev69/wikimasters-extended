@@ -8,7 +8,6 @@ import type { ScheduleRetry } from '../../card-detection/presentation/handle-sca
 import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
 import { BADGE_SELECTOR, CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
-import { DIM_SELECTOR, PANEL_SELECTOR } from '../../category-highlight/data/highlight-selectors';
 import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import {
@@ -50,7 +49,6 @@ const FILM_URL = 'https://letterboxd.com/film/lost-river/';
 
 const ALL_OFF: Settings = {
   categoryBadges: false,
-  categoryHighlight: false,
   letterboxdLink: false,
   missingImages: false,
   hideCardStats: false,
@@ -174,14 +172,13 @@ describe('createOverlay', () => {
     document.body.innerHTML = '';
   });
 
-  it('should show every part of the overlay when the four settings are on', async () => {
+  it('should show every part of the overlay when the settings are on', async () => {
     document.body.innerHTML = GRID_HTML + MODAL_HTML;
     const { overlay } = mount();
 
     await scanUntilDrawn(overlay);
 
     expect(badges().length).toBeGreaterThan(0);
-    expect(document.body.querySelector(PANEL_SELECTOR)).not.toBeNull();
     expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
     expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).not.toBeNull();
   });
@@ -393,34 +390,6 @@ describe('createOverlay', () => {
     observer.disconnect();
   });
 
-  it('should take back the panel and every veil when the highlight is turned off', async () => {
-    document.body.innerHTML = GRID_HTML + LARGE_HTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-    document.body.querySelector<HTMLElement>('.wme-panel-toggle')?.click();
-    document.body.querySelector<HTMLElement>('.wme-panel-item')?.click();
-    expect(document.body.querySelectorAll(DIM_SELECTOR).length).toBeGreaterThan(0);
-
-    overlay.applySettings({ ...DEFAULT_SETTINGS, categoryHighlight: false });
-
-    expect(document.body.querySelector(PANEL_SELECTOR)).toBeNull();
-    expect(document.body.querySelectorAll(DIM_SELECTOR)).toHaveLength(0);
-  });
-
-  it('should forget the chosen filter when the highlight is turned off and on again', async () => {
-    document.body.innerHTML = GRID_HTML + LARGE_HTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-    document.body.querySelector<HTMLElement>('.wme-panel-toggle')?.click();
-    document.body.querySelector<HTMLElement>('.wme-panel-item')?.click();
-
-    overlay.applySettings({ ...DEFAULT_SETTINGS, categoryHighlight: false });
-    overlay.applySettings(DEFAULT_SETTINGS);
-
-    expect(document.body.querySelectorAll(DIM_SELECTOR)).toHaveLength(0);
-    expect(document.body.querySelector('.wme-panel-clear')).toBeNull();
-  });
-
   it('should take back the Letterboxd link at once when it is turned off', async () => {
     document.body.innerHTML = MODAL_HTML;
     const { overlay } = mount();
@@ -457,7 +426,7 @@ describe('createOverlay', () => {
     expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(drawn);
   });
 
-  it('should ask for no categorization at all when the four settings are off', () => {
+  it('should ask for no categorization at all when every setting is off', () => {
     document.body.innerHTML = GRID_HTML + LARGE_HTML;
     const { overlay, categorize } = mount(ALL_OFF);
 
@@ -598,22 +567,6 @@ describe('createOverlay', () => {
     const observer = observeBody();
 
     // The modal is still looked up on every scan, for the category line.
-    scan(overlay);
-
-    expect(observer.takeRecords()).toHaveLength(0);
-    observer.disconnect();
-  });
-
-  it('should write nothing on a second scan while only the highlight is left on', async () => {
-    document.body.innerHTML = GRID_HTML + LARGE_HTML;
-    const { overlay } = mount({ ...ALL_OFF, categoryHighlight: true });
-    scan(overlay);
-    await vi.waitFor(() => {
-      expect(document.body.querySelector(PANEL_SELECTOR)).not.toBeNull();
-    });
-    scan(overlay);
-    const observer = observeBody();
-
     scan(overlay);
 
     expect(observer.takeRecords()).toHaveLength(0);
