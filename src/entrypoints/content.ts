@@ -4,7 +4,10 @@ import { createLogger } from '../core/logger/logger';
 import { observeCards } from '../features/card-detection/data/card-observer';
 import { findDetailModal } from '../features/card-detection/data/detail-modal';
 import { scanCards, type ObservedCard } from '../features/card-detection/data/scan-cards';
-import { handleScan } from '../features/card-detection/presentation/handle-scan';
+import {
+  handleScan,
+  type ScheduleRetry,
+} from '../features/card-detection/presentation/handle-scan';
 import type { CardCategory } from '../features/categorization/domain/category';
 import type { CardToCategorize } from '../features/categorization/domain/categorize-cards';
 import {
@@ -64,6 +67,13 @@ export default defineContentScript({
     /** Titles of the last scan, the cards the page shows right now. */
     let visibleTitles: ReadonlySet<string> = new Set<string>();
     const highlight = createCategoryHighlight(root);
+    /**
+     * The retry of a failed categorization is armed on the context, so it is
+     * cleared with it: a timer of its own would fire long after the teardown.
+     */
+    const scheduleRetry: ScheduleRetry = (callback, delayMs) => {
+      ctx.setTimeout(callback, delayMs);
+    };
 
     /**
      * Brings the whole overlay in line with what is known of the cards given.
@@ -91,9 +101,15 @@ export default defineContentScript({
     }
 
     function onScan(observedCards: ObservedCard[]): void {
+      // Reading `isInvalid` is what makes WXT notice that the extension was
+      // disabled, updated or uninstalled: it then runs the teardown below.
+      // Nothing else would, so the overlay would stay on the page for good.
+      if (ctx.isInvalid) {
+        return;
+      }
       visibleTitles = new Set(observedCards.map((observed) => observed.card.title));
 
-      handleScan(observedCards, memory.seenTitles, logger, categorize);
+      handleScan(observedCards, memory.seenTitles, logger, categorize, scheduleRetry);
       rememberCategories(memory, visibleTitles);
       syncOverlay(observedCards);
     }
