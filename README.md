@@ -2,7 +2,7 @@
 
 Extension Chrome (Manifest V3) en lecture seule pour [wiki-masters.com](https://www.wiki-masters.com).
 
-Objectif : afficher sur chaque carte une catégorie (via Wikidata), une image pour les cartes que le site laisse sans illustration, un lien Letterboxd pour les films et personnalités du cinéma, et des étiquettes suggérées dans la modale de détail. Elle ne scrolle pas et n'intercepte aucun trafic réseau. Elle est en lecture seule sur le site, à une seule exception près : un réglage désactivé par défaut qui, sur un clic explicite de ta part, écrit une étiquette suggérée dans le champ du site (voir la section "Étiquettes suggérées").
+Objectif : afficher sur chaque carte une catégorie (via Wikidata), une image pour les cartes que le site laisse sans illustration, un lien Letterboxd pour les films et personnalités du cinéma, des étiquettes suggérées dans la modale de détail, et les cartes elles-mêmes à la place des noms tronqués sur la page des échanges. Elle ne scrolle pas et n'intercepte aucun trafic réseau. Elle est en lecture seule sur le site, à une seule exception près : un réglage désactivé par défaut qui, sur un clic explicite de ta part, écrit une étiquette suggérée dans le champ du site (voir la section "Étiquettes suggérées").
 
 ## État actuel
 
@@ -48,13 +48,25 @@ Cette fonctionnalité suit le réglage "Images manquantes" de la page d'options.
 
 Limites connues : environ une carte sans illustration sur quatre a une image sur Wikidata, essentiellement des personnes, des logos et des drapeaux. Les films et les séries n'en ont presque jamais, car les affiches ne sont pas libres de droits. La seconde source ajoute environ une carte de plus sur dix parmi celles qui restent sans illustration : elle est volontairement rare, pour rester sûre. Enfin, le cache de catégorisation change de version à chacune de ces deux mises à jour : les cartes déjà en cache sont redemandées une fois, puis reprennent leur durée de vie habituelle.
 
+### Cartes sur la page d'échange
+
+Sur la page des échanges, chaque offre nomme les cartes proposées dans de petites pastilles dont le texte est coupé au bout de quelques caractères ("SR · The Backrooms (fil…"). Il fallait ouvrir l'offre pour savoir de quelles cartes il s'agissait.
+
+L'extension dessine la carte à la place de chaque pastille : son image quand Wikidata ou l'article de Wikipédia en connaît une (la même source que pour les images manquantes), la couleur et le code de sa rareté, et son titre entier, jamais coupé. Une carte dont aucune image n'est connue garde le fond plat de sa rareté, son code et son titre complet, ce qui est déjà tout ce que la pastille cachait.
+
+La pastille du site n'est ni modifiée ni retirée : elle reste dans la page exactement comme le site l'a écrite, et c'est une règle de style qui la laisse hors du rendu, uniquement là où une carte de l'extension vient d'être dessinée juste avant elle. Là où l'extension ne dessine rien, la pastille s'affiche comme avant.
+
+Un clic sur la carte fait exactement ce qu'un clic sur la pastille faisait, c'est-à-dire ouvrir l'offre : rien de ce que l'extension pose sur le site ne prend le clic.
+
+Cette fonctionnalité suit le réglage "Cartes sur la page d'échange" de la page d'options. Désactivée, les cartes dessinées sont retirées immédiatement et les pastilles du site réapparaissent.
+
 ### Masquer les statistiques des cartes
 
 Une option, désactivée par défaut, masque les valeurs d'attaque (ATK) et de défense (DEF) : sur les cartes elles-mêmes, dans la grille comme en grand format, et dans les deux grands encadrés de la modale de détail. Rien d'autre n'est touché : le Q-Score, le nombre d'exemplaires et le nombre de vues de la modale ne sont pas concernés, car ils sont ailleurs dans la page que les deux encadrés retirés. Si le site venait à les déplacer dans ce même bloc, ils disparaîtraient avec, et la règle serait à corriger.
 
 La ligne noire que la carte trace au-dessus de ces deux valeurs s'efface avec elles : une bande vide fermée par un trait est tout ce que la carte montrerait sinon. Seule la couleur du trait part, jamais le trait lui-même, sinon un pixel s'effondrerait et tout ce que le site a posé au-dessus remonterait d'autant.
 
-Techniquement, cette option ne fonctionne pas comme les autres. Toutes les autres fonctionnalités de cette extension ajoutent leurs propres éléments à la page, alors que celle-ci en cache un, ce qui mérite d'être expliqué en détail plutôt que passé sous silence. L'extension pose une feuille de style qui lui appartient dans l'en-tête de la page (jamais dans la page elle-même) quand l'option est cochée, et la retire entièrement dès qu'elle est décochée. Cette feuille de style ne fait que dire au navigateur de ne pas peindre deux nombres à l'écran : elle ne pose, ne modifie ni ne retire aucune classe, aucun attribut, ni aucun texte sur un élément du site, et rien n'est déplacé. Décocher l'option fait réapparaître les deux valeurs instantanément, sur tous les onglets ouverts, sans recharger la page.
+Techniquement, cette option ne fonctionne pas comme les autres. Les autres fonctionnalités de cette extension ajoutent leurs propres éléments à la page ; celle-ci est la seule qui cache quelque chose du site en toutes circonstances, ce qui mérite d'être expliqué en détail plutôt que passé sous silence. Les cartes de la page d'échange laissent bien une pastille du site hors du rendu, mais seulement là où elles viennent d'en dessiner la carte, et jamais ailleurs. L'extension pose une feuille de style qui lui appartient dans l'en-tête de la page (jamais dans la page elle-même) quand l'option est cochée, et la retire entièrement dès qu'elle est décochée. Cette feuille de style ne fait que dire au navigateur de ne pas peindre deux nombres à l'écran : elle ne pose, ne modifie ni ne retire aucune classe, aucun attribut, ni aucun texte sur un élément du site, et rien n'est déplacé. Décocher l'option fait réapparaître les deux valeurs instantanément, sur tous les onglets ouverts, sans recharger la page.
 
 Cacher un nombre dans ton propre navigateur ne donne aucun avantage dans le jeu, ne révèle rien à personne et n'automatise rien : c'est une préférence d'affichage, comme un mode lecture. Rien n'est envoyé nulle part par cette option, qu'elle soit activée ou non.
 
@@ -72,20 +84,21 @@ Cette fonctionnalité suit le réglage "Étiquettes suggérées" de la page d'op
 
 Un clic sur l'icône de l'extension ouvre sa page d'options (également accessible depuis `chrome://extensions`, bouton "Détails" puis "Options de l'extension").
 
-Section "Fonctionnalités" : six cases à cocher, quatre activées par défaut et deux désactivées par défaut (celle qui masque des statistiques du site et celle qui remplit l'étiquette au clic, voir plus haut).
+Section "Fonctionnalités" : sept cases à cocher, cinq activées par défaut et deux désactivées par défaut (celle qui masque des statistiques du site et celle qui remplit l'étiquette au clic, voir plus haut).
 
 | Réglage | Ce qu'il active |
 | --- | --- |
 | Badge de catégorie | La pastille de catégorie sur les cartes et la ligne "Catégorie" dans la modale de détail |
 | Lien Letterboxd | Le lien vers Letterboxd dans la modale de détail, et le petit logo sous la photo sur la carte |
 | Images manquantes | L'image de Wikimedia Commons posée sur les cartes que le site laisse sans illustration, et la ligne de crédit dans la modale de détail |
+| Cartes sur la page d'échange | Les cartes dessinées à la place des noms tronqués dans les offres de la page des échanges |
 | Masquer les statistiques des cartes | Les valeurs d'attaque et de défense, sur les cartes et dans la modale de détail |
 | Étiquettes suggérées | Les propositions d'étiquette dans la modale de détail, pour les cartes que tu possèdes |
 | Remplir l'étiquette au clic | Écrit et valide la proposition cliquée dans le champ du site, au lieu de seulement sélectionner son texte |
 
 Un changement est enregistré immédiatement et un petit message "Enregistré" le confirme. Si l'enregistrement échoue, la page relit les réglages réellement stockés, les affiche et signale l'erreur : ce qui est coché correspond toujours à ce qui est réellement stocké, y compris quand une autre case a été cochée entre-temps.
 
-Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Quand le badge, le lien Letterboxd, les images manquantes et les étiquettes suggérées sont tous désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata. Les deux réglages restants n'envoient eux-mêmes jamais la moindre requête, qu'ils soient cochés ou non : masquer les statistiques ne fait que peindre la page différemment, et remplir l'étiquette au clic écrit directement dans le champ du site, sans appel réseau.
+Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Quand le badge, le lien Letterboxd, les images manquantes, les cartes de la page d'échange et les étiquettes suggérées sont tous désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata. Les deux réglages restants n'envoient eux-mêmes jamais la moindre requête, qu'ils soient cochés ou non : masquer les statistiques ne fait que peindre la page différemment, et remplir l'étiquette au clic écrit directement dans le champ du site, sans appel réseau.
 
 Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et d'adresses d'images en cache, avec une action qui demande une confirmation sur place.
 
