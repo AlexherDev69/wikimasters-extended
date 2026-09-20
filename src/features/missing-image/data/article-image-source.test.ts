@@ -199,6 +199,76 @@ const SAINT_MALO_ARTICLE_ANSWER = {
   },
 };
 
+/**
+ * Real, measured 2026-09-21 and trimmed: sixteen flags, an icon and one
+ * photograph. No file is named after the article, and MediaWiki names that
+ * photograph as the free lead picture of the page, underscores and all.
+ */
+const LEAD_PICTURE_TITLE = 'Discographie de Janet Jackson';
+const LEAD_PICTURE_FILE = 'Janet Jackson Number Ones Tour 2011 (cropped).jpeg';
+
+const LEAD_PICTURE_ARTICLE_ANSWER = {
+  batchcomplete: true,
+  query: {
+    pages: [
+      {
+        pageid: 11985429,
+        ns: 0,
+        title: LEAD_PICTURE_TITLE,
+        images: [
+          { ns: 6, title: 'Fichier:Flag of Australia.svg' },
+          { ns: 6, title: 'Fichier:Flag of France (lighter variant).svg' },
+          { ns: 6, title: `Fichier:${LEAD_PICTURE_FILE}` },
+          { ns: 6, title: 'Fichier:Musical notes.svg' },
+        ],
+        pageprops: {
+          page_image_free: 'Janet_Jackson_Number_Ones_Tour_2011_(cropped).jpeg',
+          wikibase_item: 'Q651655',
+        },
+      },
+    ],
+  },
+};
+
+/** The request asks for no image information, only where the file is hosted. */
+const LEAD_PICTURE_REPOSITORY_ANSWER = {
+  batchcomplete: true,
+  query: {
+    normalized: [
+      {
+        from: `File:${LEAD_PICTURE_FILE}`,
+        to: `Fichier:${LEAD_PICTURE_FILE}`,
+      },
+    ],
+    pages: [
+      {
+        ns: 6,
+        title: `Fichier:${LEAD_PICTURE_FILE}`,
+        missing: true,
+        known: true,
+        imagerepository: 'shared',
+      },
+    ],
+  },
+};
+
+/** A cut answer naming a lead picture its own file list never reached. */
+const LEAD_OUTSIDE_LIST_TITLE = 'Liste coupee';
+const LEAD_OUTSIDE_LIST_ANSWER = {
+  continue: { imcontinue: '18|Zzz', continue: '||' },
+  query: {
+    pages: [
+      {
+        pageid: 6,
+        ns: 0,
+        title: LEAD_OUTSIDE_LIST_TITLE,
+        images: [{ ns: 6, title: 'Fichier:Sans rapport.jpg' }],
+        pageprops: { page_image_free: 'Photo_de_tete.jpg' },
+      },
+    ],
+  },
+};
+
 /** Real, measured 2026-09-20 and trimmed: a redirect and a normalization on the same batch. */
 const REDIRECTED_TITLE = 'Einstein';
 const UNNORMALIZED_TITLE = 'albert Einstein';
@@ -334,7 +404,7 @@ function requestedTitles(call: RecordedCall): string[] {
 }
 
 describe('createArticleImageSource', () => {
-  it('should ask for the images and the disambiguation property of every title', async () => {
+  it('should ask for the images, the disambiguation and the lead picture of every title', async () => {
     const replay = routedFetch({ 'images|pageprops': EMPTY_ARTICLE_ANSWER });
 
     await makeSource(replay.fetchImpl).findArticleImages([SAINT_MALO_TITLE, 'Autre titre']);
@@ -344,7 +414,7 @@ describe('createArticleImageSource', () => {
     expect(requestedTitles(call)).toEqual([SAINT_MALO_TITLE, 'Autre titre']);
     expect(call.parameters.get('action')).toBe('query');
     expect(call.parameters.get('prop')).toBe('images|pageprops');
-    expect(call.parameters.get('ppprop')).toBe('disambiguation');
+    expect(call.parameters.get('ppprop')).toBe('disambiguation|page_image_free');
     expect(call.parameters.get('imlimit')).toBe('max');
     expect(call.parameters.get('redirects')).toBe('1');
     expect(call.parameters.get('formatversion')).toBe('2');
@@ -375,6 +445,31 @@ describe('createArticleImageSource', () => {
     const resolved = await makeSource(replay.fetchImpl).findArticleImages([HARRY_HOLE_TITLE]);
 
     expect(resolved.get(HARRY_HOLE_TITLE)).toEqual({ fileName: HARRY_HOLE_FILE, kind: 'emblem' });
+  });
+
+  it('should give the lead picture of the article when no file carries its title', async () => {
+    const replay = routedFetch({
+      'images|pageprops': LEAD_PICTURE_ARTICLE_ANSWER,
+      imageinfo: LEAD_PICTURE_REPOSITORY_ANSWER,
+    });
+
+    const resolved = await makeSource(replay.fetchImpl).findArticleImages([LEAD_PICTURE_TITLE]);
+
+    expect(resolved.get(LEAD_PICTURE_TITLE)).toEqual({
+      fileName: LEAD_PICTURE_FILE,
+      kind: 'picture',
+    });
+  });
+
+  it('should leave a title unresolved when the cut list does not hold its lead picture', async () => {
+    const replay = routedFetch({ 'images|pageprops': LEAD_OUTSIDE_LIST_ANSWER });
+
+    const resolved = await makeSource(replay.fetchImpl).findArticleImages([
+      LEAD_OUTSIDE_LIST_TITLE,
+    ]);
+
+    expect(resolved.has(LEAD_OUTSIDE_LIST_TITLE)).toBe(false);
+    expect(replay.calls).toHaveLength(1);
   });
 
   it('should ask for the repository of only the matched candidate, under the File namespace', async () => {

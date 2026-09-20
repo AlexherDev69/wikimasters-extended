@@ -32,11 +32,12 @@ export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
  * 5 changes no shape at all: the article image rule now also accepts a file
  * named after the article followed by one word, so a card remembered under
  * version 4 as having no article image would keep that answer forever on the
- * strength of a lookup the extension no longer makes the same way. Entries
- * of an earlier version are fetched again, once, on the next display of
- * their card.
+ * strength of a lookup the extension no longer makes the same way. Version 6
+ * is that same story once more: the rule now falls back on the lead picture
+ * MediaWiki picked for the article itself. Entries of an earlier version are
+ * fetched again, once, on the next display of their card.
  */
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;

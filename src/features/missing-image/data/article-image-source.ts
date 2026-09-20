@@ -16,7 +16,9 @@ import type { CommonsFile } from '../domain/card-image';
 /**
  * The article's own picture, for a card Wikidata's image properties leave
  * empty: a Commons file named exactly after the article and actually used in
- * it (rules 2 to 6 of the phase 7d specification). Rule 1, "Wikidata gave no
+ * it (rules 2 to 6 of the phase 7d specification), or failing that the free
+ * lead picture MediaWiki itself picked for the article (rule 7, phase 7f),
+ * which the same answer carries at no extra cost. Rule 1, "Wikidata gave no
  * image at all", is decided by the caller: only the titles of cards that
  * qualify for it are ever passed to this source.
  *
@@ -43,6 +45,19 @@ const MAX_REDIRECT_HOPS = 5;
 
 const DISAMBIGUATION_PROPERTY = 'disambiguation';
 
+/**
+ * The page property naming the FREE lead picture MediaWiki picked for an
+ * article, which is the last rule of the match (phase 7f). The free variant
+ * on purpose: the other one, `page_image`, also answers with the non free
+ * files frwiki hosts under its own exception, which rule 5 refuses anyway.
+ */
+const LEAD_IMAGE_PROPERTY = 'page_image_free';
+
+/** Underscores and spaces are the same character in a MediaWiki title, and
+ * the file lists of the same answer are spelled with spaces. */
+const TITLE_UNDERSCORE_PATTERN = /_/g;
+const TITLE_SPACE = ' ';
+
 /** What `imagerepository` reads for a Commons file. A local frwiki file reads "local". */
 const SHARED_REPOSITORY = 'shared';
 
@@ -68,7 +83,7 @@ export const ARTICLE_TITLE_BATCH_SIZE = 20;
 const ARTICLE_QUERY_PARAMETERS = {
   action: 'query',
   prop: 'images|pageprops',
-  ppprop: DISAMBIGUATION_PROPERTY,
+  ppprop: `${DISAMBIGUATION_PROPERTY}|${LEAD_IMAGE_PROPERTY}`,
   imlimit: 'max',
   redirects: '1',
   format: 'json',
@@ -96,6 +111,12 @@ interface ParsedArticlePages {
    */
   fileNamesByTitle: Map<string, string[]>;
   /**
+   * The free lead picture of each page that has one, by the title the API
+   * answered under, as a bare file name spelled the way the file lists above
+   * spell it.
+   */
+  leadFileNameByTitle: Map<string, string>;
+  /**
    * Whether MediaWiki cut this answer short (`continue.imcontinue`). A title
    * absent from `fileNamesByTitle` while this is true was never examined, not
    * confirmed fileless: see `findArticleImages`.
@@ -122,11 +143,13 @@ function parseUsedFileNames(rawImages: unknown): string[] {
 function parseArticlePages(raw: unknown): {
   disambiguationTitles: Set<string>;
   fileNamesByTitle: Map<string, string[]>;
+  leadFileNameByTitle: Map<string, string>;
 } {
   const disambiguationTitles = new Set<string>();
   const fileNamesByTitle = new Map<string, string[]>();
+  const leadFileNameByTitle = new Map<string, string>();
   if (!Array.isArray(raw)) {
-    return { disambiguationTitles, fileNamesByTitle };
+    return { disambiguationTitles, fileNamesByTitle, leadFileNameByTitle };
   }
 
   for (const page of raw) {
@@ -139,6 +162,13 @@ function parseArticlePages(raw: unknown): {
     if (isRecord(pageProps) && DISAMBIGUATION_PROPERTY in pageProps) {
       disambiguationTitles.add(page['title']);
     }
+    const leadFileName = isRecord(pageProps) ? pageProps[LEAD_IMAGE_PROPERTY] : undefined;
+    if (typeof leadFileName === 'string' && leadFileName !== '') {
+      leadFileNameByTitle.set(
+        page['title'],
+        leadFileName.replace(TITLE_UNDERSCORE_PATTERN, TITLE_SPACE),
+      );
+    }
     // A missing `images` key is left unset here rather than defaulted to an
     // empty list: `findArticleImages` is the one place that knows whether an
     // absent list means "no file" or "not examined" (see `truncated`).
@@ -146,7 +176,7 @@ function parseArticlePages(raw: unknown): {
       fileNamesByTitle.set(page['title'], parseUsedFileNames(page['images']));
     }
   }
-  return { disambiguationTitles, fileNamesByTitle };
+  return { disambiguationTitles, fileNamesByTitle, leadFileNameByTitle };
 }
 
 /** Whether MediaWiki still had more images to list for this batch. */
@@ -160,13 +190,16 @@ function parseArticleResponse(payload: unknown): ParsedArticlePages {
     throw new Error(INVALID_ARTICLE_RESPONSE_MESSAGE);
   }
   const query = payload['query'];
-  const { disambiguationTitles, fileNamesByTitle } = parseArticlePages(query['pages']);
+  const { disambiguationTitles, fileNamesByTitle, leadFileNameByTitle } = parseArticlePages(
+    query['pages'],
+  );
 
   return {
     normalized: parseTitleMappings(query['normalized']),
     redirects: parseTitleMappings(query['redirects']),
     disambiguationTitles,
     fileNamesByTitle,
+    leadFileNameByTitle,
     truncated: hasImagesContinuation(payload),
   };
 }
@@ -372,7 +405,11 @@ export function createArticleImageSource(httpOptions: FetchJsonOptions): Article
             continue;
           }
 
-          const candidate = findArticleImageFile(stripTrailingParenthetical(finalTitle), usedFileNames);
+          const candidate = findArticleImageFile(
+            stripTrailingParenthetical(finalTitle),
+            usedFileNames,
+            pages.leadFileNameByTitle.get(finalTitle) ?? null,
+          );
           if (candidate !== null) {
             candidatesByTitle.set(requestedTitle, candidate);
           } else if (!pages.truncated) {
