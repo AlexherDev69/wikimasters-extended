@@ -257,14 +257,38 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 
 Reste à faire par l'utilisateur : contrôle visuel dans Chrome (lisibilité du badge sur les petites cartes de la grille, emplacement du panneau) et validation des choix de présentation.
 
+#### Phase 4c : index local de la collection et fenêtre de statistiques (faite le 2026-09-20, revue indépendante passée)
+
+- Index local : les cartes détectées sur la page `/collection` sont mémorisées par le service worker, `{ rareté, première vue, dernière vue }` par titre, dans une seule clé versionnée de `chrome.storage.local` (environ 80 octets par carte). Les autres pages (marché, échanges, tirages, collection globale) n'alimentent jamais l'index : ces cartes ne sont pas possédées
+- L'extension ne navigue jamais à la place de l'utilisateur : l'index ne grandit qu'avec les pages de collection affichées. La fenêtre indique le nombre de cartes vues et la date de la dernière mise à jour (parade du risque R6)
+- Fenêtre de statistiques (popup de l'extension, TypeScript sans framework) : cartes par catégorie avec part en pourcentage, sous-types des personnes, répartition par rareté, cartes non catégorisées, liste des cartes d'une catégorie avec lien vers l'article Wikipédia, remise à zéro de l'index avec confirmation
+- Aucun appel réseau : le résumé est calculé uniquement depuis l'index et les deux caches existants. Le cas d'usage ne reçoit aucun port réseau, ouvrir la fenêtre ne peut donc pas interroger Wikimedia. Une carte dont les faits sont absents, expirés ou introuvables compte comme "non catégorisée" jusqu'à son prochain affichage sur le site
+- La catégorie n'est pas stockée dans l'index : elle est recalculée à la lecture par les mêmes fonctions pures que les badges (étape commune extraite dans `classify-cached-card.ts`). Retoucher les listes de racines ne demande donc aucune reconstruction de l'index
+
+Écarts assumés et décisions :
+
+- Seul le chemin exact `/collection` alimente l'index (et non ses sous-chemins, comme prévu au départ) : aucune sous-route n'a été observée, et une carte enregistrée à tort ne pourrait plus être distinguée des autres. La règle ne sera élargie que sur preuve
+- Le premier scan qui suit un changement de route n'enregistre rien : le scan est différé de 200 ms et l'URL peut déjà être `/collection` alors que le DOM lu est encore celui du marché. Les scans suivants enregistrent la page
+- Un titre que le service worker refuserait (caractère `|`, plus de 300 caractères) n'est jamais envoyé, et un lot est découpé en messages de 500 cartes au plus : un lot refusé en bloc serait sinon renvoyé à l'identique toutes les 60 s, sans fin
+- Approximation connue : l'index ne garde pas la description des cartes, le sous-type principal d'une personne y est donc décidé par vote majoritaire. Il peut différer du badge pour quelques personnes aux métiers multiples. Les personnes sans sous-type reconnu apparaissent sur une ligne "Autre"
+- Manifest : seule l'entrée `action` (popup) est ajoutée, permissions inchangées. Le polyfill `modulepreload` de Vite est désactivé : il embarquait un `fetch` inutile dans la fenêtre, Chrome gérant `modulepreload` nativement
+- Points de revue acceptés sans changement : l'index est réécrit en entier à chaque lot (le quota de 10 Mo correspond à environ 125 000 cartes) ; un titre déjà envoyé n'est pas renvoyé avant le rechargement de l'onglet, un changement de rareté n'est donc vu qu'à la session suivante
+
+Question ouverte pour l'utilisateur : la page `/collection` propose un filtre "liste de souhaits". S'il affiche des cartes non possédées sous la même URL, elles entreraient dans l'index. À vérifier sur le site ; un export HTML de cette vue permettrait de la détecter.
+
+Reste à faire par l'utilisateur : contrôle visuel de la fenêtre dans Chrome.
+
 #### Suite de la phase 4
 
-- Badge de catégorie sur chaque carte (toutes pages) et catégorie détaillée dans la modale
+Plan initial, avec l'état de chaque point :
+
+- Badge de catégorie sur chaque carte (toutes pages) et catégorie détaillée dans la modale : fait (4a)
 - La collection étant paginée, trois réponses complémentaires au besoin de filtre, par ordre de coût :
-  1. Mise en évidence par catégorie sur la page courante (atténuer les cartes hors catégorie). Simple, mais limité à la page affichée
-  2. Vue "Ma collection par catégorie" dans l'extension (popup ou page dédiée), alimentée par l'index local des cartes déjà vues. Tri, filtres et regroupements sans limite de page
-  3. Synergie avec les étiquettes natives : l'extension indique la catégorie, l'utilisateur pose lui-même l'étiquette avec la sélection en lot du site. Le filtre natif marche alors sur toutes les pages, côté serveur. L'extension ne clique jamais à la place de l'utilisateur
-- Popup de stats : nombre de cartes par catégorie et sous-type
+  1. Mise en évidence par catégorie sur la page courante (atténuer les cartes hors catégorie). Simple, mais limité à la page affichée : fait (4a)
+  2. Vue "Ma collection par catégorie" dans l'extension (popup ou page dédiée), alimentée par l'index local des cartes déjà vues. Tri, filtres et regroupements sans limite de page : fait (4c), sous forme de popup
+  3. Synergie avec les étiquettes natives : l'extension indique la catégorie, l'utilisateur pose lui-même l'étiquette avec la sélection en lot du site. Le filtre natif marche alors sur toutes les pages, côté serveur. L'extension ne clique jamais à la place de l'utilisateur. Le badge donne déjà l'information ; rien de plus à coder tant que le DOM des étiquettes natives n'a pas été observé (export de `/collection` attendu)
+- Popup de stats : nombre de cartes par catégorie et sous-type : fait (4c)
+- Taux de complétion par catégorie : à faire, demande le catalogue de `/global-collection` (export attendu, voir Phase 0)
 - Vérification : scénarios manuels de la section 7
 
 ### Phase 5 : lien Letterboxd (faite le 2026-09-20)

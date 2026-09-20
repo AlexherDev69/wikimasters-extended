@@ -30,8 +30,12 @@ export interface CategorizeCardsResponse {
  * A title made only of whitespace resolves to nothing, and a title containing
  * the frwiki batch separator would silently corrupt the whole batch it travels
  * in, so both are refused at the boundary.
+ *
+ * Exported because every card title reaching the service worker obeys the same
+ * rule, whichever message carries it: the collection index shares it rather
+ * than keeping a second definition that could drift.
  */
-function isValidTitle(value: unknown): value is string {
+export function isValidTitle(value: unknown): value is string {
   return (
     typeof value === 'string' &&
     value.trim() !== '' &&

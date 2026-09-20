@@ -1,4 +1,5 @@
-const CATEGORY_IDS = [
+/** Exported so a view can give every category a place in a display order. */
+export const CATEGORY_IDS = [
   'person',
   'film_tv',
   'music',
@@ -19,7 +20,8 @@ const CATEGORY_IDS = [
 
 export type CategoryId = (typeof CATEGORY_IDS)[number];
 
-const PERSON_SUBTYPE_IDS = [
+/** Exported for the same reason as CATEGORY_IDS. */
+export const PERSON_SUBTYPE_IDS = [
   'cinema',
   'music',
   'sport',

@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { RARITIES, parseRarityFromClassName } from './rarity';
+import { RARITIES, isRarity, parseRarityFromClassName } from './rarity';
+
+describe('isRarity', () => {
+  it('should accept every known rarity', () => {
+    for (const rarity of RARITIES) {
+      expect(isRarity(rarity)).toBe(true);
+    }
+  });
+
+  it('should reject an unknown code and a non-string value', () => {
+    expect(isRarity('xyz')).toBe(false);
+    expect(isRarity('C')).toBe(false);
+    expect(isRarity(null)).toBe(false);
+  });
+});
 
 describe('parseRarityFromClassName', () => {
   it('should return the rarity when the class contains a valid glow-<rarity> token', () => {
