@@ -20,12 +20,15 @@ import type { CommonsFile } from '../domain/card-image';
  * image at all", is decided by the caller: only the titles of cards that
  * qualify for it are ever passed to this source.
  *
- * Two requests to fr.wikipedia.org per batch, never more: the first lists the
- * files an article uses and says whether the article is a disambiguation
- * page, the second confirms that the one candidate file it produced is
- * hosted on Commons rather than on frwiki itself. No new host: both travel
- * through the same fetchJson plumbing, with its timeout, its retries, its
- * cooldowns and no credentials, as every other frwiki request.
+ * One request to fr.wikipedia.org per batch of titles, listing the files each
+ * article uses and whether it is a disambiguation page; a second, smaller
+ * request follows only when at least one candidate file was found, to confirm
+ * it is hosted on Commons rather than on frwiki itself. The common case is one
+ * request only, since most cards produce no candidate: for N titles this is
+ * at most ceil(N / ARTICLE_TITLE_BATCH_SIZE) + ceil(C / TITLE_BATCH_SIZE)
+ * requests, C being the number of candidates found. No new host: every
+ * request travels through the same fetchJson plumbing, with its timeout, its
+ * retries, its cooldowns and no credentials, as every other frwiki request.
  */
 
 const JSON_MEDIA_TYPE = 'application/json';
@@ -45,6 +48,22 @@ const SHARED_REPOSITORY = 'shared';
 
 const INVALID_ARTICLE_RESPONSE_MESSAGE = 'Unexpected frwiki images response shape';
 const INVALID_REPOSITORY_RESPONSE_MESSAGE = 'Unexpected frwiki imageinfo response shape';
+
+/** Present on `query.continue` while MediaWiki still has more images to list. */
+const IMAGES_CONTINUATION_PARAMETER = 'imcontinue';
+
+/**
+ * How many article titles one `findArticleImages` request asks about at once.
+ * Deliberately its own constant rather than TITLE_BATCH_SIZE: `imlimit=max`
+ * caps the WHOLE answer at 500 file rows shared across every title of the
+ * batch, not 500 per title. Measured live on 2026-09-20: 13 realistic card
+ * titles produced 194 rows (about 15 per title) and no continuation, while 50
+ * titles hit the 500 row cap after only 3 of the 50 pages had received any
+ * file list at all. Sizing the batch at that measured average would leave no
+ * room for an article carrying more files than the mean, so this constant
+ * targets 60% of the cap at that average instead: 500 * 0.6 / 15 = 20.
+ */
+export const ARTICLE_TITLE_BATCH_SIZE = 20;
 
 const ARTICLE_QUERY_PARAMETERS = {
   action: 'query',
@@ -70,8 +89,18 @@ interface ParsedArticlePages {
   normalized: Map<string, string>;
   redirects: Map<string, string>;
   disambiguationTitles: Set<string>;
-  /** Bare Commons file names (no namespace prefix), by the title the API answered under. */
+  /**
+   * Bare Commons file names (no namespace prefix), by the title the API
+   * answered under. Only set for a page whose own `images` key came back in
+   * this answer: see `truncated` for what a missing entry means.
+   */
   fileNamesByTitle: Map<string, string[]>;
+  /**
+   * Whether MediaWiki cut this answer short (`continue.imcontinue`). A title
+   * absent from `fileNamesByTitle` while this is true was never examined, not
+   * confirmed fileless: see `findArticleImages`.
+   */
+  truncated: boolean;
 }
 
 /** The bare file names of one page's `images`, in the order the API lists them. */
@@ -110,9 +139,20 @@ function parseArticlePages(raw: unknown): {
     if (isRecord(pageProps) && DISAMBIGUATION_PROPERTY in pageProps) {
       disambiguationTitles.add(page['title']);
     }
-    fileNamesByTitle.set(page['title'], parseUsedFileNames(page['images']));
+    // A missing `images` key is left unset here rather than defaulted to an
+    // empty list: `findArticleImages` is the one place that knows whether an
+    // absent list means "no file" or "not examined" (see `truncated`).
+    if (Array.isArray(page['images'])) {
+      fileNamesByTitle.set(page['title'], parseUsedFileNames(page['images']));
+    }
   }
   return { disambiguationTitles, fileNamesByTitle };
+}
+
+/** Whether MediaWiki still had more images to list for this batch. */
+function hasImagesContinuation(payload: Record<string, unknown>): boolean {
+  const continuation = payload['continue'];
+  return isRecord(continuation) && IMAGES_CONTINUATION_PARAMETER in continuation;
 }
 
 function parseArticleResponse(payload: unknown): ParsedArticlePages {
@@ -127,6 +167,7 @@ function parseArticleResponse(payload: unknown): ParsedArticlePages {
     redirects: parseTitleMappings(query['redirects']),
     disambiguationTitles,
     fileNamesByTitle,
+    truncated: hasImagesContinuation(payload),
   };
 }
 
@@ -148,12 +189,14 @@ function resolveFinalTitle(requestedTitle: string, pages: ParsedArticlePages): s
 }
 
 /**
- * MediaWiki may CONTINUE this answer (`continue.imcontinue`) when an article
- * uses more files than fit in one page. It is deliberately not followed: the
- * file this source looks for is the one named after the article itself, which
- * sits in the article's own file list wherever the API happens to cut it, so a
- * truncated list only costs an occasional miss, never a wrong match, and never
- * a second request per article.
+ * MediaWiki may CONTINUE this answer (`continue.imcontinue`) when the titles
+ * of a batch together use more files than `imlimit=max` allows across all of
+ * them. It is deliberately not followed: every title a truncated answer fails
+ * to give a matching file for is treated by `findArticleImages` as unexamined
+ * rather than fileless, so it is left unresolved for a later batch instead of
+ * wrongly remembered as having no matching file. This never costs a second
+ * request per article, only an occasional retry that ARTICLE_TITLE_BATCH_SIZE
+ * is sized to make rare.
  */
 async function requestArticleBatch(
   titles: readonly string[],
@@ -281,8 +324,10 @@ async function keepCommonsHostedFiles(
 
 /**
  * Finds, for each of `titles`, the image the article itself uses in place of
- * one Wikidata could not give, by batches of TITLE_BATCH_SIZE. A title with no
- * qualifying file maps to null, which the caller remembers as such.
+ * one Wikidata could not give, by batches of ARTICLE_TITLE_BATCH_SIZE. A title
+ * with no qualifying file maps to null, which the caller remembers as such. A
+ * title left unexamined by MediaWiki's continuation is absent from the answer
+ * altogether: the caller must not remember that as a miss either.
  *
  * The pages of an answer come back in an ARBITRARY order, exactly like the
  * other frwiki sources, so each requested title is mapped through the
@@ -307,7 +352,7 @@ export function createArticleImageSource(httpOptions: FetchJsonOptions): Article
       }
 
       const candidatesByTitle = new Map<string, CommonsFile>();
-      for (const batch of chunk(sendableTitles, TITLE_BATCH_SIZE)) {
+      for (const batch of chunk(sendableTitles, ARTICLE_TITLE_BATCH_SIZE)) {
         const pages = await requestArticleBatch(batch, httpOptions);
         for (const requestedTitle of batch) {
           const finalTitle = resolveFinalTitle(requestedTitle, pages);
@@ -316,13 +361,27 @@ export function createArticleImageSource(httpOptions: FetchJsonOptions): Article
             continue;
           }
 
-          const usedFileNames = pages.fileNamesByTitle.get(finalTitle) ?? [];
-          const candidate = findArticleImageFile(stripTrailingParenthetical(finalTitle), usedFileNames);
-          if (candidate === null) {
+          const usedFileNames = pages.fileNamesByTitle.get(finalTitle);
+          if (usedFileNames === undefined) {
+            if (pages.truncated) {
+              // Cut off before reaching this article's own file list: unknown,
+              // not fileless, so it is left out of the answer for a retry.
+              continue;
+            }
             resolved.set(requestedTitle, null);
-          } else {
-            candidatesByTitle.set(requestedTitle, candidate);
+            continue;
           }
+
+          const candidate = findArticleImageFile(stripTrailingParenthetical(finalTitle), usedFileNames);
+          if (candidate !== null) {
+            candidatesByTitle.set(requestedTitle, candidate);
+          } else if (!pages.truncated) {
+            resolved.set(requestedTitle, null);
+          }
+          // A truncated answer also cuts ONE page's list in the MIDDLE, and
+          // the pages come back in an arbitrary order, so no list of such an
+          // answer is known to be complete: a title that found nothing in it
+          // is left unresolved as well, never remembered as a miss.
         }
       }
 

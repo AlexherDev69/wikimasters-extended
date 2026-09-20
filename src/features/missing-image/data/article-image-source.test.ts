@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { TITLE_BATCH_SIZE } from '../../../core/config/wikimedia';
 import { createMemoryCooldownStore, type FetchLike } from '../../../core/http/fetch-json';
 import type { ArticleImageSource } from '../../categorization/domain/ports';
-import { createArticleImageSource } from './article-image-source';
+import { ARTICLE_TITLE_BATCH_SIZE, createArticleImageSource } from './article-image-source';
 
 const HTTP_OK = 200;
 const JSON_MEDIA_TYPE = 'application/json';
@@ -74,6 +73,65 @@ const DISAMBIGUATION_ANSWER = {
         title: DISAMBIGUATION_TITLE,
         images: [{ ns: 6, title: 'Fichier:Logo disambig.svg' }],
         pageprops: { disambiguation: '' },
+      },
+    ],
+  },
+};
+
+/**
+ * Constructed for the test: none of the real disambiguation pages checked
+ * against the live API names a file after itself, so the fixture above never
+ * actually exercises the disambiguation guard, it never produces a candidate
+ * regardless of it. "Accueil" carries a file matching its own title so that
+ * removing the guard is the only thing that turns this pair red.
+ */
+const SELF_NAMED_DISAMBIGUATION_TITLE = 'Accueil';
+const SELF_NAMED_DISAMBIGUATION_FILE = 'Accueil.jpg';
+
+const SELF_NAMED_DISAMBIGUATION_ANSWER = {
+  batchcomplete: true,
+  query: {
+    pages: [
+      {
+        pageid: 10,
+        ns: 0,
+        title: SELF_NAMED_DISAMBIGUATION_TITLE,
+        images: [{ ns: 6, title: `Fichier:${SELF_NAMED_DISAMBIGUATION_FILE}` }],
+        pageprops: { disambiguation: '' },
+      },
+    ],
+  },
+};
+
+/** The positive control: the same page and the same matching file, not a disambiguation page. */
+const SELF_NAMED_MATCH_ANSWER = {
+  batchcomplete: true,
+  query: {
+    pages: [
+      {
+        pageid: 10,
+        ns: 0,
+        title: SELF_NAMED_DISAMBIGUATION_TITLE,
+        images: [{ ns: 6, title: `Fichier:${SELF_NAMED_DISAMBIGUATION_FILE}` }],
+      },
+    ],
+  },
+};
+
+const SELF_NAMED_MATCH_REPOSITORY_ANSWER = {
+  batchcomplete: true,
+  query: {
+    normalized: [
+      { from: `File:${SELF_NAMED_DISAMBIGUATION_FILE}`, to: `Fichier:${SELF_NAMED_DISAMBIGUATION_FILE}` },
+    ],
+    pages: [
+      {
+        ns: 6,
+        title: `Fichier:${SELF_NAMED_DISAMBIGUATION_FILE}`,
+        missing: true,
+        known: true,
+        imagerepository: 'shared',
+        imageinfo: [{ url: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Accueil.jpg' }],
       },
     ],
   },
@@ -202,6 +260,28 @@ const CONTINUATION_ANSWER = {
   },
 };
 
+/**
+ * A continuation whose OWN page carries no `images` key at all: the shape
+ * MediaWiki's global `imlimit=max` cap actually produces for a page it never
+ * got to, measured live on a batch of 50 titles (see ARTICLE_TITLE_BATCH_SIZE).
+ */
+const TRUNCATED_TITLE = 'Titre non examine';
+const TRUNCATED_ANSWER = {
+  continue: { imcontinue: '18|Zzz', continue: '||' },
+  query: {
+    pages: [{ pageid: 4, ns: 0, title: TRUNCATED_TITLE }],
+  },
+};
+
+/** The same missing `images` key, but no continuation: a genuine "no file" answer. */
+const NO_FILES_TITLE = 'Page sans fichier';
+const NO_FILES_ANSWER = {
+  batchcomplete: true,
+  query: {
+    pages: [{ pageid: 5, ns: 0, title: NO_FILES_TITLE }],
+  },
+};
+
 interface RecordedCall {
   url: string;
   parameters: URLSearchParams;
@@ -276,14 +356,14 @@ describe('createArticleImageSource', () => {
   it('should send one request per batch when more titles than a batch are asked for', async () => {
     const replay = routedFetch({ 'images|pageprops': EMPTY_ARTICLE_ANSWER });
     const titles = Array.from(
-      { length: TITLE_BATCH_SIZE * 2 + 1 },
+      { length: ARTICLE_TITLE_BATCH_SIZE * 2 + 1 },
       (_unused, index) => `Titre ${String(index)}`,
     );
 
     await makeSource(replay.fetchImpl).findArticleImages(titles);
 
     expect(replay.calls).toHaveLength(3);
-    expect(requestedTitles(firstCall(replay.calls))).toHaveLength(TITLE_BATCH_SIZE);
+    expect(requestedTitles(firstCall(replay.calls))).toHaveLength(ARTICLE_TITLE_BATCH_SIZE);
   });
 
   it('should give the real answer of "Harry Hole (série télévisée)": its own file, confirmed on Commons', async () => {
@@ -327,6 +407,39 @@ describe('createArticleImageSource', () => {
     expect(replay.calls).toHaveLength(1);
   });
 
+  it('should give nothing for a disambiguation page even when it carries a file named after itself', async () => {
+    const replay = routedFetch({ 'images|pageprops': SELF_NAMED_DISAMBIGUATION_ANSWER });
+
+    const resolved = await makeSource(replay.fetchImpl).findArticleImages([
+      SELF_NAMED_DISAMBIGUATION_TITLE,
+    ]);
+
+    expect(resolved.get(SELF_NAMED_DISAMBIGUATION_TITLE)).toBeNull();
+    // No repository request either: this is the disambiguation guard alone,
+    // not the "no candidate" shortcut the DISAMBIGUATION_ANSWER above cannot
+    // tell apart from it.
+    expect(replay.calls).toHaveLength(1);
+  });
+
+  it('should give the matching file when the same page is not a disambiguation page', async () => {
+    // The positive control of the test above: removing the disambiguation
+    // guard in the source must turn this pair red, since both requests then
+    // resolve to the same file.
+    const replay = routedFetch({
+      'images|pageprops': SELF_NAMED_MATCH_ANSWER,
+      imageinfo: SELF_NAMED_MATCH_REPOSITORY_ANSWER,
+    });
+
+    const resolved = await makeSource(replay.fetchImpl).findArticleImages([
+      SELF_NAMED_DISAMBIGUATION_TITLE,
+    ]);
+
+    expect(resolved.get(SELF_NAMED_DISAMBIGUATION_TITLE)).toEqual({
+      fileName: SELF_NAMED_DISAMBIGUATION_FILE,
+      kind: 'picture',
+    });
+  });
+
   it('should give nothing when the matching file is hosted on frwiki and not on Commons', async () => {
     const replay = routedFetch({
       'images|pageprops': LOCAL_FILE_ARTICLE_ANSWER,
@@ -362,14 +475,35 @@ describe('createArticleImageSource', () => {
     expect(resolved.get(UNNORMALIZED_TITLE)).toEqual({ fileName: EINSTEIN_FILE, kind: 'picture' });
   });
 
-  it('should not follow a continuation of the images list', async () => {
+  it('should not follow a continuation of the images list, and not trust the partial list it returned', async () => {
     const replay = routedFetch({ 'images|pageprops': CONTINUATION_ANSWER });
 
     const resolved = await makeSource(replay.fetchImpl).findArticleImages([CONTINUATION_TITLE]);
 
-    expect(resolved.get(CONTINUATION_TITLE)).toBeNull();
+    // The page carries a file list, but the answer was cut short and the cut
+    // falls in the MIDDLE of one page's list, which the arbitrary page order
+    // makes impossible to identify: finding no match in it proves nothing.
+    expect(resolved.has(CONTINUATION_TITLE)).toBe(false);
     // A second request would carry `imcontinue`: there is none at all.
     expect(replay.calls).toHaveLength(1);
+  });
+
+  it('should leave a title unresolved, rather than fileless, when its own file list was cut off by the continuation', async () => {
+    const replay = routedFetch({ 'images|pageprops': TRUNCATED_ANSWER });
+
+    const resolved = await makeSource(replay.fetchImpl).findArticleImages([TRUNCATED_TITLE]);
+
+    // Absent, not null: a title never remembered as a miss it was never given
+    // the chance to be.
+    expect(resolved.has(TRUNCATED_TITLE)).toBe(false);
+  });
+
+  it('should treat a title as having no file when its page carries no images key and the answer was not cut short', async () => {
+    const replay = routedFetch({ 'images|pageprops': NO_FILES_ANSWER });
+
+    const resolved = await makeSource(replay.fetchImpl).findArticleImages([NO_FILES_TITLE]);
+
+    expect(resolved.get(NO_FILES_TITLE)).toBeNull();
   });
 
   it('should map a title containing the batch separator to null without sending it', async () => {

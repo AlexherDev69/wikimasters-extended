@@ -132,7 +132,9 @@ async function fetchMissingFacts(
     const facts = qid === null ? undefined : factsByQid.get(qid);
     fetched.set(
       title,
-      facts === undefined ? { status: 'not_found', facts: null } : { status: 'resolved', facts },
+      facts === undefined
+        ? { status: 'not_found', facts: null, articleImageTried: false }
+        : { status: 'resolved', facts, articleImageTried: false },
     );
   }
   return fetched;
@@ -374,23 +376,53 @@ function buildResult(
   };
 }
 
-/** Titles whose card was categorized but Wikidata gave it no image at all. */
-function titlesWithoutImage(results: readonly CardCategory[]): string[] {
+/**
+ * Titles whose card was categorized, Wikidata gave it no image at all, and
+ * whose fresh facts were not already marked as tried against the article's
+ * own image: a title still absent from `factsByTitle` (should not happen for
+ * a categorized result) is treated as untried, exactly like a missing flag.
+ */
+function titlesWithoutImage(
+  results: readonly CardCategory[],
+  factsByTitle: ReadonlyMap<string, CachedCardFacts>,
+): string[] {
   return results
-    .filter((result) => result.status === 'categorized' && result.image === null)
+    .filter(
+      (result) =>
+        result.status === 'categorized' &&
+        result.image === null &&
+        factsByTitle.get(result.title)?.articleImageTried !== true,
+    )
     .map((result) => result.title);
 }
 
 /**
- * Persists a newly found image as part of the facts of its card: the next
- * categorization of the same card, still inside its 90 day lifetime, then
- * reads it back from the cache instead of asking again. This source gets no
- * cache level of its own, it rides in the existing one, which is also why a
- * card whose facts were never loaded (should not happen for a categorized
- * result) is simply skipped rather than forced into the cache on its own.
+ * Persists what this run definitely learned about the article's own image, as
+ * part of the facts of each card: the next categorization of the same card,
+ * still inside its 90 day lifetime, then reads it back from the cache instead
+ * of asking again. This source gets no cache level of its own, it rides in
+ * the existing one, which is also why a card whose facts were never loaded
+ * (should not happen for a categorized result) is simply skipped rather than
+ * forced into the cache on its own.
+ *
+ * `articleImages` holds only the titles this run got a DEFINITE answer for,
+ * found or not: a title MediaWiki's continuation left unresolved (see
+ * ARTICLE_TITLE_BATCH_SIZE in the source) is absent from it on purpose, so it
+ * is retried on the next categorization instead of remembered as a miss it
+ * never actually was. Every title written here is marked `articleImageTried`,
+ * whether or not a file was found, which is what lets `titlesWithoutImage`
+ * stop asking about it.
+ *
+ * This write does not preserve the original `fetchedAt` of the entry:
+ * `cardFactsCache.putMany` always stamps the current time, so an enrichment
+ * restarts the card's 90 day lifetime from today. Accepted as is: it can
+ * happen at most once per card, since a tried card is never asked again, so
+ * the extra lifetime this buys is bounded, and the classes and external ids
+ * kept in service a little longer are the very ones this same batch just
+ * confirmed accurate.
  */
 async function rememberArticleImages(
-  articleImages: ReadonlyMap<string, CommonsFile>,
+  articleImages: ReadonlyMap<string, CommonsFile | null>,
   factsByTitle: ReadonlyMap<string, CachedCardFacts>,
   deps: CategorizeCardsDeps,
 ): Promise<void> {
@@ -398,7 +430,11 @@ async function rememberArticleImages(
   for (const [title, image] of articleImages) {
     const entry = factsByTitle.get(title);
     if (entry?.facts) {
-      enrichedFacts.set(title, { ...entry, facts: { ...entry.facts, image } });
+      enrichedFacts.set(title, {
+        ...entry,
+        facts: image === null ? entry.facts : { ...entry.facts, image },
+        articleImageTried: true,
+      });
     }
   }
   if (enrichedFacts.size === 0) {
@@ -408,7 +444,7 @@ async function rememberArticleImages(
   try {
     await deps.cardFactsCache.putMany(enrichedFacts);
   } catch (error) {
-    deps.logger.warn('Card cache write failed', { error: toErrorMessage(error) });
+    deps.logger.warn('Article image cache write failed', { error: toErrorMessage(error) });
   }
 }
 
@@ -425,12 +461,15 @@ async function withArticleImages(
   factsByTitle: ReadonlyMap<string, CachedCardFacts>,
   deps: CategorizeCardsDeps,
 ): Promise<CardCategory[]> {
-  const candidateTitles = titlesWithoutImage(results);
+  const candidateTitles = titlesWithoutImage(results, factsByTitle);
   // Not one card of the batch is missing its Wikidata image, which is the
   // common case: nothing is asked and nothing is written.
   if (candidateTitles.length === 0) {
     return results.slice();
   }
+  // The source only ever answers about the titles it was given, but this
+  // keeps that invariant in one place rather than trusting it a second time.
+  const candidateTitleSet = new Set(candidateTitles);
 
   let articleImages: Map<string, CommonsFile | null>;
   try {
@@ -443,13 +482,23 @@ async function withArticleImages(
     return results.slice();
   }
 
-  const foundImages = new Map<string, CommonsFile>();
+  // Both what is persisted and what is shown are read from this map, so a
+  // title the source answered about without being asked reaches neither.
+  const definiteAnswers = new Map<string, CommonsFile | null>();
   for (const [title, image] of articleImages) {
+    if (candidateTitleSet.has(title)) {
+      definiteAnswers.set(title, image);
+    }
+  }
+
+  await rememberArticleImages(definiteAnswers, factsByTitle, deps);
+
+  const foundImages = new Map<string, CommonsFile>();
+  for (const [title, image] of definiteAnswers) {
     if (image !== null) {
       foundImages.set(title, image);
     }
   }
-  await rememberArticleImages(foundImages, factsByTitle, deps);
 
   return results.map((result) => {
     const image = foundImages.get(result.title);

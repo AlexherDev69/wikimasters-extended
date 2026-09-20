@@ -27,6 +27,13 @@ export interface CachedCardFacts {
   status: CardFactsStatus;
   /** Null when `status` is `not_found`. */
   facts: EntityFacts | null;
+  /**
+   * Whether the article's own image (phase 7d) was already looked up for this
+   * card. Always false for a `not_found` card, which never reaches that
+   * stage, and for a card whose answer MediaWiki's continuation left
+   * unresolved: only a definite yes or no marks a card as tried.
+   */
+  articleImageTried: boolean;
 }
 
 export interface TitleResolver {

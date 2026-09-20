@@ -20,14 +20,19 @@ export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
 /**
  * Bump when the stored shape changes, or when an entry of the current shape
  * can no longer be trusted to hold everything a fresh fetch would give it.
- * Version 2 added the image of the card. Version 3 changes nothing in the
- * shape itself: the article's own image (phase 7d) is written into that same
- * `image` field when Wikidata left it empty, so an entry written under
- * version 2 never tried and must expire just the same, even though it would
- * still pass every structural check below. Entries of either version are
- * fetched again, once, on the next display of their card.
+ * Version 2 added the image of the card. Version 3 wrote the article's own
+ * image (phase 7d) into that same `image` field when Wikidata left it empty,
+ * without changing the shape itself, so an entry written under version 2
+ * never tried and had to expire just the same. Version 4 adds
+ * `articleImageTried`, a genuinely new field remembering whether that lookup
+ * was already attempted: a version 3 entry lacks it and fails the structural
+ * check below on its own, so the bump is not strictly required for
+ * correctness, but it keeps the version number a reliable label for "the
+ * shape currently defined here", consistent with every earlier bump. Entries
+ * of an earlier version are fetched again, once, on the next display of
+ * their card.
  */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
@@ -38,6 +43,7 @@ interface StoredCardFacts {
   status: CardFactsStatus;
   facts: EntityFacts | null;
   fetchedAt: number;
+  articleImageTried: boolean;
 }
 
 function cardKey(title: string): StorageItemKey {
@@ -70,6 +76,7 @@ function isStoredCardFacts(value: unknown): value is StoredCardFacts {
     value['schemaVersion'] === SCHEMA_VERSION &&
     isCardFactsStatus(value['status']) &&
     typeof value['fetchedAt'] === 'number' &&
+    typeof value['articleImageTried'] === 'boolean' &&
     (value['facts'] === null || isEntityFacts(value['facts']))
   );
 }
@@ -94,7 +101,11 @@ export function createCardFactsCache(clock: Clock): CardFactsCache {
       for (const [index, title] of uniqueTitles.entries()) {
         const stored: unknown = items[index]?.value;
         if (isStoredCardFacts(stored) && isFresh(stored, now)) {
-          fresh.set(title, { status: stored.status, facts: stored.facts });
+          fresh.set(title, {
+            status: stored.status,
+            facts: stored.facts,
+            articleImageTried: stored.articleImageTried,
+          });
         }
       }
 
@@ -115,6 +126,7 @@ export function createCardFactsCache(clock: Clock): CardFactsCache {
             status: entry.status,
             facts: entry.facts,
             fetchedAt,
+            articleImageTried: entry.articleImageTried,
           } satisfies StoredCardFacts,
         })),
       );
