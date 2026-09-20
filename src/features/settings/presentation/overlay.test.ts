@@ -11,6 +11,11 @@ import { BADGE_SELECTOR, CATEGORY_LINE_SELECTOR } from '../../category-badge/dat
 import { DIM_SELECTOR, PANEL_SELECTOR } from '../../category-highlight/data/highlight-selectors';
 import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
+import {
+  CARD_ATTACK_VALUE_SELECTOR,
+  HIDE_STATS_STYLE_SELECTOR,
+  MODAL_ATTACK_PANELS_SELECTOR,
+} from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
@@ -43,6 +48,7 @@ const ALL_OFF: Settings = {
   categoryHighlight: false,
   letterboxdLink: false,
   missingImages: false,
+  hideCardStats: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -116,6 +122,10 @@ function badges(): NodeListOf<Element> {
 
 function cardImages(): NodeListOf<Element> {
   return document.body.querySelectorAll(CARD_IMAGE_SELECTOR);
+}
+
+function hideStatsStyle(): Element | null {
+  return document.head.querySelector(HIDE_STATS_STYLE_SELECTOR);
 }
 
 /**
@@ -241,6 +251,99 @@ describe('createOverlay', () => {
 
     expect(cardImages()).toHaveLength(drawn);
     expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).not.toBeNull();
+  });
+
+  it('should add the hide-stats style at once when the setting is on at load, asking for no categorization', () => {
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, hideCardStats: true });
+
+    scan(overlay);
+
+    expect(hideStatsStyle()).not.toBeNull();
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should hide the ATK/DEF value block and the modal panels once the style is applied', () => {
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, hideCardStats: true });
+
+    scan(overlay);
+
+    const valueBlock = document.body.querySelector(CARD_ATTACK_VALUE_SELECTOR);
+    const modalPanels = document.body.querySelector(MODAL_ATTACK_PANELS_SELECTOR);
+    expect(valueBlock).not.toBeNull();
+    expect(modalPanels).not.toBeNull();
+    expect(getComputedStyle(valueBlock as Element).visibility).toBe('hidden');
+    expect(getComputedStyle(modalPanels as Element).display).toBe('none');
+  });
+
+  it('should take back the hide-stats style at once when the setting is turned off', () => {
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
+    scan(overlay);
+    expect(hideStatsStyle()).not.toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, hideCardStats: false });
+
+    expect(hideStatsStyle()).toBeNull();
+  });
+
+  it('should bring the hide-stats style back at once when it is turned on again', () => {
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
+    scan(overlay);
+    overlay.applySettings({ ...DEFAULT_SETTINGS, hideCardStats: false });
+    expect(hideStatsStyle()).toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, hideCardStats: true });
+
+    expect(hideStatsStyle()).not.toBeNull();
+  });
+
+  it('should write nothing on a second scan while the hide-stats style is already applied', () => {
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, hideCardStats: true });
+    scan(overlay);
+    const observer = observeBody();
+
+    scan(overlay);
+
+    // The style element lives in document.head, so even the write that first
+    // adds it is outside what this observer, scoped to document.body exactly
+    // as the content script scopes its own, could ever see.
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
+  it('should keep the category badge visible while the stats row next to it is hidden', async () => {
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
+
+    await scanUntilDrawn(overlay);
+
+    const badge = document.body.querySelector(BADGE_SELECTOR);
+    const valueBlock = document.body.querySelector(CARD_ATTACK_VALUE_SELECTOR);
+    expect(badge).not.toBeNull();
+    expect(valueBlock).not.toBeNull();
+    expect(getComputedStyle(badge as Element).visibility).not.toBe('hidden');
+    expect(getComputedStyle(valueBlock as Element).visibility).toBe('hidden');
+  });
+
+  it('should keep the Letterboxd button visible while the stats row it sits on is hidden', async () => {
+    // The riskiest node of ours: it is absolutely positioned over the empty
+    // middle of that very row, and `visibility: hidden` inherits, so a rule
+    // aimed one level too high would take it with the numbers.
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
+
+    await scanUntilDrawn(overlay);
+
+    const button = document.body.querySelector(CARD_BUTTON_SELECTOR);
+    const valueBlock = document.body.querySelector(CARD_ATTACK_VALUE_SELECTOR);
+    expect(button).not.toBeNull();
+    expect(valueBlock).not.toBeNull();
+    expect(getComputedStyle(button as Element).visibility).not.toBe('hidden');
+    expect(getComputedStyle(valueBlock as Element).visibility).toBe('hidden');
   });
 
   it('should write nothing on a second scan while an image and its credit are shown', async () => {
@@ -510,5 +613,20 @@ describe('createOverlay', () => {
     overlay.destroy();
 
     expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should take back the hide-stats style when the context is invalidated', async () => {
+    // Its own case, and not the comparison above: the style sheet lives in
+    // document.head, where comparing the body cannot see it. Without this,
+    // an extension reloaded while a tab is open would leave the numbers of
+    // the site hidden with nothing left on the page able to bring them back.
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
+    await scanUntilDrawn(overlay);
+    expect(hideStatsStyle()).not.toBeNull();
+
+    overlay.destroy();
+
+    expect(hideStatsStyle()).toBeNull();
   });
 });

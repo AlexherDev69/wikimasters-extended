@@ -52,11 +52,19 @@ Cette fonctionnalité suit le réglage "Images manquantes" de la page d'options.
 
 Limites connues : environ une carte sans illustration sur quatre a une image sur Wikidata, essentiellement des personnes, des logos et des drapeaux. Les films et les séries n'en ont presque jamais, car les affiches ne sont pas libres de droits. La seconde source ajoute environ une carte de plus sur dix parmi celles qui restent sans illustration : elle est volontairement rare, pour rester sûre. Enfin, le cache de catégorisation change de version à chacune de ces deux mises à jour : les cartes déjà en cache sont redemandées une fois, puis reprennent leur durée de vie habituelle.
 
+### Masquer les statistiques des cartes
+
+Une option, désactivée par défaut, masque les valeurs d'attaque (ATK) et de défense (DEF) : sur les cartes elles-mêmes, dans la grille comme en grand format, et dans les deux grands encadrés de la modale de détail. Rien d'autre n'est touché : le Q-Score, le nombre d'exemplaires et le nombre de vues de la modale ne sont pas concernés, car ils sont ailleurs dans la page que les deux encadrés retirés. Si le site venait à les déplacer dans ce même bloc, ils disparaîtraient avec, et la règle serait à corriger.
+
+Techniquement, cette option ne fonctionne pas comme les autres. Toutes les autres fonctionnalités de cette extension ajoutent leurs propres éléments à la page, alors que celle-ci en cache un, ce qui mérite d'être expliqué en détail plutôt que passé sous silence. L'extension pose une feuille de style qui lui appartient dans l'en-tête de la page (jamais dans la page elle-même) quand l'option est cochée, et la retire entièrement dès qu'elle est décochée. Cette feuille de style ne fait que dire au navigateur de ne pas peindre deux nombres à l'écran : elle ne pose, ne modifie ni ne retire aucune classe, aucun attribut, ni aucun texte sur un élément du site, et rien n'est déplacé. Décocher l'option fait réapparaître les deux valeurs instantanément, sur tous les onglets ouverts, sans recharger la page.
+
+Cacher un nombre dans ton propre navigateur ne donne aucun avantage dans le jeu, ne révèle rien à personne et n'automatise rien : c'est une préférence d'affichage, comme un mode lecture. Rien n'est envoyé nulle part par cette option, qu'elle soit activée ou non.
+
 ### Options
 
 Un clic sur l'icône de l'extension ouvre sa page d'options (également accessible depuis `chrome://extensions`, bouton "Détails" puis "Options de l'extension").
 
-Section "Fonctionnalités" : quatre cases à cocher, toutes activées par défaut.
+Section "Fonctionnalités" : cinq cases à cocher, quatre activées par défaut et une désactivée par défaut (celle qui masque des statistiques du site, voir plus haut).
 
 | Réglage | Ce qu'il active |
 | --- | --- |
@@ -64,10 +72,11 @@ Section "Fonctionnalités" : quatre cases à cocher, toutes activées par défau
 | Mise en évidence par catégorie | Le panneau flottant des catégories de la page et le voile posé sur les cartes hors du filtre choisi |
 | Lien Letterboxd | Le lien vers Letterboxd dans la modale de détail, et le petit logo sous la photo sur la carte |
 | Images manquantes | L'image de Wikimedia Commons posée sur les cartes que le site laisse sans illustration, et la ligne de crédit dans la modale de détail |
+| Masquer les statistiques des cartes | Les valeurs d'attaque et de défense, sur les cartes et dans la modale de détail |
 
 Un changement est enregistré immédiatement et un petit message "Enregistré" le confirme. Si l'enregistrement échoue, la page relit les réglages réellement stockés, les affiche et signale l'erreur : ce qui est coché correspond toujours à ce qui est réellement stocké, y compris quand une autre case a été cochée entre-temps.
 
-Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Le filtre du panneau de catégories repart de zéro après une désactivation. Quand les quatre réglages sont désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata.
+Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Le filtre du panneau de catégories repart de zéro après une désactivation. Quand les quatre premiers réglages sont désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata. Le cinquième réglage, qui masque les statistiques, n'a jamais envoyé la moindre requête, qu'il soit coché ou non : il ne fait que peindre la page différemment.
 
 Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et d'adresses d'images en cache, avec une action qui demande une confirmation sur place.
 
@@ -124,10 +133,11 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - La page d'options est une page de l'extension : elle lit et efface uniquement ce qui est stocké localement, et ne fait aucun appel réseau.
 - Les images manquantes sont chargées par ton navigateur depuis `commons.wikimedia.org` et les serveurs de vignettes de Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : Wikimedia reçoit une demande de fichier, jamais la page qui l'affiche. Ce sont des requêtes de ton navigateur, comme pour n'importe quelle image d'un article de Wikipédia.
 - La résolution de l'adresse de ces images est, elle, un appel de l'extension : il part vers `fr.wikipedia.org`, sans cookie, exactement comme celui qui résout les titres des cartes. Seuls des noms de fichiers publics de Wikimedia Commons y sont envoyés. Aucun autre hôte n'est contacté.
-- Si tu désactives les quatre fonctionnalités dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.
+- Si tu désactives les quatre fonctionnalités qui en ont besoin dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.
+- L'option qui masque les statistiques des cartes n'envoie jamais rien, qu'elle soit activée ou non : elle agit uniquement par une feuille de style locale, sans le moindre appel réseau.
 
 ## Contrainte fondamentale
 
 Cette extension est un overlay en lecture seule. Elle ne clique jamais, ne scrolle pas, ne saisit rien, n'intercepte pas le trafic réseau et n'appelle pas les API du site. Tout contournement de cette règle expose au bannissement du compte.
 
-Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, lien Letterboxd et son petit logo sur la carte, voile d'atténuation, panneau de catégories, image sur les cartes sans illustration et sa ligne de crédit) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit, à une seule exception près : le petit logo Letterboxd de la carte (voir la section "Lien Letterboxd"), qui empêche son propre clic d'ouvrir en plus la modale de détail. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est par ailleurs intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la page d'options.
+Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, lien Letterboxd et son petit logo sur la carte, voile d'atténuation, panneau de catégories, image sur les cartes sans illustration et sa ligne de crédit, feuille de style qui masque les statistiques) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. La feuille de style qui masque les statistiques demande de distinguer deux plans, car elle touche au second sans toucher au premier : rien n'est écrit sur un noeud du site, et pourtant l'affichage de deux nombres du site change. C'est un élément qui n'appartient qu'à l'extension, ajouté dans l'en-tête de la page plutôt que dans la page elle-même, et qui se contente de dire au navigateur de ne pas peindre ces deux nombres à l'écran. Le site, lui, garde exactement le document qu'il a construit, et la retirer (en décochant l'option) fait réapparaître les deux nombres aussitôt. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit, à une seule exception près : le petit logo Letterboxd de la carte (voir la section "Lien Letterboxd"), qui empêche son propre clic d'ouvrir en plus la modale de détail. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est par ailleurs intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la page d'options.

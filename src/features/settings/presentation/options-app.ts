@@ -34,7 +34,7 @@ const FOCUS_FALLBACK = actionSelector(CACHE_ACTION);
 export interface OptionsPorts {
   /**
    * The strict read of the settings: a failure must reach the page. Showing
-   * the defaults instead would hand the next toggle four switches nobody read,
+   * the defaults instead would hand the next toggle switches nobody read,
    * and write them over the ones the user had saved.
    */
   readSettings: () => Promise<Settings>;
@@ -257,9 +257,9 @@ export function mountOptions(container: HTMLElement, ports: OptionsPorts): void 
     try {
       setSettings(await ports.readSettings());
     } catch {
-      // Nothing is known of what is stored, so nothing of it is drawn: four
-      // boxes shown at their default would be written over the saved ones by
-      // the very next toggle.
+      // Nothing is known of what is stored, so nothing of it is drawn: boxes
+      // shown at their default would be written over the saved ones by the
+      // very next toggle.
       settingsUnreadable = true;
     }
     loaded = true;

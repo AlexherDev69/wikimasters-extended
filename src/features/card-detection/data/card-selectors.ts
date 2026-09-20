@@ -15,7 +15,13 @@ export const CARD_DESCRIPTION_SELECTOR = 'p';
  */
 export const MODAL_ROOT_SELECTOR = 'div.fixed.inset-0.z-50';
 
-/** Frame of a card, the semantic class the site puts on its own modal. */
+/**
+ * Frame of a panel, the one semantic class the site writes itself. It is not
+ * specific to the detail modal: docs/DOM_NOTES.md also finds it on the header
+ * block of `/global-collection` and on the tiles of the marketplace, so a
+ * selector that means "a panel OF THE MODAL" needs MODAL_ROOT_SELECTOR in
+ * front of it.
+ */
 export const MODAL_FRAME_SELECTOR = 'div.card-frame';
 
 /** The site link the features of the extension insert their own nodes after. */

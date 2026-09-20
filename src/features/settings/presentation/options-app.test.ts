@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
+import { DEFAULT_SETTINGS, SETTING_KEYS, type Settings } from '../domain/settings';
 import type { StorageStats } from '../domain/storage-stats';
 import { mountOptions, type OptionsPorts } from './options-app';
+import { settingSelector } from './features-view';
 
 const PRESENTATION_DIR = dirname(fileURLToPath(import.meta.url));
 
@@ -81,17 +82,15 @@ describe('mountOptions', () => {
     document.body.replaceChildren();
   });
 
-  it('should show every switch on when nothing was ever saved', async () => {
+  it('should show one switch per setting, each matching its default', async () => {
     const container = await mount();
 
     expect([...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')]).toHaveLength(
-      4,
+      5,
     );
-    expect(
-      [...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')].every(
-        (input) => input.checked,
-      ),
-    ).toBe(true);
+    for (const key of SETTING_KEYS) {
+      expect(checkbox(container, settingSelector(key))?.checked).toBe(DEFAULT_SETTINGS[key]);
+    }
   });
 
   it('should show a switch off when the settings say so', async () => {

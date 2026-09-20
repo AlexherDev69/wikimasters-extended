@@ -6,10 +6,11 @@ const ALL_OFF: Settings = {
   categoryHighlight: false,
   letterboxdLink: false,
   missingImages: false,
+  hideCardStats: false,
 };
 
 describe('normalizeSettings', () => {
-  it('should return every feature on when nothing was ever saved', () => {
+  it('should return the current defaults when nothing was ever saved', () => {
     expect(normalizeSettings(null)).toEqual(DEFAULT_SETTINGS);
   });
 
@@ -25,6 +26,7 @@ describe('normalizeSettings', () => {
       categoryHighlight: true,
       letterboxdLink: false,
       missingImages: true,
+      hideCardStats: false,
     });
   });
 
@@ -32,6 +34,28 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ categoryBadges: 'false', categoryHighlight: 0 })).toEqual(
       DEFAULT_SETTINGS,
     );
+  });
+
+  it('should default hideCardStats to false when nothing was ever saved', () => {
+    expect(normalizeSettings(null).hideCardStats).toBe(false);
+  });
+
+  it('should read hideCardStats as false when a stored record does not hold it', () => {
+    expect(
+      normalizeSettings({ categoryBadges: false, letterboxdLink: false }).hideCardStats,
+    ).toBe(false);
+  });
+
+  it('should fall back to false when the stored value of hideCardStats is not a boolean', () => {
+    expect(normalizeSettings({ hideCardStats: 'true' }).hideCardStats).toBe(false);
+    expect(normalizeSettings({ hideCardStats: 1 }).hideCardStats).toBe(false);
+  });
+
+  it('should read hideCardStats back as true when it was saved that way, keeping the other defaults', () => {
+    expect(normalizeSettings({ hideCardStats: true })).toEqual({
+      ...DEFAULT_SETTINGS,
+      hideCardStats: true,
+    });
   });
 
   it('should ignore a key that is not one of the settings', () => {
@@ -57,7 +81,7 @@ describe('normalizeSettings', () => {
     expect(DEFAULT_SETTINGS.categoryBadges).toBe(true);
   });
 
-  it('should read every saved switch back when all four were written', () => {
+  it('should read every saved switch back when all five were written', () => {
     expect(normalizeSettings(ALL_OFF)).toEqual(ALL_OFF);
   });
 });
@@ -73,5 +97,11 @@ describe('hasEnabledFeature', () => {
 
   it('should be false when every feature is off', () => {
     expect(hasEnabledFeature(ALL_OFF)).toBe(false);
+  });
+
+  it('should be false when hideCardStats is the only setting on', () => {
+    // Hiding the stats needs nothing from Wikidata: turning it on alone must
+    // never start the traffic the other four settings ask for.
+    expect(hasEnabledFeature({ ...ALL_OFF, hideCardStats: true })).toBe(false);
   });
 });

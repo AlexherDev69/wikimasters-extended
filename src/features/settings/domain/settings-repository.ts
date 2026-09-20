@@ -15,8 +15,8 @@ export type UnwatchSettings = () => void;
  * failure. A failed `read` gives the defaults rather than rejecting: the
  * overlay must never stay off the page because storage answered badly.
  * `readStrict` rejects instead, for the options page, which must never show
- * four boxes it did not read: the next toggle would write those four over
- * whatever the user had really saved.
+ * boxes it did not read: the next toggle would write those over whatever the
+ * user had really saved.
  *
  * A value that is there but corrupted is not a failure: both reads normalize
  * it, because the defaults ARE what the extension does with it.
