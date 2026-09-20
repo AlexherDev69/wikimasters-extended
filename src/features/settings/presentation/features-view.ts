@@ -42,6 +42,12 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
     label: 'Index de collection',
     hint: 'Mémorise les cartes que tu affiches sur ta collection, pour la fenêtre de statistiques.',
   },
+  missingImages: {
+    label: 'Images manquantes',
+    hint:
+      'Affiche une image de Wikimedia Commons sur les cartes que le site laisse sans illustration, ' +
+      "quand Wikidata en connaît une. L'image est chargée par ton navigateur depuis Wikimedia.",
+  },
 };
 
 const LABEL_TAG = 'label';

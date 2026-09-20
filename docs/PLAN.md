@@ -188,6 +188,16 @@ Le site n'expose aucun attribut `data-*` et chaque déploiement peut changer les
 | Séries TV sur Letterboxd | Pas de lien en v1 | Couverture trop faible, risque de liens morts |
 | UI du content script | TypeScript sans framework | Poids injecté minimal. React seulement si une page d'options ou de stats le justifie |
 
+Décisions prises par l'utilisateur le 2026-09-20, après la phase 7a :
+
+| Décision | Choix | Pourquoi |
+| --- | --- | --- |
+| Index de collection | Tout retirer (phase 8a) | L'extension ne peut pas voir une carte quitter la collection (défausse, enchère, échange) sans interagir avec le site ou deviner. Une supposition supprimerait ou garderait les mauvaises cartes en silence. Des chiffres qui dérivent valent moins que pas de chiffres |
+| Cartes des paquets dans l'index | Abandonné | Conséquence de la décision précédente. Le travail était spécifié, il n'a pas été lancé |
+| Étiquettes suggérées dans la modale | Faire (phase 8b) | L'extension sait déjà de quoi parle la carte. Proposer des étiquettes reste de la lecture seule |
+| Remplissage de l'étiquette au clic | Faire, mais réglage désactivé par défaut | Écrire dans le champ du site, c'est "interagir à votre place", ce que les règles du site interdisent, bannissement annoncé comme sanction. L'utilisateur assume ce risque sur son compte et prévient les auteurs du site. Désactivé par défaut pour que personne d'autre ne l'active sans le savoir, et isolé dans un seul fichier pour rester relisable |
+| Rendre le remplissage indétectable | Refusé | Les événements émis par une extension portent `isTrusted: false`, lisible en une ligne par le site. Imiter une frappe humaine ou masquer les noeuds de l'extension n'entre pas dans ce projet |
+
 ## 6. Plan par phases
 
 ### Phase 0 : reconnaissance des pages connectées (faite à 80 %)
@@ -337,6 +347,27 @@ Plan initial, avec l'état de chaque point :
 - Contact avec le développeur de WikiMasters avant toute publication (voir "Garde-fous")
 - Contrôles manuels dans Chrome des phases 4a, 4c et 6a
 
+### Phase 7 : images manquantes
+
+#### Phase 7a : image de Wikimedia Commons sur les cartes sans illustration (faite le 2026-09-20, revue indépendante passée)
+
+- Demande de l'utilisateur : beaucoup de cartes n'ont pas d'illustration, le site y affiche son logo. Relevé sur les exports réels : 7 cartes sur 41 au marché, 12 sur 50 parmi les légendaires du catalogue
+- Source : Wikidata. `pageimages` de frwiki ne renvoie rien pour ces cartes (0 sur 19, même avec `pilicense=any`) : si l'article avait une image exploitable, le site l'aurait déjà. Les propriétés image de Wikidata en trouvent environ une sur quatre (5 sur 19) : surtout des personnes, des logos, des drapeaux. Presque jamais les films et les séries, dont les affiches ne sont pas libres
+- Aucune requête de plus : la requête SPARQL des faits, déjà envoyée pour chaque carte, gagne six propriétés facultatives, dans l'ordre de priorité P18 (image), P154 (logo), P3383 (affiche), P41 (drapeau), P94 (blason), P2716 (collage). Seul le nom de fichier voyage, validé (caractères interdits par MediaWiki, plages de substitution, extension dans une liste fermée) ; l'URI renvoyée par Wikidata n'est jamais réutilisée telle quelle, chaque adresse est reconstruite
+- Affichage : un noeud de l'extension ajouté dans la zone image de la carte, par-dessus le logo, `pointer-events: none`, invisible tant que l'image n'est pas chargée (si le chargement échoue, le logo du site reste visible). Photos recadrées vers le haut, logos et drapeaux entiers. La carte de la modale est une carte ordinaire : elle reçoit la même image sans code particulier
+- L'image est chargée par le navigateur depuis `commons.wikimedia.org` (`Special:FilePath?width=500`, redirigé vers le serveur de vignettes), sans referrer et sans `crossorigin` (les redirections n'ont pas d'en-tête CORS). Le site n'envoie ni CSP ni COEP. Le service worker ne contacte toujours que fr.wikipedia.org et query.wikidata.org ; permissions et manifest inchangés (empreinte identique)
+- Crédit : les images de Commons demandent une attribution. La modale de détail gagne une ligne "Image : Wikimedia Commons (auteur et licence)" qui ouvre la page du fichier
+- Cinquième réglage "Images manquantes", actif par défaut
+- Coût unique : le schéma du cache par carte passe en version 2, donc les faits de chaque carte sont redemandés une fois
+
+Écarts assumés et décisions :
+
+- Option écartée : demander l'URL de la vignette à l'API de frwiki (`prop=imageinfo`). Elle donne une URL directe du serveur de vignettes, mais demande un message, un niveau de cache et une source de plus. `Special:FilePath` ne coûte aucun code réseau ; à reconsidérer si les deux redirections se révèlent lentes
+- L'extension ajoute pour la première fois une balise `img` dans une racine de carte. La règle "uniquement `div` et `span`" protège la lecture du titre (`h3`) et de la description (`p`) ; une `img` ne les touche pas, et la détection du logo ignore ce qui se trouve dans un noeud de l'extension
+- La ligne de crédit s'affiche dès qu'une image est connue, même si son chargement échoue ensuite : conditionner l'affichage au chargement coûterait une passe de synchronisation de plus par modale
+- `SAMPLE` choisit une valeur parmi plusieurs sans ordre défini : un article portant plusieurs P18 peut changer d'image après expiration du cache
+- Le coût des six propriétés dans la requête SPARQL n'a pas pu être mesuré proprement le jour de la livraison : query.wikidata.org était dégradé (une requête triviale à 26 s, des 502 en série). À mesurer et à consigner ici
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
@@ -363,6 +394,9 @@ Plan initial, avec l'état de chaque point :
 22. should count a card as "Non catégorisée" in the popup when its cached facts are missing, without any network call
 23. should remove every badge at once when "Badge de catégorie" is switched off in the options, and bring them back when switched on again without reloading the tab
 24. should send no categorization request when the four settings are off
+25. should show an image from Commons on a card the site left without one, and leave a card that has a picture untouched
+26. should show no image and no credit line when Wikidata knows no image for the article
+27. should refuse a file name carrying a forbidden character, a lone surrogate or an extension outside the allowed list
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 

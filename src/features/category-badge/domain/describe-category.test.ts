@@ -17,6 +17,7 @@ function makeCategory(overrides: Partial<CardCategory> = {}): CardCategory {
     primarySubtype: null,
     personSubtypes: [],
     letterboxdUrl: null,
+    image: null,
     ...overrides,
   };
 }

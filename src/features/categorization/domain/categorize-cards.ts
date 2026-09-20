@@ -83,6 +83,7 @@ function emptyResult(title: string, status: 'not_found' | 'error'): CardCategory
     primarySubtype: null,
     personSubtypes: [],
     letterboxdUrl: null,
+    image: null,
   };
 }
 
@@ -348,6 +349,7 @@ function buildResult(
     primarySubtype: classification.primarySubtype,
     personSubtypes: classification.personSubtypes,
     letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, classification, stage)),
+    image: facts.image,
   };
 }
 

@@ -70,7 +70,7 @@ describe('mountOptions', () => {
     const container = await mount();
 
     expect([...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')]).toHaveLength(
-      4,
+      5,
     );
     expect(
       [...container.querySelectorAll<HTMLInputElement>('input[data-wme-setting]')].every(

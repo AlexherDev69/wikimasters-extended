@@ -2,11 +2,11 @@
 
 Extension Chrome (Manifest V3) en lecture seule pour [wiki-masters.com](https://www.wiki-masters.com).
 
-Objectif : afficher sur chaque carte une catégorie (via Wikidata) et un lien Letterboxd pour les films et personnalités du cinéma. Elle ne clique jamais, ne scrolle pas, ne saisit rien et n'intercepte aucun trafic réseau.
+Objectif : afficher sur chaque carte une catégorie (via Wikidata), une image pour les cartes que le site laisse sans illustration, et un lien Letterboxd pour les films et personnalités du cinéma. Elle ne clique jamais, ne scrolle pas, ne saisit rien et n'intercepte aucun trafic réseau.
 
 ## État actuel
 
-Phases 1 à 3, 4a, 4c, 4d, 5 et 6a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+Phases 1 à 3, 4a, 4c, 4d, 5, 6a et 7a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
 
 ### Badge de catégorie sur les cartes
 
@@ -48,11 +48,23 @@ Approximation connue : l'index ne stocke pas la description des cartes, alors qu
 
 Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il n'apparaît que pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une série, une saison, un épisode ou une personnalité sans métier de cinéma n'en reçoivent aucun, même si Wikidata leur connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives).
 
+### Images manquantes
+
+Beaucoup de cartes n'ont pas d'illustration : le site affiche alors son propre logo à la place. Quand Wikidata connaît une image pour la carte, l'extension l'affiche par-dessus ce logo, dans la grille comme dans la modale de détail. Tant que l'image n'est pas chargée, ou si elle ne se charge pas, le logo du site reste visible : aucun trou n'apparaît jamais.
+
+L'image vient de Wikidata, par les propriétés "image" (P18), "logo" (P154), "affiche" (P3383), "drapeau" (P41), "blason" (P94) et "collage" (P2716), dans cet ordre : la première que possède l'élément est retenue. Elle est demandée avec les autres faits de la carte, dans la requête qui existait déjà : l'extension n'envoie aucune requête supplémentaire. Le fichier lui-même est hébergé par Wikimedia Commons et c'est ton navigateur qui le charge, comme n'importe quelle image d'un article de Wikipédia. Les photos sont cadrées en plein (avec un léger décalage vers le haut, là où se trouvent les visages), les logos, drapeaux et blasons sont affichés en entier sur un fond uni.
+
+Les fichiers de Commons sont sous licence libre et demandent d'attribuer leur auteur : quand la modale de détail affiche une carte dont l'image vient de nous, une ligne "Image : Wikimedia Commons (auteur et licence)" est ajoutée avec un lien vers la page du fichier, où figurent l'auteur et la licence exacte. Le lien s'ouvre dans un nouvel onglet.
+
+Cette fonctionnalité suit le réglage "Images manquantes" de la page d'options. Désactivée, les images et la ligne de crédit sont retirées immédiatement.
+
+Limites connues : environ une carte sans illustration sur quatre a une image sur Wikidata, essentiellement des personnes, des logos et des drapeaux. Les films et les séries n'en ont presque jamais, car les affiches ne sont pas libres de droits. Enfin, le cache de catégorisation change de version avec cette mise à jour : les cartes déjà en cache sont redemandées une fois, puis reprennent leur durée de vie habituelle.
+
 ### Options
 
 Un bouton "Options" en bas de la fenêtre de statistiques ouvre la page d'options de l'extension (également accessible depuis `chrome://extensions`, bouton "Détails" puis "Options de l'extension").
 
-Section "Fonctionnalités" : quatre cases à cocher, toutes activées par défaut.
+Section "Fonctionnalités" : cinq cases à cocher, toutes activées par défaut.
 
 | Réglage | Ce qu'il active |
 | --- | --- |
@@ -60,10 +72,11 @@ Section "Fonctionnalités" : quatre cases à cocher, toutes activées par défau
 | Mise en évidence par catégorie | Le panneau flottant des catégories de la page et le voile posé sur les cartes hors du filtre choisi |
 | Lien Letterboxd | Le lien vers Letterboxd dans la modale de détail |
 | Index de collection | L'enregistrement des cartes que tu affiches sur ta collection, qui alimente la fenêtre de statistiques, et la lecture des totaux par rareté affichés par la page "Toutes les cartes" |
+| Images manquantes | L'image de Wikimedia Commons posée sur les cartes que le site laisse sans illustration, et la ligne de crédit dans la modale de détail |
 
 Un changement est enregistré immédiatement et un petit message "Enregistré" le confirme. Si l'enregistrement échoue, la page relit les réglages réellement stockés, les affiche et signale l'erreur : ce qui est coché correspond toujours à ce qui est réellement stocké, y compris quand une autre case a été cochée entre-temps.
 
-Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Le filtre du panneau de catégories repart de zéro après une désactivation. Quand les quatre réglages sont désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata.
+Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Le filtre du panneau de catégories repart de zéro après une désactivation. Quand les cinq réglages sont désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata.
 
 Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et de cartes dans l'index de collection, avec deux actions qui demandent chacune une confirmation sur place.
 
@@ -121,10 +134,11 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - Les totaux du catalogue par rareté sont lus sur la page "Toutes les cartes" quand tu l'ouvres, et stockés au même endroit. Ce sont six nombres publics affichés par le site, sans rapport avec ton compte. Rien n'est demandé au site pour les obtenir.
 - Les réglages de la page d'options sont stockés au même endroit, sur ta machine uniquement.
 - La fenêtre de statistiques et la page d'options sont des pages de l'extension : elles lisent et effacent uniquement ce qui est stocké localement, et ne font aucun appel réseau.
-- Si tu désactives les quatre fonctionnalités dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.
+- Les images manquantes sont chargées par ton navigateur depuis `commons.wikimedia.org` et les serveurs de vignettes de Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : Wikimedia reçoit une demande de fichier, jamais la page qui l'affiche. Ce sont des requêtes de ton navigateur, comme pour n'importe quelle image d'un article de Wikipédia ; les appels de l'extension elle-même, eux, ne changent pas.
+- Si tu désactives les cinq fonctionnalités dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.
 
 ## Contrainte fondamentale
 
 Cette extension est un overlay en lecture seule. Elle ne clique jamais, ne scrolle pas, ne saisit rien, n'intercepte pas le trafic réseau et n'appelle pas les API du site. Tout contournement de cette règle expose au bannissement du compte.
 
-Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, lien Letterboxd, voile d'atténuation, panneau de catégories) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la page d'options.
+Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, lien Letterboxd, voile d'atténuation, panneau de catégories, image sur les cartes sans illustration et sa ligne de crédit) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la page d'options.

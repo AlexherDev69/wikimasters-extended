@@ -1,6 +1,9 @@
 import { chunk } from '../../../core/array/chunk';
 import { ENTITY_BATCH_SIZE } from '../../../core/config/wikimedia';
 import type { FetchJsonOptions } from '../../../core/http/fetch-json';
+import type { CardImage } from '../../missing-image/domain/card-image';
+import { fileNameFromFilePathUri } from '../../missing-image/domain/commons-url';
+import { IMAGE_PROPERTIES } from '../../missing-image/domain/image-properties';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
 import type { EntityFactsSource } from '../domain/ports';
 import { createSparqlClient, type SparqlBinding } from './sparql-client';
@@ -35,6 +38,22 @@ function readExternalIds(binding: SparqlBinding): ExternalIds {
   return externalIds;
 }
 
+/**
+ * The first image property the item holds, in the order of the table. A value
+ * that yields no usable file name is skipped and the next property is tried:
+ * one unusable URI must not cost the card its image.
+ */
+function readImage(binding: SparqlBinding): CardImage | null {
+  for (const property of IMAGE_PROPERTIES) {
+    const uri = binding[property.variable];
+    const fileName = uri === undefined ? null : fileNameFromFilePathUri(uri);
+    if (fileName !== null) {
+      return { fileName, kind: property.kind };
+    }
+  }
+  return null;
+}
+
 function emptyFacts(qid: string): EntityFacts {
   return {
     qid,
@@ -42,6 +61,7 @@ function emptyFacts(qid: string): EntityFacts {
     parentClassIds: [],
     occupationIds: [],
     externalIds: emptyExternalIds(),
+    image: null,
   };
 }
 
@@ -58,6 +78,7 @@ function readFacts(binding: SparqlBinding): EntityFacts | null {
     parentClassIds: qidsFromConcatenatedUris(binding[PARENTS_VARIABLE]),
     occupationIds: qidsFromConcatenatedUris(binding[OCCUPATIONS_VARIABLE]),
     externalIds: readExternalIds(binding),
+    image: readImage(binding),
   };
 }
 

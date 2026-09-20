@@ -193,6 +193,7 @@ const STUB_FACTS: EntityFacts = {
     tmdbMovieId: null,
     tmdbPersonId: null,
   },
+  image: null,
 };
 
 /**
@@ -330,6 +331,7 @@ describe('categorizeCards', () => {
       primarySubtype: null,
       personSubtypes: [],
       letterboxdUrl: null,
+      image: null,
     });
   });
 

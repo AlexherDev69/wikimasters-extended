@@ -20,6 +20,7 @@ const VALID_CARD_CATEGORY: CardCategory = {
   primarySubtype: null,
   personSubtypes: [],
   letterboxdUrl: 'https://letterboxd.com/film/pulp-fiction/',
+  image: { fileName: 'Pulp Fiction poster.jpg', kind: 'picture' },
 };
 
 function makeResponse(cards: unknown): unknown {
@@ -104,6 +105,7 @@ describe('isCategorizeCardsResponse', () => {
       primarySubtype: 'cinema',
       personSubtypes: ['cinema', 'media'],
       letterboxdUrl: 'https://letterboxd.com/director/quentin-tarantino/',
+      image: { fileName: 'Quentin Tarantino by Gage Skidmore.jpg', kind: 'picture' },
     };
 
     expect(isCategorizeCardsResponse(makeResponse([person]))).toBe(true);
@@ -165,7 +167,53 @@ describe('isCategorizeCardsResponse', () => {
     for (const status of ['not_found', 'error']) {
       expect(
         isCategorizeCardsResponse(
-          makeResponse([{ ...VALID_CARD_CATEGORY, status, categoryId: null }]),
+          makeResponse([{ ...VALID_CARD_CATEGORY, status, categoryId: null, image: null }]),
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it('should accept a result without an image', () => {
+    expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image: null }]))).toBe(
+      true,
+    );
+  });
+
+  it('should accept an image of each kind', () => {
+    for (const kind of ['picture', 'emblem']) {
+      const image = { fileName: 'Logo.svg', kind };
+      expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image }]))).toBe(
+        true,
+      );
+    }
+  });
+
+  it('should reject an image whose file name or kind is not usable', () => {
+    const refused = [
+      { fileName: 'Pulp Fiction poster.jpg', kind: 'photo' },
+      { fileName: '../secret.jpg', kind: 'picture' },
+      { fileName: 'Pulp Fiction poster.ogv', kind: 'picture' },
+      { fileName: '', kind: 'picture' },
+      { fileName: 'Pulp Fiction poster.jpg' },
+      'Pulp Fiction poster.jpg',
+      42,
+      undefined,
+    ];
+
+    for (const image of refused) {
+      expect(isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, image }]))).toBe(
+        false,
+      );
+    }
+  });
+
+  it('should reject an image on a result that was not categorized', () => {
+    for (const status of ['not_found', 'error']) {
+      expect(
+        isCategorizeCardsResponse(
+          makeResponse([
+            { ...VALID_CARD_CATEGORY, status, categoryId: null, letterboxdUrl: null },
+          ]),
         ),
       ).toBe(false);
     }
@@ -175,7 +223,13 @@ describe('isCategorizeCardsResponse', () => {
     expect(
       isCategorizeCardsResponse(
         makeResponse([
-          { ...VALID_CARD_CATEGORY, status: 'not_found', categoryId: null, letterboxdUrl: null },
+          {
+            ...VALID_CARD_CATEGORY,
+            status: 'not_found',
+            categoryId: null,
+            letterboxdUrl: null,
+            image: null,
+          },
         ]),
       ),
     ).toBe(true);

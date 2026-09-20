@@ -6,6 +6,7 @@ const ALL_OFF: Settings = {
   categoryHighlight: false,
   letterboxdLink: false,
   collectionIndex: false,
+  missingImages: false,
 };
 
 describe('normalizeSettings', () => {
@@ -25,6 +26,7 @@ describe('normalizeSettings', () => {
       categoryHighlight: true,
       letterboxdLink: false,
       collectionIndex: true,
+      missingImages: true,
     });
   });
 
@@ -48,7 +50,7 @@ describe('normalizeSettings', () => {
     expect(DEFAULT_SETTINGS.categoryBadges).toBe(true);
   });
 
-  it('should read every saved switch back when all four were written', () => {
+  it('should read every saved switch back when all five were written', () => {
     expect(normalizeSettings(ALL_OFF)).toEqual(ALL_OFF);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { IMAGE_PROPERTIES } from '../../missing-image/domain/image-properties';
 import {
   buildClassLabelsQuery,
   buildClassRootsQuery,
@@ -21,6 +22,19 @@ describe('buildEntityFactsQuery', () => {
 
     for (const property of ['P6127', 'P6119', 'P12383', 'P14583', 'P14196', 'P13273', 'P345', 'P4947', 'P4985']) {
       expect(query).toContain(`wdt:${property}`);
+    }
+  });
+
+  it('should ask for every image property of the shared table', () => {
+    const query = buildEntityFactsQuery(['Q1']);
+
+    // The table is what both the query and the reader of the answer walk, so
+    // the six properties are checked through it rather than written twice.
+    expect(IMAGE_PROPERTIES).toHaveLength(6);
+    for (const property of IMAGE_PROPERTIES) {
+      const rawVariable = property.propertyId.toLowerCase();
+      expect(query).toContain(`(SAMPLE(?${rawVariable}) AS ?${property.variable})`);
+      expect(query).toContain(`OPTIONAL { ?item wdt:${property.propertyId} ?${rawVariable}. }`);
     }
   });
 

@@ -27,6 +27,9 @@ const PRIVACY_ITEMS: readonly string[] = [
   "Ces appels sont faits sans cookie : aucune session ni aucun compte n'est identifié.",
   "Rien n'est envoyé à wiki-masters.com, ni à Letterboxd, ni à aucun autre serveur. Le lien " +
     'Letterboxd est seulement construit à partir des identifiants publics de Wikidata.',
+  'Les images manquantes sont chargées par ton navigateur depuis Wikimedia Commons, sans ' +
+    "référent, exactement comme les photos d'un article de Wikipédia. L'extension, elle, ne " +
+    "contacte toujours que Wikipédia et Wikidata.",
   'Tout le reste (caches, index de collection, réglages) reste dans le stockage local de ton ' +
     'navigateur, sur cette machine uniquement.',
   'Cette page ne fait aucun appel réseau : elle lit et efface uniquement ce qui est stocké sur ' +

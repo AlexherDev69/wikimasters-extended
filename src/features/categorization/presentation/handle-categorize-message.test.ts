@@ -15,6 +15,7 @@ const CATEGORIZED_CARD: CardCategory = {
   personSubtypes: [],
   // The stubbed facts carry no external id, so the film falls back to a search.
   letterboxdUrl: 'https://letterboxd.com/search/Pulp%20Fiction/',
+  image: null,
 };
 
 /** Deps that resolve the single test card entirely from the card cache. */
@@ -37,6 +38,7 @@ function makeDeps(): CategorizeCardsDeps {
         tmdbMovieId: null,
         tmdbPersonId: null,
       },
+      image: null,
     },
   };
   const logger: Logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };

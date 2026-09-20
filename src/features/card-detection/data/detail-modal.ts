@@ -16,6 +16,13 @@ export interface DetailModal {
    * what the previous card got must go away rather than stay on the wrong one.
    */
   title: string | null;
+  /**
+   * Root of the card shown, from the very same reading as the title. Null when
+   * there is no readable card, exactly as for the title. A feature that needs
+   * to look at the card itself takes it from here rather than scanning the
+   * modal a second time on every pass.
+   */
+  cardRoot: HTMLElement | null;
   /** The site link our own nodes are inserted after. */
   wikipediaLink: HTMLAnchorElement;
 }
@@ -36,7 +43,12 @@ export function findDetailModal(root: ParentNode): DetailModal | null {
     // The card of the modal is an ordinary card root, so the scanner reads it
     // like any other card of the page.
     const [observed] = scanCards(layer);
-    return { root: layer, title: observed?.card.title ?? null, wikipediaLink };
+    return {
+      root: layer,
+      title: observed?.card.title ?? null,
+      cardRoot: observed?.element ?? null,
+      wikipediaLink,
+    };
   }
   return null;
 }
