@@ -107,12 +107,37 @@ describe('syncTagSuggestions', () => {
     expect(document.body.querySelector(TAG_PROPOSALS_SELECTOR)).toBeNull();
   });
 
-  it('should show nothing when the card has no known category yet', () => {
+  it('should say it is looking when the card has no known category yet', () => {
     document.body.innerHTML = UNTAGGED_MODAL_HTML;
 
     sync(new Map());
 
-    expect(document.body.querySelector(TAG_PROPOSALS_SELECTOR)).toBeNull();
+    const node = document.body.querySelector(TAG_PROPOSALS_SELECTOR);
+    expect(node?.textContent).toContain('recherche');
+    expect(proposalTexts()).toEqual([]);
+  });
+
+  it('should replace what it is saying with the proposals once the category arrives', () => {
+    document.body.innerHTML = UNTAGGED_MODAL_HTML;
+    sync(new Map());
+
+    sync(new Map([[UNTAGGED_CARD_TITLE, makeCategory(UNTAGGED_CARD_TITLE, ['Lieu'])]]));
+
+    expect(proposalTexts()).toEqual(['Lieu']);
+    expect(document.body.querySelector(TAG_PROPOSALS_SELECTOR)?.textContent).not.toContain(
+      'recherche',
+    );
+  });
+
+  it('should write nothing on a second sync while it is still waiting', () => {
+    document.body.innerHTML = UNTAGGED_MODAL_HTML;
+    sync(new Map());
+    const observer = observeBody();
+
+    sync(new Map());
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
   });
 
   it('should show nothing when every suggested tag is already on the card', () => {
