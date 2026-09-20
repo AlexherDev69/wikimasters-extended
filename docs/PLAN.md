@@ -316,10 +316,25 @@ Plan initial, avec l'état de chaque point :
 
 ### Phase 5 : lien Letterboxd (faite le 2026-09-20)
 
-Écarts assumés : le lien n'est posé que dans la modale de détail (pas d'icône sur la carte grand format en v1). L'URL est calculée par le service worker et renvoyée avec la catégorie. L'extension ne contacte jamais Letterboxd, elle construit seulement un lien. Jeu de référence : 100 cartes réelles avec l'URL attendue, produit par un prototype indépendant.
+Écarts assumés : le lien n'est posé que dans la modale de détail (voir la phase 5b pour le bouton de la carte elle-même). L'URL est calculée par le service worker et renvoyée avec la catégorie. L'extension ne contacte jamais Letterboxd, elle construit seulement un lien. Jeu de référence : 100 cartes réelles avec l'URL attendue, produit par un prototype indépendant.
 
 - Résolveur de lien (fonction pure), bouton sur la carte, ouverture en nouvel onglet avec `rel="noopener noreferrer"`
 - Vérification : tests unitaires couvrant chaque ligne du tableau de résolution, dont le cas Einstein
+
+#### Phase 5b : bouton Letterboxd sur la carte elle-même (faite le 2026-09-20, revue indépendante passée)
+
+- Demande de l'utilisateur : un petit logo Letterboxd cliquable sur la carte, pas sur la photo, en dessous. Jusque-là le lien n'existait que dans la modale, ce qui coûtait un clic pour le découvrir
+- Emplacement : le milieu vide de la ligne de statistiques, seul espace libre sous la photo. Le titre peut passer sur deux lignes et atteindre le bord droit, la description est tronquée à trois lignes, mais la ligne ATK/DEF est en `justify-between` sur les deux formats de carte, son centre est donc toujours libre. Dégagement mesuré : environ 6,8 px de chaque côté sur la carte la plus étroite (320 px de fenêtre), environ 19 px dès 375 px
+- Positionnement absolu contre la zone texte, jamais en flux : un enfant absolument positionné n'est pas un élément flex, il ne consomme aucun espace, ne décale aucun frère et ne change pas le calcul du `mt-auto` de la ligne de statistiques. Rien du site ne bouge
+- Repli vérifié plutôt que supposé : si la zone texte perdait `position: absolute`, le bouton se placerait contre la racine de carte, qui est `relative`. Comme la zone texte porte `bottom-0 left-0 right-0`, les deux boîtes partagent bord bas et largeur, donc `bottom: 4px; left: 50%` désigne le même pixel dans les deux cas. Le repli est invisible, pas seulement acceptable
+- Une balise `a` et non un `div` avec un gestionnaire : elle donne gratuitement l'activation au clavier, le clic milieu, le menu contextuel et l'aperçu de l'adresse dans la barre d'état. Elle est aussi invisible pour le scanner, qui lit le premier `h3` et le premier `p` d'une racine `div[class*="glow-"]`
+- Le logo est dessiné en CSS, trois pastilles de couleur dans une pilule sombre. Aucun fichier, aucune image encodée, aucune requête : Letterboxd n'apprend rien tant que l'utilisateur n'a pas cliqué lui-même
+- Le clic est la seule exception assumée à la règle "le site est maître de ses propres événements" : le gestionnaire appelle `stopPropagation()`, sans quoi un clic sur le bouton ouvrirait Letterboxd ET la modale derrière. `preventDefault()` est volontairement absent, l'ancre garde son comportement natif, et la garde `event.isTrusted` laisse repartir un clic synthétique du site comme n'importe quel autre. Vérifié par mutation en revue : sans `stopPropagation()`, l'écouteur de la racine de carte est bien appelé
+- C'est aussi le seul noeud de l'extension posé sur une carte qui accepte un clic : tout le reste de ce que l'extension dessine est en `pointer-events: none`
+- Zéro écriture quand la carte porte déjà le bon bouton, la clé de comparaison étant l'adresse. Le `WeakSet` est consulté AVANT toute recherche DOM, à l'inverse de celui des images : la plupart des cartes n'ont pas d'adresse Letterboxd et doivent sortir à la première ligne, alors que trouver la zone texte coûte une recherche sur tout le sous-arbre
+- Réglage partagé avec le lien de la modale, aucune clé nouvelle : c'est la même fonctionnalité à un second endroit. La description du réglage nomme désormais les deux
+- Conséquence assumée : la modale de détail affiche elle-même une copie complète de la carte, le petit logo y apparaît donc aussi, sous la vignette, à côté du lien texte. Les deux noeuds portent des attributs différents et aucun sélecteur ne peut atteindre l'autre
+- Aucune requête de plus, aucun message de plus, manifest identique
 
 ### Phase 6 : finitions et diffusion
 
