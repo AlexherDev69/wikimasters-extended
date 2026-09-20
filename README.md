@@ -14,7 +14,7 @@ L'extension ne garde aucune liste de tes cartes : rien de ta collection n'est en
 
 ### Badge de catégorie sur les cartes
 
-Chaque carte catégorisée reçoit une pastille sombre en bas de sa zone image : un point de la couleur de la catégorie et son libellé, par exemple "Lieu" ou "Personne · Cinéma" pour une personne dont le sous-type principal est connu. La pastille suit toujours la carte affichée à l'instant : si le site réutilise un emplacement pour une autre carte (pagination), le badge est recalculé à partir du titre affiché. Une carte dont l'article est introuvable, dont la catégorisation a échoué ou dont la catégorie n'est pas encore connue ne reçoit aucun badge.
+Chaque carte catégorisée reçoit une petite pastille sombre en bas à gauche, à cheval sur la limite entre la photo et le texte : un point de la couleur de la catégorie et son libellé, par exemple "Lieu" ou "Personne · Cinéma" pour une personne dont le sous-type principal est connu. La pastille suit toujours la carte affichée à l'instant : si le site réutilise un emplacement pour une autre carte (pagination), le badge est recalculé à partir du titre affiché. Une carte dont l'article est introuvable, dont la catégorisation a échoué ou dont la catégorie n'est pas encore connue ne reçoit aucun badge.
 
 ### Catégorie dans la modale de détail
 

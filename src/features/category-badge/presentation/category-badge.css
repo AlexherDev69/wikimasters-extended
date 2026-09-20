@@ -6,20 +6,24 @@
 
 [data-wme-badge] {
   position: absolute;
-  left: 0.5rem;
+  left: 0.375rem;
   /*
    * The picture area of a card ends at 45 % of its height and the text starts
-   * there: the badge sits just above that line, on the dark gradient of the
-   * picture, whatever the size of the card.
+   * there. The badge straddles that line, mostly below it, on the padding the
+   * card keeps above its title.
+   *
+   * Not entirely below: that padding is 12 px on a grid card and the badge is
+   * about 16 px tall, so a badge placed under the line would bite into the
+   * title. Straddling drops it clearly without covering anything.
    */
-  bottom: calc(55% + 4px);
+  bottom: calc(55% - 8px);
   z-index: 25;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   box-sizing: border-box;
-  max-width: calc(100% - 1rem);
-  padding: 2px 6px;
+  max-width: calc(100% - 0.75rem);
+  padding: 1px 5px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background-color: rgba(9, 12, 17, 0.78);
@@ -28,11 +32,11 @@
   /*
    * The two card formats differ only by the size of their root, and a card
    * cannot become a container without restyling a node of the site, so the
-   * size follows the viewport: around 9 px where the grid cards are narrowest,
-   * 11 px on a wide screen.
+   * size follows the viewport: around 7 px where the grid cards are narrowest,
+   * 9 px on a wide screen.
    */
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-size: clamp(9px, 0.85vw, 11px);
+  font-size: clamp(7px, 0.65vw, 9px);
   font-weight: 500;
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.92);
@@ -41,8 +45,10 @@
 
 [data-wme-badge] .wme-badge-dot {
   flex: 0 0 auto;
-  width: 6px;
-  height: 6px;
+  /* Relative to the label, so the dot shrinks with it instead of dominating
+   * the badge on the narrowest cards. */
+  width: 0.6em;
+  height: 0.6em;
   border-radius: 50%;
   /* Replaced by the accent colour of the category as soon as one is known. */
   background-color: #8b949e;
