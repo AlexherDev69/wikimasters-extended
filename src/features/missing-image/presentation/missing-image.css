@@ -134,11 +134,10 @@
 [data-wme-card-image] .wme-card-image-source {
   position: absolute;
   /*
-   * The bottom right corner of the picture area. The category badge holds the
-   * same row on the left, at `bottom: calc(55% + 4px)` of the card root, which
-   * is 4 px above the bottom inside our container, and it is drawn above ours.
-   * A disc of about 14 px leaves it the whole width it had before, so the two
-   * cannot meet even on the narrowest card with the longest label.
+   * The bottom right corner of the picture area. The category badge sits
+   * below that line now, straddling the top of the text area, so the two
+   * cannot meet whatever the label; the disc stays small all the same, since
+   * nothing is gained by growing it.
    *
    * The top of the picture area is not free: the rarity badge holds its left
    * corner and the favourite button of the large format its right one, both
