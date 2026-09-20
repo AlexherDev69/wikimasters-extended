@@ -6,12 +6,14 @@ import {
   type LetterboxdCard,
 } from '../../letterboxd/domain/resolve-letterboxd-url';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
-import { categoryClassIds, classifyEntity, decisiveClassIds, isHuman } from './classify-entity';
 import {
-  classifyPerson,
-  type PersonClassification,
-  type ResolvedOccupation,
-} from './classify-person';
+  classifyCachedCard,
+  collectNeededClassIds,
+  requiredClassIds,
+  type CachedCardClassification,
+  type NeededClassIds,
+} from './classify-cached-card';
+import { decisiveClassIds, isHuman } from './classify-entity';
 import type { EntityFacts } from './entity-facts';
 import type {
   CachedCardFacts,
@@ -82,19 +84,6 @@ function emptyResult(title: string, status: 'not_found' | 'error'): CardCategory
     personSubtypes: [],
     letterboxdUrl: null,
   };
-}
-
-/** Class ids to resolve before classifying, both branches of the cascade included. */
-function neededClassIds(facts: EntityFacts): string[] {
-  return isHuman(facts) ? facts.occupationIds : categoryClassIds(facts);
-}
-
-/**
- * Class ids whose resolution this card really depends on, known only once the
- * targets are in: an unresolved id outside this list leaves the verdict intact.
- */
-function requiredClassIds(facts: EntityFacts, stage: ClassStage): string[] {
-  return isHuman(facts) ? facts.occupationIds : decisiveClassIds(facts, stage.categoryTargets);
 }
 
 async function readCachedFacts(
@@ -220,34 +209,15 @@ async function resolveClassKind<TTarget>(
   return resolutions;
 }
 
-interface NeededIds {
-  categoryIds: string[];
-  occupationIds: string[];
-}
-
-/** Every class id the batch needs, from the cache hits as well as the fetched facts. */
-function collectNeededIds(factsByTitle: ReadonlyMap<string, CachedCardFacts>): NeededIds {
-  const categoryIds = new Set<string>();
-  const occupationIds = new Set<string>();
-
-  for (const entry of factsByTitle.values()) {
-    if (entry.facts === null) {
-      continue;
-    }
-    const target = isHuman(entry.facts) ? occupationIds : categoryIds;
-    for (const classId of neededClassIds(entry.facts)) {
-      target.add(classId);
-    }
-  }
-
-  return { categoryIds: [...categoryIds], occupationIds: [...occupationIds] };
-}
-
 async function loadClassStage(
   factsByTitle: ReadonlyMap<string, CachedCardFacts>,
   deps: CategorizeCardsDeps,
 ): Promise<ClassStage> {
-  const { categoryIds, occupationIds } = collectNeededIds(factsByTitle);
+  // Every class id the batch needs, from the cache hits as well as the
+  // fetched facts.
+  const { categoryIds, occupationIds }: NeededClassIds = collectNeededClassIds(
+    factsByTitle.values(),
+  );
   const unresolvedCategoryIds = new Set<string>();
   const unresolvedOccupationIds = new Set<string>();
 
@@ -284,22 +254,6 @@ async function loadClassStage(
     unresolvedCategoryIds,
     unresolvedOccupationIds,
   };
-}
-
-/** One entry per P106 of the card, in its order, unresolved ones included. */
-function occupationsOf(facts: EntityFacts, stage: ClassStage): ResolvedOccupation[] {
-  return facts.occupationIds.map((classId) => {
-    const resolution = stage.occupationResolutions.get(classId);
-    return { label: resolution?.label ?? null, subtype: resolution?.target ?? null };
-  });
-}
-
-function classifyAsPerson(
-  card: CardToCategorize,
-  facts: EntityFacts,
-  stage: ClassStage,
-): PersonClassification {
-  return classifyPerson(card.description, occupationsOf(facts, stage));
 }
 
 /**
@@ -345,17 +299,16 @@ function cinemaRolesOf(facts: EntityFacts, stage: ClassStage): CinemaRoleOccupat
 function toLetterboxdCard(
   card: CardToCategorize,
   facts: EntityFacts,
-  categoryId: CategoryId,
-  person: PersonClassification | null,
+  classification: CachedCardClassification,
   stage: ClassStage,
 ): LetterboxdCard {
   return {
     title: card.title,
     description: card.description,
-    categoryId,
-    personSubtypes: person?.personSubtypes ?? [],
+    categoryId: classification.categoryId,
+    personSubtypes: classification.personSubtypes,
     externalIds: facts.externalIds,
-    isFilm: isFilm(facts, categoryId, stage),
+    isFilm: isFilm(facts, classification.categoryId, stage),
     cinemaRoles: cinemaRolesOf(facts, stage),
   };
 }
@@ -376,21 +329,25 @@ function buildResult(
   const unresolvedIds = isHuman(facts)
     ? stage.unresolvedOccupationIds
     : stage.unresolvedCategoryIds;
-  if (requiredClassIds(facts, stage).some((classId) => unresolvedIds.has(classId))) {
+  if (requiredClassIds(facts, stage.categoryTargets).some((classId) => unresolvedIds.has(classId))) {
     return emptyResult(card.title, 'error');
   }
 
-  const categoryId = classifyEntity(facts, stage.categoryTargets);
-  const person = categoryId === 'person' ? classifyAsPerson(card, facts, stage) : null;
+  const classification = classifyCachedCard(
+    facts,
+    card.description,
+    stage.categoryTargets,
+    stage.occupationResolutions,
+  );
 
   return {
     title: card.title,
     status: 'categorized',
     qid: facts.qid,
-    categoryId,
-    primarySubtype: person?.primarySubtype ?? null,
-    personSubtypes: person?.personSubtypes ?? [],
-    letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, categoryId, person, stage)),
+    categoryId: classification.categoryId,
+    primarySubtype: classification.primarySubtype,
+    personSubtypes: classification.personSubtypes,
+    letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, classification, stage)),
   };
 }
 
