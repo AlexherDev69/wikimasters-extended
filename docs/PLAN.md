@@ -440,6 +440,22 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - `RARITIES_RAREST_FIRST` a été supprimé bien que la spec le range dans ce qui doit rester : après le retrait il n'avait plus aucun consommateur, et "aucun code mort" et "knip sort à 0" ne pouvaient pas tenir en même temps que lui. Le reste de `rarity.ts` (type `Rarity`, `RARITIES`, `isRarity`, lecture de la classe `glow-*`) est intact et toujours utilisé
 - `isValidTitle`, `CATEGORY_IDS` et `PERSON_SUBTYPE_IDS` ne sont plus exportés, pour la même raison : leurs seuls consommateurs externes étaient dans l'index. Les fonctions et les constantes restent, à l'intérieur de leur module
 
+### Phase 10 : préférences d'affichage
+
+#### Phase 10a : option pour masquer les statistiques des cartes (faite le 2026-09-20, revue indépendante passée)
+
+- Demande de l'utilisateur : une option pour cacher les statistiques de la carte, partout sur le site, par défaut sur non. Portée retenue : ATK et DEF, sur la carte (grille, grand format, et la copie de carte que la modale affiche d'elle-même) et dans les deux grands encadrés de la modale. Le Q-Score, les exemplaires et les vues restent hors périmètre, faute d'une demande explicite
+- Première fonctionnalité qui CACHE quelque chose du site au lieu d'AJOUTER quelque chose par-dessus, et premier réglage désactivé par défaut. Les deux méritaient d'être traités comme des décisions, pas comme des détails
+- Mécanisme : une feuille de style qui appartient à l'extension, ajoutée dans `document.head` quand l'option est cochée et retirée entièrement quand elle est décochée. Aucun attribut, aucune classe, aucun style et aucun texte n'est écrit sur un noeud du site, rien n'est déplacé ni supprimé : c'est la cascade qui décide de ce qui est peint. Le site garde exactement le document qu'il a construit
+- `document.head` et non `document.body` : le content script observe `document.body`, donc cette feuille vit hors du sous-arbre observé et la poser ne peut jamais déclencher un scan. La dispense est structurelle, pas une précaution
+- C'est la seule règle CSS de l'extension qui vise un noeud du site, donc elle ne vit pas dans la feuille que le manifest injecte toujours, dont chaque sélecteur commence par un de nos attributs. Vérifié sur le paquet construit : `content.css` ne contient aucun de ces sélecteurs
+- Sur la carte, `visibility: hidden` et jamais `display: none` : la carte est de taille fixe et effondrer la ligne ferait remonter tout ce qui est au-dessus. Dans la modale, `display: none` sur la grille qui porte les deux encadrés, et non sur chaque encadré : deux cadres vides auraient l'air d'un bug
+- Sélecteurs ancrés sur les classes d'icônes lucide, jamais sur une classe Tailwind, et bornés en amont : la règle de la carte par la racine `glow-`, celle de la modale par la couche de la modale. La revue a montré que borner cette dernière par `card-frame` seul ne suffit pas : cette classe est la classe de panneau du site en général, présente aussi sur l'en-tête de `/global-collection` et sur les tuiles du marché, donc la règle non bornée emportait une grille entière de panneaux sur une route que l'extension n'a jamais observée
+- Défaut à faux : une installation que personne n'a configurée doit continuer de montrer exactement ce que le site montre. C'est le premier défaut qui n'est pas vrai, donc la normalisation a été vérifiée clé par clé plutôt que supposée
+- `hasEnabledFeature` ne compte pas ce réglage, qui ne consomme aucune catégorie : l'activer seul ne doit lancer aucun trafic, et le désactiver ne doit pas couper celui dont une autre option a besoin. La garantie "tous les réglages sur non, plus rien ne part" tient donc toujours, avec son miroir "ce réglage sur oui, rien ne part non plus"
+- Sur les règles du site : cacher un nombre dans son propre navigateur ne donne aucun avantage, ne révèle rien et n'automatise rien. C'est une préférence d'affichage, comme un mode lecture, et un clic la défait entièrement
+- Aucune requête, aucun message, aucune permission, manifest identique
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
