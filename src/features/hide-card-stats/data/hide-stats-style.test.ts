@@ -7,6 +7,7 @@ import { applyHideCardStats, removeHideCardStats } from './hide-stats-style';
 import {
   CARD_ATTACK_VALUE_SELECTOR,
   CARD_DEFENSE_VALUE_SELECTOR,
+  CARD_STATS_ROW_SELECTOR,
   HIDE_STATS_STYLE_SELECTOR,
   MODAL_ATTACK_PANELS_SELECTOR,
   MODAL_DEFENSE_PANELS_SELECTOR,
@@ -170,6 +171,36 @@ describe('applyHideCardStats', () => {
     expect(getComputedStyle(defenseBlock as Element).visibility).toBe('hidden');
     // visibility, never display: the row this block sits in keeps its height.
     expect(getComputedStyle(attackBlock as Element).display).not.toBe('none');
+  });
+
+  it('should take the colour of the line the stats row draws, and not the line', () => {
+    applyHideCardStats(document);
+    const rule = styleRuleFor(CARD_STATS_ROW_SELECTOR);
+
+    expect(rule?.style.getPropertyValue('border-top-color')).toBe('transparent');
+    // The border itself is never dropped: collapsing that pixel would move
+    // everything the site laid out above it.
+    expect(rule?.style.getPropertyValue('border-top-width')).toBe('');
+    expect(rule?.style.getPropertyValue('border-top-style')).toBe('');
+  });
+
+  it('should aim that rule at the row itself and not at one of its value blocks', () => {
+    applyHideCardStats(document);
+    const card = document.body.querySelector('div[class*="glow-"]');
+    // Reached through a utility class of the SITE, which no production
+    // selector is allowed to use, precisely so this test walks a different
+    // path to the node than the constant it checks: `border-t` is what draws
+    // the very line at stake.
+    const row = card?.querySelector('div.border-t') ?? null;
+    const attackBlock = document.body.querySelector(CARD_ATTACK_VALUE_SELECTOR);
+
+    expect(row).not.toBeNull();
+    expect(row).not.toBe(attackBlock);
+    // happy-dom resolves a `:has()` carrying a descendant combinator more
+    // loosely than a browser does, so this pins that the row IS among the
+    // nodes reached, not that nothing else is. A rule aimed at a value block
+    // would leave the row out entirely, which is the mistake worth catching.
+    expect([...document.body.querySelectorAll(CARD_STATS_ROW_SELECTOR)]).toContain(row);
   });
 
   it('should hide the big ATK/DEF panels of the detail modal as one block', () => {

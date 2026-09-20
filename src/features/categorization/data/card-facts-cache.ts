@@ -28,11 +28,15 @@ export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
  * was already attempted: a version 3 entry lacks it and fails the structural
  * check below on its own, so the bump is not strictly required for
  * correctness, but it keeps the version number a reliable label for "the
- * shape currently defined here", consistent with every earlier bump. Entries
+ * shape currently defined here", consistent with every earlier bump. Version
+ * 5 changes no shape at all: the article image rule now also accepts a file
+ * named after the article followed by one word, so a card remembered under
+ * version 4 as having no article image would keep that answer forever on the
+ * strength of a lookup the extension no longer makes the same way. Entries
  * of an earlier version are fetched again, once, on the next display of
  * their card.
  */
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;

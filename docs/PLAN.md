@@ -336,6 +336,17 @@ Plan initial, avec l'état de chaque point :
 - Conséquence assumée : la modale de détail affiche elle-même une copie complète de la carte, le petit logo y apparaît donc aussi, sous la vignette, à côté du lien texte. Les deux noeuds portent des attributs différents et aucun sélecteur ne peut atteindre l'autre
 - Aucune requête de plus, aucun message de plus, manifest identique
 
+#### Phase 5c : marque Letterboxd redessinée et calée en bas à droite (faite le 2026-09-20)
+
+- Demande de l'utilisateur, image de référence à l'appui : "fait le comme ça le letterboxd, bien aligné". Puis, après un premier essai : "j'ai l'impression que le orange est plus haut"
+- Le défaut était géométrique. Les trois pastilles étaient trois `span` empilés en absolu, chacun à 60 % de la largeur d'un cercle de 16 px : à cette taille ils se recouvraient presque entièrement et seul le dernier peint, le bleu, restait visible. La marque se lisait comme un point bleu
+- Les deux zones blanches du vrai logo sont les INTERSECTIONS des disques, et une intersection ne s'exprime pas avec des boîtes empilées. La marque est donc dessinée en SVG : trois disques de rayon 20 espacés de 30 dans un viewBox `0 0 100 40`, soit un recouvrement d'un quart de diamètre, puis les deux lentilles peintes par-dessus, chacune tracée par les deux arcs qui la ferment. Les drapeaux `large-arc=0 sweep=1` ont été vérifiés centre par centre, pas supposés
+- Pas d'`id` ni de `clipPath` : un `id` est global au document et toutes les cartes porteraient le même. Les lentilles sont des `path`, donc chaque marque est autonome
+- Construite par `createElementNS`, jamais par `innerHTML`, comme tout ce que l'extension ajoute
+- Position : coin bas droite, dans la bande que la zone texte (`p-3`) laisse sous la ligne de statistiques. Ce n'est ni le centre de cette ligne ni son extrémité droite, qui porte la valeur de défense dès que les statistiques sont affichées. La bande du dessous est le seul endroit libre à droite quel que soit l'état des statistiques, question tranchée avec l'utilisateur plutôt que devinée
+- La carte est en `rounded-2xl overflow-hidden` : l'arc du coin mange cette bande, environ 6,7 px de retrait à 3 px du bord bas. La marque est calée en dehors de l'arc, calculs dans le commentaire du CSS
+- Tailles en pixels entiers, et plus un `clamp` sur le viewport : la bande est un padding `p-3`, donc 12 px quels que soient l'écran et le format de carte. Le clamp n'apportait rien et garantissait des positions fractionnaires, donc un antialiasing différent d'un disque à l'autre. C'est ce que l'utilisateur voyait comme un décalage vertical, alors que les trois disques partagent le même `cy` et qu'un décalage vertical est impossible : les trois ne diffèrent que par leur x, donc chaque ligne de pixels reçoit la même couverture
+
 ### Phase 6 : finitions et diffusion
 
 #### Phase 6a : réglages, page d'options, entretien du cache (faite le 2026-09-20, revue indépendante passée)
@@ -440,6 +451,16 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Comme pour toute donnée franchissant une frontière, la source ne peut rien imposer hors de sa commande : seuls les titres effectivement demandés peuvent recevoir une image, ce qui vaut pour l'affichage comme pour l'écriture en cache
 - Un échec de cette étape, comme en 7c, ne coûte jamais sa catégorie à une carte : la carte garde simplement le logo du site
 
+#### Phase 7e : nom de fichier qualifié par un mot (faite le 2026-09-20)
+
+- Signalé par l'utilisateur sur une carte précise : "sur cette carte j'ai pas d'image, pourtant la page wikipedia en a une", The Backrooms (film, 2022)
+- Diagnostic fait sur les API avant de toucher au code : Wikidata (Q125131315) ne porte aucune propriété image, et l'article, qui redirige vers "Backrooms (web-série)", affiche `Backrooms Logo.png`, bien hébergé sur Commons. La règle du nom exact cherchait "Backrooms" et ne pouvait pas le trouver
+- La règle accepte désormais, en second recours, le titre suivi d'UN seul mot qui désigne l'image : logo, logotype, affiche, poster, cover, couverture, banner, titre, title. Liste fermée et non préfixe libre : "Paris Hilton.jpg" commence par le titre de l'article "Paris", et un préfixe libre poserait le portrait de quelqu'un d'autre sur cette carte
+- Le nom exact est cherché sur TOUS les fichiers avant qu'un nom qualifié ne soit envisagé : un fichier portant le titre seul, c'est l'article qui dit "c'est moi", et il prime quel que soit l'ordre de la réponse
+- Cache des faits de carte en version 5. Aucune forme ne change : c'est la règle qui change, donc une carte mémorisée comme sans image d'article garderait cette réponse pour rien
+- `pageimages` a été envisagée comme source supplémentaire, mesurée, puis écartée : elle ne renvoie rien pour Backrooms, L'Esquive, Paprika, Corinne Hermès, Fonds souverain, ni même pour Parti québécois que la règle de nom trouve pourtant. Trop inégale sur frwiki pour valoir une source
+- Vérifié sur les cartes que l'utilisateur voyait sans image : trois de leurs articles n'affichent aucune image (champ `image` de l'infobox vide ou absent) et le quatrième, Paprika, porte une affiche hébergée en local sur frwiki sous exception de fichier non libre, que la règle 5 refuse et doit continuer de refuser
+
 ### Phase 8 : étiquettes
 
 #### Phase 8a : retrait de l'index de collection (faite le 2026-09-20, revue indépendante passée)
@@ -495,6 +516,13 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Le panneau était le seul noeud que l'extension ajoutait directement dans `document.body`. Après ce retrait, tout ce qu'elle pose vit à l'intérieur d'une carte ou de la modale de détail, la seule exception étant la feuille de style de la phase 10a, qui vit dans `document.head` et n'ajoute aucun noeud visible
 - Conservé : catégorisation Wikidata, badge sur les cartes, ligne de catégorie dans la modale, couleurs d'accent, lien Letterboxd, images manquantes, étiquettes suggérées, masquage des statistiques, les deux caches et leur entretien. Permissions, hôtes et manifest inchangés
 - La réponse 1 au besoin de filtre de la phase 4 disparaît avec elle. Il reste la réponse 3, les étiquettes natives que l'utilisateur pose lui-même, que la phase 8b alimente en propositions
+
+#### Phase 10c : la ligne des statistiques s'efface avec elles (faite le 2026-09-20)
+
+- Demande de l'utilisateur : "cache cette ligne noir si on cache les stats". Une fois les deux valeurs masquées, la carte ne montrait plus qu'une bande vide fermée par un trait
+- Seule la couleur du trait part, jamais le trait : `border-top-color: transparent` et non `border-top: none`. Supprimer la bordure effondrerait un pixel et ferait remonter tout ce que le site a posé au-dessus, ce que le choix de `visibility` plutôt que `display` sur les valeurs elles-mêmes cherchait déjà à éviter
+- La ligne est visée par l'icône d'attaque qu'elle contient, jamais par la classe `border-t` qui la dessine, comme toutes les règles de cette fonctionnalité
+- Limite connue de l'outillage, notée dans le test : happy-dom résout un `:has()` portant un combinateur de descendance plus largement qu'un navigateur. Le test atteint donc la ligne par un autre chemin (la classe du site) et vérifie qu'elle est parmi les noeuds visés, ce qui tombe bien en rouge si la règle est pointée sur un bloc de valeur. Vérifié par mutation
 
 ## 7. Scénarios de test proposés (à valider ou compléter)
 

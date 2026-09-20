@@ -27,6 +27,15 @@ export const CARD_ATTACK_VALUE_SELECTOR = `${CARD_ROOT_SELECTOR} div:has(> ${ATT
 export const CARD_DEFENSE_VALUE_SELECTOR = `${CARD_ROOT_SELECTOR} div:has(> ${DEFENSE_ICON_SELECTOR})`;
 
 /**
+ * The row the two value blocks sit on, reached through the attack block it
+ * holds rather than through the `border-t` utility class that draws its
+ * line, for the same reason the blocks themselves are reached through their
+ * icon. That line is all the row still shows once both values are hidden: a
+ * black rule closing an empty band.
+ */
+export const CARD_STATS_ROW_SELECTOR = `${CARD_ROOT_SELECTOR} div:has(> div > ${ATTACK_ICON_SELECTOR})`;
+
+/**
  * The grid holding the two big ATK/DEF panels of the detail modal (not the
  * small card it also shows, matched above).
  *

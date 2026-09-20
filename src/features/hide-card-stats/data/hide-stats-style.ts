@@ -1,6 +1,7 @@
 import {
   CARD_ATTACK_VALUE_SELECTOR,
   CARD_DEFENSE_VALUE_SELECTOR,
+  CARD_STATS_ROW_SELECTOR,
   HIDE_STATS_STYLE_ATTRIBUTE,
   HIDE_STATS_STYLE_SELECTOR,
   MODAL_ATTACK_PANELS_SELECTOR,
@@ -44,6 +45,14 @@ ${CARD_ATTACK_VALUE_SELECTOR} {
 /* Same shape, the DEF value block. */
 ${CARD_DEFENSE_VALUE_SELECTOR} {
   visibility: hidden;
+}
+
+/* The row those two blocks sit on draws a black line above itself, which is
+   all that would be left to see: an empty band closed by a rule. Only the
+   colour of that line goes; the border itself stays, since dropping it would
+   collapse a pixel and move everything the site laid out above it. */
+${CARD_STATS_ROW_SELECTOR} {
+  border-top-color: transparent;
 }
 
 /* Detail modal: the grid holding the two big ATK/DEF panels, removed whole
