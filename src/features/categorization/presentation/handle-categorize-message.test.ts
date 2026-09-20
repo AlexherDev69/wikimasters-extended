@@ -13,6 +13,8 @@ const CATEGORIZED_CARD: CardCategory = {
   categoryId: 'film_tv',
   primarySubtype: null,
   personSubtypes: [],
+  // The stubbed facts carry no external id, so the film falls back to a search.
+  letterboxdUrl: 'https://letterboxd.com/search/Pulp%20Fiction/',
 };
 
 /** Deps that resolve the single test card entirely from the card cache. */
@@ -53,7 +55,9 @@ function makeDeps(): CategorizeCardsDeps {
     },
     classTargetCache: {
       getCategoryTargets: (): Promise<Map<string, ClassResolution<'film_tv'>>> =>
-        Promise.resolve(new Map([['Q11424', { target: 'film_tv', label: null }]])),
+        Promise.resolve(
+          new Map([['Q11424', { target: 'film_tv', label: null, matchedRootIds: ['Q11424'] }]]),
+        ),
       putCategoryTargets: (): Promise<void> => Promise.resolve(),
       getOccupationTargets: (): Promise<Map<string, ClassResolution<never>>> =>
         Promise.resolve(new Map()),

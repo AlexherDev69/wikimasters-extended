@@ -80,37 +80,48 @@ async function queryFrenchLabels(
 }
 
 /** Classes that reached a target, the only ones whose label is ever read. */
-function classifiedClassIds<TTarget>(targets: ReadonlyMap<string, TTarget | null>): string[] {
+function classifiedClassIds<TTarget>(
+  resolutions: ReadonlyMap<string, RootMatch<TTarget>>,
+): string[] {
   const classIds: string[] = [];
-  for (const [classId, target] of targets) {
-    if (target !== null) {
+  for (const [classId, resolution] of resolutions) {
+    if (resolution.target !== null) {
       classIds.push(classId);
     }
   }
   return classIds;
 }
 
+/** What the roots query tells about one class, before its label is fetched. */
+type RootMatch<TTarget> = Omit<ClassResolution<TTarget>, 'label'>;
+
 /**
- * Resolves the target of each class. A class that IS one of the roots is
- * resolved locally, without any network call.
+ * Resolves the target and the matched roots of each class. A class that IS one
+ * of the roots is resolved locally, without any network call, and matches
+ * itself.
  */
 async function resolveTargets<TTarget>(
   classIds: readonly string[],
   groups: readonly RootGroup<TTarget>[],
   runQuery: RunSparqlQuery,
-): Promise<Map<string, TTarget | null>> {
+): Promise<Map<string, RootMatch<TTarget>>> {
   const rootIds = collectRootIds(groups);
   const remoteClassIds = classIds.filter((classId) => !rootIds.has(classId));
   const matchedByClass = await queryMatchedRoots(remoteClassIds, [...rootIds], runQuery);
 
-  const targets = new Map<string, TTarget | null>();
+  const resolutions = new Map<string, RootMatch<TTarget>>();
   for (const classId of classIds) {
     const matched = rootIds.has(classId)
       ? new Set<string>([classId])
       : (matchedByClass.get(classId) ?? new Set<string>());
-    targets.set(classId, pickRootTarget(matched, groups));
+    resolutions.set(classId, {
+      target: pickRootTarget(matched, groups),
+      // Sorted so that a stored entry does not depend on the row order of the
+      // service, which makes the cached value stable and comparable.
+      matchedRootIds: [...matched].sort(),
+    });
   }
-  return targets;
+  return resolutions;
 }
 
 export function createClassRootsSource(httpOptions: FetchJsonOptions): ClassRootsSource {
@@ -120,11 +131,11 @@ export function createClassRootsSource(httpOptions: FetchJsonOptions): ClassRoot
     async resolveCategoryClasses(
       classIds: readonly string[],
     ): Promise<Map<string, ClassResolution<CategoryId>>> {
-      const targets = await resolveTargets(classIds, CATEGORY_ROOT_GROUPS, runQuery);
+      const matches = await resolveTargets(classIds, CATEGORY_ROOT_GROUPS, runQuery);
 
       const resolutions = new Map<string, ClassResolution<CategoryId>>();
-      for (const [classId, target] of targets) {
-        resolutions.set(classId, { target, label: null });
+      for (const [classId, match] of matches) {
+        resolutions.set(classId, { ...match, label: null });
       }
       return resolutions;
     },
@@ -132,14 +143,14 @@ export function createClassRootsSource(httpOptions: FetchJsonOptions): ClassRoot
     async resolveOccupationClasses(
       classIds: readonly string[],
     ): Promise<Map<string, ClassResolution<PersonSubtypeId>>> {
-      const targets = await resolveTargets(classIds, OCCUPATION_ROOT_GROUPS, runQuery);
+      const matches = await resolveTargets(classIds, OCCUPATION_ROOT_GROUPS, runQuery);
       // Only a classified occupation can win the description tie-break of
       // classifyPerson, so the labels of the others would never be read.
-      const labels = await queryFrenchLabels(classifiedClassIds(targets), runQuery);
+      const labels = await queryFrenchLabels(classifiedClassIds(matches), runQuery);
 
       const resolutions = new Map<string, ClassResolution<PersonSubtypeId>>();
-      for (const [classId, target] of targets) {
-        resolutions.set(classId, { target, label: labels.get(classId) ?? null });
+      for (const [classId, match] of matches) {
+        resolutions.set(classId, { ...match, label: labels.get(classId) ?? null });
       }
       return resolutions;
     },

@@ -11,6 +11,11 @@ import {
   isCategorizeCardsResponse,
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
+import {
+  rememberCategories,
+  type CategoryMemory,
+} from '../features/letterboxd/presentation/remember-categories';
+import { syncModalLink } from '../features/letterboxd/presentation/sync-modal-link';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
 
@@ -19,7 +24,7 @@ const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
  * boundary, so it is validated: an invalid one rejects, which lets the caller
  * schedule a retry.
  */
-async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
+async function requestCategories(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
   const request: CategorizeCardsRequest = {
     type: CATEGORIZE_CARDS_MESSAGE,
     cards: [...cards],
@@ -37,10 +42,32 @@ export default defineContentScript({
   runAt: 'document_idle',
   main(ctx): void {
     const logger = createLogger('content-script');
-    const seenTitles = new Set<string>();
+    // Results of the cards met so far, read by the modal sync, and the titles
+    // already asked for. Bounded together, so a title dropped from one is
+    // dropped from the other and can be asked again if its card comes back.
+    const memory: CategoryMemory = {
+      categoriesByTitle: new Map<string, CardCategory>(),
+      seenTitles: new Set<string>(),
+    };
+    /** Titles of the last scan, the cards the page shows right now. */
+    let visibleTitles: ReadonlySet<string> = new Set<string>();
+
+    async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
+      const results = await requestCategories(cards);
+      rememberCategories(memory, visibleTitles, results);
+      // The modal is usually already open when its results come back.
+      syncModalLink(document.body, memory.categoriesByTitle);
+      return results;
+    }
 
     function onScan(observedCards: ObservedCard[]): void {
-      handleScan(observedCards, seenTitles, logger, categorize);
+      visibleTitles = new Set(observedCards.map((observed) => observed.card.title));
+
+      handleScan(observedCards, memory.seenTitles, logger, categorize);
+      rememberCategories(memory, visibleTitles);
+      // The observer of the cards also fires when the modal opens, so no
+      // observer, no polling and no timer of its own is needed here.
+      syncModalLink(document.body, memory.categoriesByTitle);
     }
 
     const root = document.body;

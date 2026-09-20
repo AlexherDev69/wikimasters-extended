@@ -1,5 +1,5 @@
 import { storage, type StorageItemKey } from '#imports';
-import { isNullableString, isRecord } from '../../../core/types/guards';
+import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
 import {
   isCategoryId,
   isPersonSubtypeId,
@@ -22,6 +22,7 @@ interface StoredClassTarget {
   rootsVersion: number;
   target: string | null;
   label: string | null;
+  matchedRootIds: string[];
 }
 
 type TargetGuard<TTarget> = (value: unknown) => value is TTarget;
@@ -35,7 +36,8 @@ function isStoredClassTarget(value: unknown): value is StoredClassTarget {
     isRecord(value) &&
     value['rootsVersion'] === ROOTS_VERSION &&
     isNullableString(value['target']) &&
-    isNullableString(value['label'])
+    isNullableString(value['label']) &&
+    isStringArray(value['matchedRootIds'])
   );
 }
 
@@ -60,7 +62,11 @@ async function readTargets<TTarget>(
     if (stored.target !== null && !isTarget(stored.target)) {
       continue;
     }
-    resolutions.set(classId, { target: stored.target, label: stored.label });
+    resolutions.set(classId, {
+      target: stored.target,
+      label: stored.label,
+      matchedRootIds: stored.matchedRootIds,
+    });
   }
 
   return resolutions;
@@ -81,6 +87,7 @@ async function writeTargets<TTarget extends string>(
         rootsVersion: ROOTS_VERSION,
         target: resolution.target,
         label: resolution.label,
+        matchedRootIds: resolution.matchedRootIds,
       } satisfies StoredClassTarget,
     })),
   );

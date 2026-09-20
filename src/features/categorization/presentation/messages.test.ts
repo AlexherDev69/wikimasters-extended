@@ -19,6 +19,7 @@ const VALID_CARD_CATEGORY: CardCategory = {
   categoryId: 'film_tv',
   primarySubtype: null,
   personSubtypes: [],
+  letterboxdUrl: 'https://letterboxd.com/film/pulp-fiction/',
 };
 
 function makeResponse(cards: unknown): unknown {
@@ -102,6 +103,7 @@ describe('isCategorizeCardsResponse', () => {
       categoryId: 'person',
       primarySubtype: 'cinema',
       personSubtypes: ['cinema', 'media'],
+      letterboxdUrl: 'https://letterboxd.com/director/quentin-tarantino/',
     };
 
     expect(isCategorizeCardsResponse(makeResponse([person]))).toBe(true);
@@ -134,6 +136,49 @@ describe('isCategorizeCardsResponse', () => {
         makeResponse([{ ...VALID_CARD_CATEGORY, personSubtypes: ['cinema', 'nope'] }]),
       ),
     ).toBe(false);
+  });
+
+  it('should accept a result without a Letterboxd URL', () => {
+    expect(
+      isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, letterboxdUrl: null }])),
+    ).toBe(true);
+  });
+
+  it('should reject a Letterboxd URL on another origin', () => {
+    const foreign = [
+      'https://evil.example.com/film/pulp-fiction/',
+      'https://letterboxd.com.evil.example.com/film/x/',
+      'http://letterboxd.com/film/x/',
+      'javascript:alert(1)',
+      42,
+      undefined,
+    ];
+
+    for (const letterboxdUrl of foreign) {
+      expect(
+        isCategorizeCardsResponse(makeResponse([{ ...VALID_CARD_CATEGORY, letterboxdUrl }])),
+      ).toBe(false);
+    }
+  });
+
+  it('should reject a Letterboxd URL on a result that was not categorized', () => {
+    for (const status of ['not_found', 'error']) {
+      expect(
+        isCategorizeCardsResponse(
+          makeResponse([{ ...VALID_CARD_CATEGORY, status, categoryId: null }]),
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it('should accept a result that was not categorized and carries no URL', () => {
+    expect(
+      isCategorizeCardsResponse(
+        makeResponse([
+          { ...VALID_CARD_CATEGORY, status: 'not_found', categoryId: null, letterboxdUrl: null },
+        ]),
+      ),
+    ).toBe(true);
   });
 
   it('should reject a result whose title or qid has the wrong type', () => {

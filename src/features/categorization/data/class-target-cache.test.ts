@@ -15,28 +15,45 @@ describe('createClassTargetCache', () => {
   it('should return a category target that was just written', async () => {
     const cache = createClassTargetCache();
     await cache.putCategoryTargets(
-      new Map([[COMMUNE_CLASS_ID, { target: 'place' as const, label: null }]]),
+      new Map([
+        [COMMUNE_CLASS_ID, { target: 'place' as const, label: null, matchedRootIds: ['Q56061'] }],
+      ]),
     );
 
     const targets = await cache.getCategoryTargets([COMMUNE_CLASS_ID]);
 
-    expect(targets.get(COMMUNE_CLASS_ID)).toEqual({ target: 'place', label: null });
+    expect(targets.get(COMMUNE_CLASS_ID)).toEqual({
+      target: 'place',
+      label: null,
+      matchedRootIds: ['Q56061'],
+    });
   });
 
   it('should return an occupation target with its label', async () => {
     const cache = createClassTargetCache();
     await cache.putOccupationTargets(
-      new Map([[ACTOR_CLASS_ID, { target: 'cinema' as const, label: 'acteur ou actrice' }]]),
+      new Map([
+        [
+          ACTOR_CLASS_ID,
+          { target: 'cinema' as const, label: 'acteur ou actrice', matchedRootIds: [ACTOR_CLASS_ID] },
+        ],
+      ]),
     );
 
     const targets = await cache.getOccupationTargets([ACTOR_CLASS_ID]);
 
-    expect(targets.get(ACTOR_CLASS_ID)).toEqual({ target: 'cinema', label: 'acteur ou actrice' });
+    expect(targets.get(ACTOR_CLASS_ID)).toEqual({
+      target: 'cinema',
+      label: 'acteur ou actrice',
+      matchedRootIds: [ACTOR_CLASS_ID],
+    });
   });
 
   it('should treat a null target as a hit and not as a miss', async () => {
     const cache = createClassTargetCache();
-    await cache.putCategoryTargets(new Map([['Q999', { target: null, label: null }]]));
+    await cache.putCategoryTargets(
+      new Map([['Q999', { target: null, label: null, matchedRootIds: [] }]]),
+    );
 
     const targets = await cache.getCategoryTargets(['Q999']);
 
@@ -47,7 +64,7 @@ describe('createClassTargetCache', () => {
   it('should keep the two kinds in separate entries', async () => {
     const cache = createClassTargetCache();
     await cache.putCategoryTargets(
-      new Map([[ACTOR_CLASS_ID, { target: 'person' as const, label: null }]]),
+      new Map([[ACTOR_CLASS_ID, { target: 'person' as const, label: null, matchedRootIds: [] }]]),
     );
 
     expect((await cache.getOccupationTargets([ACTOR_CLASS_ID])).size).toBe(0);
@@ -59,6 +76,7 @@ describe('createClassTargetCache', () => {
       rootsVersion: ROOTS_VERSION + 1,
       target: 'place',
       label: null,
+      matchedRootIds: ['Q56061'],
     });
 
     const targets = await createClassTargetCache().getCategoryTargets([COMMUNE_CLASS_ID]);
@@ -70,6 +88,19 @@ describe('createClassTargetCache', () => {
     await storage.setItem(`local:wme:class:category:${COMMUNE_CLASS_ID}`, {
       rootsVersion: ROOTS_VERSION,
       target: 'not_a_category',
+      label: null,
+      matchedRootIds: [],
+    });
+
+    const targets = await createClassTargetCache().getCategoryTargets([COMMUNE_CLASS_ID]);
+
+    expect(targets.size).toBe(0);
+  });
+
+  it('should ignore an entry stored without its matched roots', async () => {
+    await storage.setItem(`local:wme:class:category:${COMMUNE_CLASS_ID}`, {
+      rootsVersion: ROOTS_VERSION,
+      target: 'place',
       label: null,
     });
 
