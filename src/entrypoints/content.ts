@@ -20,9 +20,13 @@ import { removeCardBadges } from '../features/category-badge/data/card-badge';
 import { removeModalCategoryLines } from '../features/category-badge/data/modal-category-line';
 import { syncCardBadges } from '../features/category-badge/presentation/sync-card-badges';
 import { syncModalCategory } from '../features/category-badge/presentation/sync-modal-category';
+import {
+  createCategoryHighlight,
+} from '../features/category-highlight/presentation/category-highlight';
 import { removeModalLink } from '../features/letterboxd/data/modal-link';
 import { syncModalLink } from '../features/letterboxd/presentation/sync-modal-link';
 import '../features/category-badge/presentation/category-badge.css';
+import '../features/category-highlight/presentation/category-highlight.css';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
 
@@ -59,6 +63,7 @@ export default defineContentScript({
     };
     /** Titles of the last scan, the cards the page shows right now. */
     let visibleTitles: ReadonlySet<string> = new Set<string>();
+    const highlight = createCategoryHighlight(root);
 
     /**
      * Brings the whole overlay in line with what is known of the cards given.
@@ -67,6 +72,7 @@ export default defineContentScript({
      */
     function syncOverlay(observedCards: readonly ObservedCard[]): void {
       syncCardBadges(observedCards, memory.categoriesByTitle);
+      highlight.sync(observedCards, memory.categoriesByTitle);
       // The observer of the cards also fires when the modal opens, so no
       // observer, no polling and no timer of its own is needed here. The modal
       // is looked up once and shared: both features write in the same one.
@@ -100,6 +106,7 @@ export default defineContentScript({
       // Reloading the extension leaves the page open: everything the overlay
       // added goes away with it, rather than staying behind with nobody to
       // keep it in line with the cards on screen.
+      highlight.destroy();
       removeCardBadges(root);
       removeModalCategoryLines(root);
       removeModalLink(root);
