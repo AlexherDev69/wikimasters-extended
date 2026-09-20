@@ -184,7 +184,7 @@ Le site n'expose aucun attribut `data-*` et chaque déploiement peut changer les
 | Décision | Recommandation | Pourquoi |
 | --- | --- | --- |
 | Manifest V3 ou userscript | Manifest V3 avec WXT, TypeScript strict, logique métier en modules purs sans dépendance à `chrome.*` | La partie difficile (DOM et pipeline Wikidata) est identique dans les deux cas. MV3 apporte un stockage isolé du site, un service worker pour le batch, des permissions déclarées et une distribution propre. Les modules purs gardent la porte ouverte à un build userscript |
-| Périmètre de l'overlay | wiki-masters.com uniquement en v1 | L'overlay sur fr.wikipedia.org ("vous possédez cette carte") est une fonctionnalité distincte. Elle sera facile ensuite grâce à l'index local |
+| Périmètre de l'overlay | wiki-masters.com uniquement en v1 | L'overlay sur fr.wikipedia.org ("vous possédez cette carte") est une fonctionnalité distincte, et sans index local elle demanderait une autre source pour savoir ce que l'utilisateur possède |
 | Séries TV sur Letterboxd | Pas de lien en v1 | Couverture trop faible, risque de liens morts |
 | UI du content script | TypeScript sans framework | Poids injecté minimal. React seulement si une page d'options ou de stats le justifie |
 
@@ -328,6 +328,7 @@ Plan initial, avec l'état de chaque point :
 - Page d'options intégrée (TypeScript sans framework) : cases à cocher enregistrées immédiatement, relecture du stockage si un enregistrement échoue, nombre de cartes et de classes en cache et de cartes dans l'index, "Vider le cache de catégorisation" et "Réinitialiser l'index de collection" avec confirmation, rappel de confidentialité. La fenêtre de statistiques gagne un accès "Options"
 - Vider le cache retire les faits par carte et les rattachements par classe, et rien d'autre : réglages, index de collection et délai d'attente imposé par Wikidata sont conservés
 - Manifest : seule l'entrée `options_ui` est ajoutée, permissions inchangées, aucun appel réseau dans cette phase
+- Cette section décrit ce qui a été livré ce jour-là. La liste des réglages a changé depuis : "index de collection" est parti avec la phase 8a, "images manquantes" est arrivé avec la phase 7a. Ils restent quatre, tous actifs par défaut
 
 Écarts assumés et décisions :
 
@@ -377,6 +378,14 @@ Plan initial, avec l'état de chaque point :
 Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre les deux formes est plus petit que l'écart d'un tirage à l'autre de la même forme, et à 50 cartes la forme avec images a même la meilleure médiane. Le service était dégradé ce jour-là (une requête triviale entre 1,4 s et 45 s, des 502 en série), ce qui explique des médianes très au-dessus des 1,1 s relevés en phase 3. La mesure vaut donc comme comparaison, pas comme référence absolue : à refaire sur un service sain
 - Piste écartée en revue : envelopper chaque propriété image dans `{ SELECT ... LIMIT 1 }` pour borner le produit cartésien. Une sous-requête SPARQL n'est pas corrélée, ce `LIMIT 1` renverrait une seule ligne pour tout le lot, donc une seule carte sur cinquante aurait son image
 
+#### Phase 7b : marque "Commons" sur les images ajoutées (faite le 2026-09-20, revue indépendante passée)
+
+- Demande de l'utilisateur : quand une image vient de l'extension et non du site, l'utilisateur doit pouvoir le voir sur la carte elle-même, sans ouvrir la modale
+- Une `span` de l'extension, texte "Commons", dans le coin bas droit de notre conteneur d'image, `pointer-events: none`, affichée seulement une fois l'image chargée (attribut `data-wme-image-loaded` posé par notre propre écouteur `load`). Une carte illustrée par le site ne porte donc jamais cette marque
+- Elle est placée une ligne au-dessus du bas de la zone image, car le badge de catégorie occupe déjà cette ligne et passe par-dessus : un libellé long recouvrait le début de la marque sur une carte de grille étroite. Le badge n'a pas été rétréci pour autant, cela aurait coûté des points de suspension à toutes les cartes pour régler le cas des seules cartes illustrées par l'extension
+- Même police et même graisse que le badge de catégorie, pour que les deux marques de l'extension se lisent comme un seul ensemble
+- Aucune requête de plus, aucun message de plus, manifest identique
+
 ### Phase 8 : étiquettes
 
 #### Phase 8a : retrait de l'index de collection (faite le 2026-09-20, revue indépendante passée)
@@ -414,13 +423,16 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 18. should show one badge "Personne · Cinéma" on the "Quentin Tarantino" card and no badge on a card whose article was not found
 19. should dim every card except the persons when "Personne" is chosen in the panel, and keep the filter on the next collection page
 20. should write nothing to the DOM when a sync runs on an unchanged page
-21. should record a card displayed on `/collection` and never a card displayed on `/marketplace`
-22. should count a card as "Non catégorisée" in the popup when its cached facts are missing, without any network call
+21. Retiré avec la phase 8a : portait sur l'enregistrement d'une carte dans l'index local
+22. Retiré avec la phase 8a : portait sur le décompte des cartes non catégorisées dans le popup
 23. should remove every badge at once when "Badge de catégorie" is switched off in the options, and bring them back when switched on again without reloading the tab
 24. should send no categorization request when the four settings are off
 25. should show an image from Commons on a card the site left without one, and leave a card that has a picture untouched
 26. should show no image and no credit line when Wikidata knows no image for the article
 27. should refuse a file name carrying a forbidden character, a lone surrogate or an extension outside the allowed list
+28. should show the "Commons" mark only once the image added by the extension has loaded, and never on a card illustrated by the site
+29. should show a loading state while the image is on its way, and leave only the site logo when it cannot be loaded
+30. should refuse a thumbnail address whose host merely ends with a Wikimedia host name
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 
@@ -428,8 +440,8 @@ Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P
 
 | # | Risque | Impact | Parade |
 | --- | --- | --- | --- |
-| R1 | Confirmé : collection paginée, un filtre DOM ne voit que la page courante | Filtres sur page peu utiles seuls | Vue par catégorie dans l'extension depuis l'index local, et étiquettes natives posées par l'utilisateur (phase 4) |
-| R6 | Index local incomplet : il ne contient que les cartes déjà affichées | Stats et vue par catégorie partielles | Indicateur "n cartes indexées", remplissage naturel en parcourant la collection, aucun scroll ni pagination automatique |
+| R1 | Confirmé : collection paginée, un filtre DOM ne voit que la page courante | Filtres sur page peu utiles seuls | Assumé : la mise en évidence agit sur la page affichée, et les étiquettes natives posées par l'utilisateur prennent le relais pour le reste (phase 8) |
+| R6 | Retiré avec la phase 8a : portait sur l'index local incomplet | | |
 | R2 | Changement du DOM à chaque déploiement du site | Détection cassée | Détection structurelle, sélecteurs centralisés, fixtures, mode dégradé silencieux |
 | R3 | Interprétation stricte des règles par le site | Bannissement du compte | Lecture seule stricte, aucun avantage de jeu, accord du développeur avant publication |
 | R4 | Indisponibilité ou limitation de query.wikidata.org | Cartes non catégorisées temporairement | Cache, backoff, file d'attente, P31 brut via `wbgetclaims` en dernier recours |
