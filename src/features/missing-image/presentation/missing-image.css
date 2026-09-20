@@ -61,6 +61,45 @@
   padding: 6%;
 }
 
+[data-wme-card-image] .wme-card-image-source {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  /*
+   * Above our own image, and no further: the container is positioned and
+   * carries a z-index of its own, so it is a stacking context and this mark
+   * cannot rise above the badges and buttons the site puts over the card.
+   */
+  z-index: 1;
+  /* Shown only once our own load listener marks the container, see below. */
+  display: none;
+  box-sizing: border-box;
+  max-width: calc(100% - 8px);
+  padding: 1px 4px;
+  border-radius: 999px;
+  background-color: rgba(9, 12, 17, 0.72);
+  /* The card is clickable everywhere: our mark must never take that click. */
+  pointer-events: none;
+  /*
+   * Smaller than the category badge, and sized on the viewport for the same
+   * reason: a card cannot become a container without restyling a node of the
+   * site, so the two card formats differ only by the size of their root.
+   */
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: clamp(7px, 0.6vw, 9px);
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+/*
+ * A mark must never appear over a picture that failed to load: what the user
+ * sees then is the logo of the site, which comes from the site itself.
+ */
+[data-wme-card-image][data-wme-image-loaded] .wme-card-image-source {
+  display: block;
+}
+
 [data-wme-image-credit] {
   display: flex;
   align-items: center;

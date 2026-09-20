@@ -11,6 +11,7 @@ import {
   IMAGE_FILE_ATTRIBUTE,
   IMAGE_KIND_ATTRIBUTE,
   IMAGE_LOADED_ATTRIBUTE,
+  IMAGE_SOURCE_MARK_ATTRIBUTE,
 } from './image-selectors';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');
@@ -19,6 +20,11 @@ const PLACEHOLDER_HTML = readFileSync(join(FIXTURES_DIR, 'placeholder-cards.html
 
 const PLACEHOLDER_TITLE = 'Adan Canto';
 const REAL_PICTURE_TITLE = 'Airbus A400M Atlas';
+
+/** What the mark reads, as data/card-image.ts writes it. */
+const IMAGE_SOURCE_LABEL = 'Commons';
+
+const IMAGE_SOURCE_MARK_SELECTOR = `[${IMAGE_SOURCE_MARK_ATTRIBUTE}]`;
 
 const PORTRAIT: CardImage = { fileName: 'Adan Canto 2015.jpg', kind: 'picture' };
 const PORTRAIT_URL =
@@ -40,6 +46,11 @@ function container(): HTMLElement | null {
 
 function ourImage(): HTMLImageElement | null {
   return container()?.querySelector<HTMLImageElement>('img') ?? null;
+}
+
+/** The mark naming the source, looked for in the whole page, not only in ours. */
+function ourMark(): HTMLElement | null {
+  return document.body.querySelector<HTMLElement>(IMAGE_SOURCE_MARK_SELECTOR);
 }
 
 /** The page as the site wrote it, whatever we added to it. */
@@ -99,12 +110,22 @@ describe('applyCardImage', () => {
     expect(container()?.getAttribute(IMAGE_KIND_ATTRIBUTE)).toBe('emblem');
   });
 
-  it('should build the container from a div and an img only, so the scanner ignores it', () => {
+  it('should build the container from a div, an img and a span only, so the scanner ignores it', () => {
     applyCardImage(cardRootOf(PLACEHOLDER_TITLE), PORTRAIT);
 
     const tags = [...(container()?.querySelectorAll('*') ?? [])].map((node) => node.tagName);
     expect(container()?.tagName).toBe('DIV');
-    expect(new Set(tags)).toEqual(new Set(['IMG']));
+    expect(new Set(tags)).toEqual(new Set(['IMG', 'SPAN']));
+  });
+
+  it('should name the source of the picture inside our container, and nowhere else', () => {
+    const cardRoot = cardRootOf(PLACEHOLDER_TITLE);
+
+    applyCardImage(cardRoot, PORTRAIT);
+
+    expect(cardRoot.querySelectorAll(IMAGE_SOURCE_MARK_SELECTOR)).toHaveLength(1);
+    expect(ourMark()?.textContent).toBe(IMAGE_SOURCE_LABEL);
+    expect(ourMark()?.closest(CARD_IMAGE_SELECTOR)).toBe(container());
   });
 
   it('should carry no class that the card detection could take for a card', () => {
@@ -189,6 +210,22 @@ describe('applyCardImage', () => {
     observer.disconnect();
   });
 
+  it('should rebuild a container whose mark was lost', () => {
+    const cardRoot = cardRootOf(PLACEHOLDER_TITLE);
+    applyCardImage(cardRoot, PORTRAIT);
+    ourMark()?.remove();
+
+    applyCardImage(cardRoot, PORTRAIT);
+
+    expect(document.body.querySelectorAll(CARD_IMAGE_SELECTOR)).toHaveLength(1);
+    expect(ourMark()?.textContent).toBe(IMAGE_SOURCE_LABEL);
+    // And the sync that follows the rebuild is back to writing nothing.
+    const observer = observeBody();
+    applyCardImage(cardRoot, PORTRAIT);
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
   it('should remove our container when the card has no image any more', () => {
     const cardRoot = cardRootOf(PLACEHOLDER_TITLE);
     applyCardImage(cardRoot, PORTRAIT);
@@ -196,6 +233,16 @@ describe('applyCardImage', () => {
     applyCardImage(cardRoot, null);
 
     expect(container()).toBeNull();
+  });
+
+  it('should take the mark back with the container when the image becomes unknown', () => {
+    const cardRoot = cardRootOf(PLACEHOLDER_TITLE);
+    applyCardImage(cardRoot, PORTRAIT);
+    ourImage()?.dispatchEvent(new Event('load'));
+
+    applyCardImage(cardRoot, null);
+
+    expect(ourMark()).toBeNull();
   });
 
   it('should remove our container when the site swapped in a real picture', () => {
@@ -249,6 +296,17 @@ describe('applyCardImage', () => {
     applyCardImage(cardRoot, PORTRAIT);
     applyCardImage(cardRoot, EMBLEM);
 
+    expect(siteHtmlWithoutOurNodes()).toBe(siteHtml);
+  });
+
+  it('should leave every node of the site untouched when the mark is shown', () => {
+    const siteHtml = document.body.innerHTML;
+    const cardRoot = cardRootOf(PLACEHOLDER_TITLE);
+
+    applyCardImage(cardRoot, PORTRAIT);
+    ourImage()?.dispatchEvent(new Event('load'));
+
+    expect(ourMark()).not.toBeNull();
     expect(siteHtmlWithoutOurNodes()).toBe(siteHtml);
   });
 });
