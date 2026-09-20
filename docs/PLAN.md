@@ -267,7 +267,7 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 - Couplage accepté : la ligne de catégorie de la modale connaît le sélecteur du lien Letterboxd pour se placer après lui (dépendance à sens unique, sans cycle)
 - La mémoire des résultats (`rememberCategories`) a rejoint `categorization/presentation` et la recherche de la modale `card-detection/data` : elles servent désormais à plusieurs fonctionnalités
 
-Reste à faire par l'utilisateur : contrôle visuel dans Chrome (lisibilité du badge sur les petites cartes de la grille, emplacement du panneau) et validation des choix de présentation.
+Reste à faire par l'utilisateur : contrôle visuel dans Chrome (lisibilité du badge sur les petites cartes de la grille) et validation des choix de présentation. La part qui portait sur l'emplacement du panneau est sans objet depuis la phase 10b.
 
 #### Phase 4c : index local de la collection et fenêtre de statistiques (faite le 2026-09-20, RETIRÉE le 2026-09-20, voir phase 8a)
 
@@ -345,7 +345,7 @@ Plan initial, avec l'état de chaque point :
 - Page d'options intégrée (TypeScript sans framework) : cases à cocher enregistrées immédiatement, relecture du stockage si un enregistrement échoue, nombre de cartes et de classes en cache et de cartes dans l'index, "Vider le cache de catégorisation" et "Réinitialiser l'index de collection" avec confirmation, rappel de confidentialité. La fenêtre de statistiques gagne un accès "Options"
 - Vider le cache retire les faits par carte et les rattachements par classe, et rien d'autre : réglages, index de collection et délai d'attente imposé par Wikidata sont conservés
 - Manifest : seule l'entrée `options_ui` est ajoutée, permissions inchangées, aucun appel réseau dans cette phase
-- Cette section décrit ce qui a été livré ce jour-là. La liste des réglages a changé depuis : "index de collection" est parti avec la phase 8a, "images manquantes" est arrivé avec la phase 7a. "masquer les statistiques" est arrivé avec la phase 10a. Ils sont cinq, dont quatre actifs par défaut
+- Cette section décrit ce qui a été livré ce jour-là. La liste des réglages a changé depuis : "index de collection" est parti avec la phase 8a, "images manquantes" est arrivé avec la phase 7a. "masquer les statistiques" est arrivé avec la phase 10a, "étiquettes suggérées" et "remplir l'étiquette au clic" avec la phase 8b, et "mise en évidence par catégorie" est parti avec la phase 10b. Ils sont six, dont quatre actifs par défaut
 
 Écarts assumés et décisions :
 
@@ -516,7 +516,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 16. should read the article title from the Wikipedia link when the detail modal is open
 17. should classify "Hutte" as "Science et concept" when the item has P279 but no P31
 18. should show one badge "Personne · Cinéma" on the "Quentin Tarantino" card and no badge on a card whose article was not found
-19. should dim every card except the persons when "Personne" is chosen in the panel, and keep the filter on the next collection page
+19. Retiré avec la phase 10b : portait sur la mise en évidence par catégorie
 20. should write nothing to the DOM when a sync runs on an unchanged page
 21. Retiré avec la phase 8a : portait sur l'enregistrement d'une carte dans l'index local
 22. Retiré avec la phase 8a : portait sur le décompte des cartes non catégorisées dans le popup

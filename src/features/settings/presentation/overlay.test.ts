@@ -426,7 +426,7 @@ describe('createOverlay', () => {
     expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(drawn);
   });
 
-  it('should ask for no categorization at all when the four settings are off', () => {
+  it('should ask for no categorization at all when every setting is off', () => {
     document.body.innerHTML = GRID_HTML + LARGE_HTML;
     const { overlay, categorize } = mount(ALL_OFF);
 

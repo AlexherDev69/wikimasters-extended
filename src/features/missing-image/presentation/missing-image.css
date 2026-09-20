@@ -21,8 +21,8 @@
   pointer-events: none;
   /*
    * Inside the image area of the site, which is its own stacking context: the
-   * rarity badge, the favourite button, our category badge and the veil of the
-   * highlight all stay above it.
+   * rarity badge, the favourite button and our category badge all stay above
+   * it.
    */
   z-index: 1;
   /*
