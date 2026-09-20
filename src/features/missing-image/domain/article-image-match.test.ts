@@ -45,6 +45,29 @@ describe('findArticleImageFile', () => {
     expect(findArticleImageFile('Harry Hole', [])).toBeNull();
   });
 
+  it('should accept the title followed by a word that names the picture', () => {
+    const file = findArticleImageFile('Backrooms', ['Async Logo.png', 'Backrooms Logo.png']);
+
+    expect(file).toEqual({ fileName: 'Backrooms Logo.png', kind: 'emblem' });
+  });
+
+  it('should accept that word whatever its case', () => {
+    expect(findArticleImageFile('Backrooms', ['Backrooms logo.png'])).not.toBeNull();
+    expect(findArticleImageFile('Lost River', ['Lost River AFFICHE.jpg'])).not.toBeNull();
+  });
+
+  it('should refuse a word that names another subject rather than the picture', () => {
+    // The trap a free prefix would fall into: this file is a portrait of
+    // someone else, and it begins with the title of the article "Paris".
+    expect(findArticleImageFile('Paris', ['Paris Hilton.jpg'])).toBeNull();
+  });
+
+  it('should prefer the exact name over a qualified one wherever each sits in the list', () => {
+    const file = findArticleImageFile('Alpha', ['Alpha Logo.png', 'Alpha.jpg']);
+
+    expect(file).toEqual({ fileName: 'Alpha.jpg', kind: 'picture' });
+  });
+
   it('should treat a PNG or an SVG as an emblem and a JPG or JPEG as a picture', () => {
     expect(findArticleImageFile('X', ['X.png'])?.kind).toBe('emblem');
     expect(findArticleImageFile('X', ['X.svg'])?.kind).toBe('emblem');

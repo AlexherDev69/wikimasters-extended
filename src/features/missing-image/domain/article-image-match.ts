@@ -25,6 +25,34 @@ const EXTENSION_SEPARATOR = '.';
 const EMBLEM_EXTENSIONS: readonly string[] = ['png', 'svg'];
 
 /**
+ * The words a file name may carry AFTER the title of the article, when no
+ * file carries the title on its own. An article about a series, a brand or
+ * an organisation very often illustrates itself with a file named
+ * "<title> Logo" and never "<title>", which the exact rule below misses
+ * entirely: "Backrooms (web-série)" shows "Backrooms Logo.png" in its own
+ * infobox and received no image at all.
+ *
+ * A closed list, deliberately, and not a free prefix: "Paris Hilton.jpg"
+ * begins with the title of the article "Paris", and a prefix rule would put
+ * a portrait of someone else on that card. Every word here names the picture
+ * itself, so it can only ever qualify the title it follows, never introduce
+ * another subject.
+ */
+const TITLE_QUALIFIERS: readonly string[] = [
+  'logo',
+  'logotype',
+  'affiche',
+  'poster',
+  'cover',
+  'couverture',
+  'banner',
+  'titre',
+  'title',
+];
+
+const QUALIFIER_SEPARATOR = ' ';
+
+/**
  * Removes a trailing disambiguation parenthetical from an article title, so
  * "Harry Hole (série télévisée)" is compared against a file name as
  * "Harry Hole", and "Lost River (film)" as "Lost River".
@@ -51,12 +79,27 @@ function articleFileKind(fileName: string): CardImageKind {
   return EMBLEM_EXTENSIONS.includes(fileExtension(fileName)) ? 'emblem' : 'picture';
 }
 
+/** True while `baseName` is the title followed by one of the words above. */
+function isQualifiedTitle(baseName: string, strippedTitle: string): boolean {
+  const prefix = `${strippedTitle}${QUALIFIER_SEPARATOR}`;
+
+  return (
+    baseName.startsWith(prefix) &&
+    TITLE_QUALIFIERS.includes(baseName.slice(prefix.length).toLowerCase())
+  );
+}
+
 /**
- * The file among `usedFileNames` whose name, without its extension, equals
- * `strippedTitle` exactly. No fuzzy matching, no "contains", no accent
- * folding: the comparison is on the exact string, because a looser rule is
- * what puts a wrong picture on a card (measured on 2026-09-20 against the
- * live API, see the phase 7d specification).
+ * The file among `usedFileNames` whose name, without its extension, is
+ * `strippedTitle` exactly, or failing that the title followed by one word
+ * that names a picture. No fuzzy matching, no "contains", no accent folding:
+ * the comparison is on the exact string, because a looser rule is what puts
+ * a wrong picture on a card (measured on 2026-09-20 against the live API,
+ * see the phase 7d specification).
+ *
+ * The exact name is searched across every file before the qualified one is
+ * considered at all: a file carrying the title alone is the article saying
+ * "this is me", and it outranks a logo whatever order the API listed them in.
  *
  * `usedFileNames` must already be restricted to the files the article itself
  * links to (rule 4): this function has no way to tell where a name came from,
@@ -68,6 +111,11 @@ export function findArticleImageFile(
 ): CommonsFile | null {
   for (const fileName of usedFileNames) {
     if (isCommonsFileName(fileName) && fileBaseName(fileName) === strippedTitle) {
+      return { fileName, kind: articleFileKind(fileName) };
+    }
+  }
+  for (const fileName of usedFileNames) {
+    if (isCommonsFileName(fileName) && isQualifiedTitle(fileBaseName(fileName), strippedTitle)) {
       return { fileName, kind: articleFileKind(fileName) };
     }
   }

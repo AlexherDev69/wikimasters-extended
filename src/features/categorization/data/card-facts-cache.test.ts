@@ -12,7 +12,7 @@ const START_TIME = new Date('2026-01-01T00:00:00.000Z').getTime();
 
 /** Version 1 held the same facts without the image of the card. */
 const PREVIOUS_SCHEMA_VERSION = 1;
-const CURRENT_SCHEMA_VERSION = 4;
+const CURRENT_SCHEMA_VERSION = 5;
 
 const FACTS: EntityFacts = {
   qid: 'Q937',
