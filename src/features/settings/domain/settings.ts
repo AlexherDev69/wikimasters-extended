@@ -10,7 +10,7 @@ export interface Settings {
   categoryBadges: boolean;
   /** Floating panel of the page, and the veils of the filter it drives. */
   categoryHighlight: boolean;
-  /** Letterboxd link in the detail modal. */
+  /** Letterboxd link in the detail modal, and the button on the card itself. */
   letterboxdLink: boolean;
   /** Image of Wikimedia Commons on the cards the site leaves without one. */
   missingImages: boolean;

@@ -1,0 +1,65 @@
+/*
+ * Styles of the nodes this feature adds to the page. Every selector starts
+ * with one of our data attributes, so no rule of ours can reach a node of the
+ * site, and no rule of the site is overridden.
+ */
+
+[data-wme-letterboxd-card] {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /*
+   * The category badge now sits at the top of the text area, straddling the
+   * line between the picture and the text: this button sits at the bottom of
+   * the same area instead, on the padding the text area keeps under its stats
+   * row, so the two can never meet whatever either one shows.
+   */
+  bottom: 4px;
+  box-sizing: border-box;
+  width: clamp(16px, 1.6vw, 20px);
+  height: clamp(16px, 1.6vw, 20px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: rgba(9, 12, 17, 0.82);
+  /*
+   * The only node of the extension that takes a click on a card: every other
+   * one stays `pointer-events: none`. See data/card-button.ts for why this
+   * one click is allowed to reach a listener at all.
+   */
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+[data-wme-letterboxd-card]:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
+[data-wme-letterboxd-card] .wme-letterboxd-dot {
+  /*
+   * The button itself is the positioning context: it carries `position:
+   * absolute` above, which is enough to place these without a rule of its own.
+   */
+  position: absolute;
+  top: 20%;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+}
+
+/* The three discs of the mark, overlapping as the real logo does. */
+[data-wme-letterboxd-card] .wme-letterboxd-dot-1 {
+  left: 12%;
+  background-color: #ff8000;
+}
+
+[data-wme-letterboxd-card] .wme-letterboxd-dot-2 {
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #00e054;
+}
+
+[data-wme-letterboxd-card] .wme-letterboxd-dot-3 {
+  right: 12%;
+  background-color: #40bcf4;
+}
