@@ -11,6 +11,7 @@ import { createTitleResolver } from '../features/categorization/data/title-resol
 import type { CategorizeCardsDeps } from '../features/categorization/domain/categorize-cards';
 import type { Clock } from '../features/categorization/domain/ports';
 import { createCategorizeMessageHandler } from '../features/categorization/presentation/handle-categorize-message';
+import { createArticleImageSource } from '../features/missing-image/data/article-image-source';
 import { createThumbnailUrlCache } from '../features/missing-image/data/thumbnail-cache';
 import { createThumbnailUrlResolver } from '../features/missing-image/data/thumbnail-resolver';
 import { createLegacyIndexStorage } from '../features/settings/data/legacy-index-storage';
@@ -37,7 +38,8 @@ export default defineBackground({
       classRootsSource: createClassRootsSource(httpOptions),
       cardFactsCache: createCardFactsCache(systemClock),
       classTargetCache: createClassTargetCache(),
-      // The one new request of this phase, to the host the titles already go to.
+      // The new source of phase 7d, to the host the titles already go to.
+      articleImageSource: createArticleImageSource(httpOptions),
       thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
       thumbnailUrlCache: createThumbnailUrlCache(systemClock),
       logger,

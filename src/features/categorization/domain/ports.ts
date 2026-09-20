@@ -1,3 +1,4 @@
+import type { CommonsFile } from '../../missing-image/domain/card-image';
 import type { CategoryId, PersonSubtypeId } from './category';
 import type { EntityFacts } from './entity-facts';
 
@@ -63,6 +64,16 @@ export interface CardFactsCache {
  */
 export interface ThumbnailUrlSource {
   resolveThumbnailUrls(fileNames: readonly string[]): Promise<Map<string, string | null>>;
+}
+
+/**
+ * The image an article uses for itself, for a card whose Wikidata image
+ * properties (P18 and friends) leave it without one. Null is an answer: none
+ * of the guards of this second image source were satisfied, and the card
+ * stays without a picture exactly as before this source existed.
+ */
+export interface ArticleImageSource {
+  findArticleImages(titles: readonly string[]): Promise<Map<string, CommonsFile | null>>;
 }
 
 export interface ThumbnailUrlCache {

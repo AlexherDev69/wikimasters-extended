@@ -18,11 +18,16 @@ import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '..
 export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
 
 /**
- * Bump when the stored shape changes: entries of another version are misses.
- * Version 2 added the image of the card, which entries written before do not
- * hold: they are fetched again, once, on the next display of their card.
+ * Bump when the stored shape changes, or when an entry of the current shape
+ * can no longer be trusted to hold everything a fresh fetch would give it.
+ * Version 2 added the image of the card. Version 3 changes nothing in the
+ * shape itself: the article's own image (phase 7d) is written into that same
+ * `image` field when Wikidata left it empty, so an entry written under
+ * version 2 never tried and must expire just the same, even though it would
+ * still pass every structural check below. Entries of either version are
+ * fetched again, once, on the next display of their card.
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;

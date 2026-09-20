@@ -12,7 +12,7 @@ const START_TIME = new Date('2026-01-01T00:00:00.000Z').getTime();
 
 /** Version 1 held the same facts without the image of the card. */
 const PREVIOUS_SCHEMA_VERSION = 1;
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 const FACTS: EntityFacts = {
   qid: 'Q937',
@@ -142,6 +142,23 @@ describe('createCardFactsCache', () => {
       status: 'resolved',
       // Version 1 held exactly these fields, and no image at all.
       facts: { qid, classIds, parentClassIds, occupationIds, externalIds },
+      fetchedAt: START_TIME,
+    });
+
+    const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
+
+    expect(fresh.size).toBe(0);
+  });
+
+  it('should ignore an entry written before the article itself was tried as a second image source', async () => {
+    // Version 2 has exactly the current shape, image included: nothing here
+    // would fail a structural check, only the version number says this entry
+    // never had a chance to pick up the article's own image.
+    const PREVIOUS_MISSING_IMAGE_SCHEMA_VERSION = 2;
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: PREVIOUS_MISSING_IMAGE_SCHEMA_VERSION,
+      status: 'resolved',
+      facts: { ...FACTS, image: null },
       fetchedAt: START_TIME,
     });
 
