@@ -9,6 +9,7 @@ import {
 import { isValidTitle, MAX_CARDS_PER_REQUEST } from '../../categorization/presentation/messages';
 import { isCollectionPath } from '../domain/collection-path';
 import type { RecordedCard } from '../domain/collection-index';
+import { createRouteMemory } from './route-memory';
 
 /** Sends one batch to the service worker. Rejects when it was not recorded. */
 export type SendRecordedCards = (cards: readonly RecordedCard[]) => Promise<void>;
@@ -53,13 +54,11 @@ export function createCollectionRecorder(deps: CollectionRecorderDeps): Collecti
   const sentTitles = new Set<string>();
 
   /**
-   * Path of the previous scan, null before the first one. A scan is debounced,
-   * so the first one after a client side navigation can read the cards of the
-   * page being left while the URL already names the new one. Recording those
-   * would say the user owns cards of the marketplace, for good, so that first
-   * scan is skipped: the rendering of the new page triggers the next one.
+   * Recording the cards of the page being left would say the user owns cards
+   * of the marketplace, for good, so the first scan after a client side
+   * navigation is skipped: the rendering of the new page triggers the next one.
    */
-  let previousPathname: string | null = null;
+  const routeMemory = createRouteMemory();
 
   /**
    * Gives the titles of a rejected batch another chance, no sooner than the
@@ -108,8 +107,9 @@ export function createCollectionRecorder(deps: CollectionRecorderDeps): Collecti
 
   return {
     record(observedCards: readonly ObservedCard[], pathname: string): void {
-      const routeChanged = previousPathname !== null && previousPathname !== pathname;
-      previousPathname = pathname;
+      // Noted before anything else, so the route memory keeps advancing while
+      // the feature is off.
+      const routeChanged = routeMemory.noteScan(pathname);
 
       // Nothing is sent and nothing is remembered as sent while the feature is
       // off, so the cards seen meanwhile are sent by the first scan that
