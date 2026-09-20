@@ -21,6 +21,7 @@ import '../features/category-badge/presentation/category-badge.css';
 import '../features/category-highlight/presentation/category-highlight.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/missing-image/presentation/missing-image.css';
+import '../features/tag-suggestions/presentation/tag-suggestions.css';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
 

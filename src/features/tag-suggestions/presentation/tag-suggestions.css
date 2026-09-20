@@ -1,0 +1,39 @@
+/*
+ * Styles of the nodes this feature adds to the page. Every selector starts
+ * with one of our data attributes, so no rule of ours can reach a node of the
+ * site, and no rule of the site is overridden.
+ */
+
+[data-wme-tag-suggestions] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+[data-wme-tag-suggestions] .wme-tag-suggestions-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Clickable, unlike every read-only node this extension otherwise draws. */
+[data-wme-tag-suggestion] {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+[data-wme-tag-suggestion]:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-wme-tag-suggestion]:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}

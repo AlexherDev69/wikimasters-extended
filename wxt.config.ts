@@ -19,7 +19,8 @@ export default defineConfig({
   },
   manifest: {
     name: EXTENSION_NAME,
-    description: "Overlay en lecture seule pour wiki-masters.com : catégorisation des cartes via Wikidata.",
+    description:
+      'Overlay pour wiki-masters.com, en lecture seule par défaut : catégorisation des cartes via Wikidata.',
     version: '0.1.0',
     // Declared here because no popup entrypoint declares it any more: without
     // it the extension would have no icon in the toolbar at all. A click on it

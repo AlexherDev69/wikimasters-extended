@@ -23,6 +23,8 @@ const STATUS_TEXTS: Record<SaveStatus, string> = {
 interface FeatureText {
   label: string;
   hint: string;
+  /** Carries a visible warning style: the switch writes on the site itself. */
+  warning?: boolean;
 }
 
 const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
@@ -53,6 +55,22 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       "Rien n'est envoyé ni modifié sur le site, et décocher cette case les fait réapparaître " +
       'immédiatement.',
   },
+  tagSuggestions: {
+    label: 'Étiquettes suggérées',
+    hint:
+      "Propose des étiquettes dans la modale de détail, d'après ce que Wikidata sait de la carte. " +
+      "Lecture seule : rien n'est écrit sur le site tant que le réglage suivant reste désactivé.",
+  },
+  tagAutoFill: {
+    label: "Remplir l'étiquette au clic",
+    hint:
+      "Un clic sur une étiquette suggérée l'écrit et la valide dans le champ du site, à ta place : " +
+      'le site ne peut pas distinguer cela de ta propre frappe au clavier. Les règles de ' +
+      'wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou ' +
+      'interagir à votre place", sanction annoncée : bannissement de TON compte wiki-masters.com, ' +
+      'sans préavis. Laisse cette case décochée sauf accord explicite des auteurs du site.',
+    warning: true,
+  },
 };
 
 const LABEL_TAG = 'label';
@@ -69,6 +87,7 @@ const SETTING_ATTRIBUTE = 'data-wme-setting';
 const STATUS_ATTRIBUTE = 'data-wme-status';
 
 const SETTING_CLASS = 'wme-setting';
+const SETTING_WARNING_CLASS = 'wme-setting--warning';
 const SETTING_HEAD_CLASS = 'wme-setting-head';
 const SETTING_LABEL_CLASS = 'wme-setting-label';
 const SETTING_HINT_CLASS = 'wme-setting-hint';
@@ -92,7 +111,9 @@ function renderSwitch(
   checked: boolean,
   callbacks: FeatureCallbacks,
 ): HTMLElement {
-  const row = createBlock(SETTING_CLASS);
+  const text = FEATURE_TEXTS[key];
+  const rowClass = text.warning === true ? `${SETTING_CLASS} ${SETTING_WARNING_CLASS}` : SETTING_CLASS;
+  const row = createBlock(rowClass);
   const head = document.createElement(LABEL_TAG);
   head.className = SETTING_HEAD_CLASS;
 
@@ -104,7 +125,6 @@ function renderSwitch(
     callbacks.onToggleSetting(key);
   });
 
-  const text = FEATURE_TEXTS[key];
   head.appendChild(checkbox);
   head.appendChild(createText(SETTING_LABEL_CLASS, text.label));
   row.appendChild(head);

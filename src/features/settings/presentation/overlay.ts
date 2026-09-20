@@ -23,6 +23,8 @@ import { removeCardImages } from '../../missing-image/data/card-image';
 import { removeModalCreditLines } from '../../missing-image/data/modal-credit-line';
 import { syncCardImages } from '../../missing-image/presentation/sync-card-images';
 import { syncModalCredit } from '../../missing-image/presentation/sync-modal-credit';
+import { removeTagProposals } from '../../tag-suggestions/presentation/apply-tag-proposals';
+import { syncTagSuggestions } from '../../tag-suggestions/presentation/sync-tag-suggestions';
 import { hasEnabledFeature, type Settings } from '../domain/settings';
 
 /**
@@ -101,12 +103,17 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.hideCardStats) {
       applyHideCardStats(root.ownerDocument);
     }
-    if (!settings.categoryBadges && !settings.letterboxdLink && !settings.missingImages) {
+    if (
+      !settings.categoryBadges &&
+      !settings.letterboxdLink &&
+      !settings.missingImages &&
+      !settings.tagSuggestions
+    ) {
       return;
     }
     // The observer of the cards also fires when the modal opens, so no
     // observer, no polling and no timer of its own is needed here. The modal
-    // is looked up once and shared: the three features write in the same one.
+    // is looked up once and shared: the four features write in the same one.
     const modal = findDetailModal(root);
     if (settings.letterboxdLink) {
       syncModalLink(modal, categoriesByTitle);
@@ -116,6 +123,13 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
     if (settings.missingImages) {
       syncModalCredit(modal, categoriesByTitle);
+    }
+    if (settings.tagSuggestions) {
+      syncTagSuggestions(modal, categoriesByTitle, {
+        // Read again on every click, never captured here: switching the
+        // setting off stops it from the very next click, not the next sync.
+        isAutoFillEnabled: (): boolean => settings.tagAutoFill,
+      });
     }
   }
 
@@ -171,6 +185,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (previous.hideCardStats && !settings.hideCardStats) {
       removeHideCardStats(root.ownerDocument);
     }
+    if (previous.tagSuggestions && !settings.tagSuggestions) {
+      removeTagProposals(root);
+    }
   }
 
   return {
@@ -199,6 +216,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCardImages(root);
       removeModalCreditLines(root);
       removeHideCardStats(root.ownerDocument);
+      removeTagProposals(root);
     },
   };
 }

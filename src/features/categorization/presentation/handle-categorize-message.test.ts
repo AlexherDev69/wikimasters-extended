@@ -17,6 +17,7 @@ const CATEGORIZED_CARD: CardCategory = {
   // The stubbed facts carry no external id, so the film falls back to a search.
   letterboxdUrl: 'https://letterboxd.com/search/Pulp%20Fiction/',
   image: null,
+  suggestedTags: ['Cinéma et TV'],
 };
 
 /** Deps that resolve the single test card entirely from the card cache. */

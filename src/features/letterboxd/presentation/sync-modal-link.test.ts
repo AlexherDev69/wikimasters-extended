@@ -25,6 +25,7 @@ function makeCategory(title: string, letterboxdUrl: string | null): CardCategory
     personSubtypes: [],
     letterboxdUrl,
     image: null,
+    suggestedTags: [],
   };
 }
 
