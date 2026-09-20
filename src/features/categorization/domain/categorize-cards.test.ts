@@ -19,6 +19,7 @@ import {
   THUMBNAIL_URL_KEY_PREFIX,
 } from '../../missing-image/data/thumbnail-cache';
 import { createThumbnailUrlResolver } from '../../missing-image/data/thumbnail-resolver';
+import type { CommonsFile } from '../../missing-image/domain/card-image';
 import { createCardFactsCache } from '../data/card-facts-cache';
 import { createClassRootsSource } from '../data/class-roots-source';
 import { createClassTargetCache } from '../data/class-target-cache';
@@ -35,11 +36,13 @@ import {
 } from './categorize-cards';
 import type { EntityFacts } from './entity-facts';
 import type {
+  ArticleImageSource,
   CachedCardFacts,
   ClassResolution,
   Clock,
   ThumbnailUrlCache,
   ThumbnailUrlSource,
+  TitleResolver,
 } from './ports';
 
 /** Expected output of the 100 real cards, produced independently from the rules. */
@@ -139,9 +142,56 @@ function makeDeps(fetchImpl: FetchLike, logger: Logger = makeLogger()): Categori
     classRootsSource: createClassRootsSource(httpOptions),
     cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
     classTargetCache: createClassTargetCache(),
+    // Every golden card was recorded before this source existed and has no
+    // Wikidata image, so a real one here would send it a request the replay
+    // fixtures know nothing about. The dedicated tests below give it their own.
+    articleImageSource: emptyArticleImageSource(),
     thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
     thumbnailUrlCache: createThumbnailUrlCache(SYSTEM_CLOCK),
     logger,
+  };
+}
+
+interface FakeArticleImageSource extends ArticleImageSource {
+  /** Every batch of titles this fake was asked about, in call order. */
+  calls: string[][];
+}
+
+/** An answer that never resolves anything: every title stays unknown, exactly like a truncated batch. */
+function emptyArticleImageSource(): ArticleImageSource {
+  return {
+    findArticleImages: (): Promise<Map<string, CommonsFile | null>> => Promise.resolve(new Map()),
+  };
+}
+
+/**
+ * Answers only for the titles present in `definiteAnswers`, a file or an
+ * explicit null: a requested title absent from it is left out of the answer
+ * altogether, exactly as the real source leaves a title MediaWiki's
+ * continuation cut off.
+ */
+function fakeArticleImageSource(
+  definiteAnswers: ReadonlyMap<string, CommonsFile | null>,
+): FakeArticleImageSource {
+  const calls: string[][] = [];
+  return {
+    calls,
+    findArticleImages(titles: readonly string[]): Promise<Map<string, CommonsFile | null>> {
+      calls.push([...titles]);
+      const resolved = new Map<string, CommonsFile | null>();
+      for (const title of titles) {
+        if (definiteAnswers.has(title)) {
+          resolved.set(title, definiteAnswers.get(title) ?? null);
+        }
+      }
+      return Promise.resolve(resolved);
+    },
+  };
+}
+
+function failingArticleImageSource(error: Error): ArticleImageSource {
+  return {
+    findArticleImages: (): Promise<Map<string, CommonsFile | null>> => Promise.reject(error),
   };
 }
 
@@ -266,6 +316,7 @@ function makeStubDeps(cachedTargets: Map<string, CategoryId | null>): Categorize
         Promise.resolve(new Map()),
       putOccupationTargets: (): Promise<void> => Promise.resolve(),
     },
+    articleImageSource: emptyArticleImageSource(),
     // The stub card has no image, so this stage is never reached.
     thumbnailUrlSource: emptyThumbnailUrlSource(),
     thumbnailUrlCache: emptyThumbnailUrlCache(),
@@ -676,6 +727,252 @@ describe('categorizeCards', () => {
       'Thumbnail cache write failed',
       expect.objectContaining({ error: 'quota exceeded' }),
     );
+  });
+
+  it('should send no request to the article image source when Wikidata already gave an image', async () => {
+    const replay = createReplayFetch();
+    const articleSource = fakeArticleImageSource(new Map());
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(replay.fetchImpl, STUB_IMAGE),
+      articleImageSource: articleSource,
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.image?.fileName).toBe(STUB_IMAGE?.fileName);
+    expect(articleSource.calls).toHaveLength(0);
+  });
+
+  it('should give the card the article file when Wikidata gave it no image', async () => {
+    const replay = createReplayFetch();
+    const articleImage: CommonsFile = { fileName: 'Poule.jpg', kind: 'picture' };
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(replay.fetchImpl, null),
+      articleImageSource: fakeArticleImageSource(new Map([[STUB_CARD.title, articleImage]])),
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image?.fileName).toBe(articleImage.fileName);
+    expect(results[0]?.image?.kind).toBe(articleImage.kind);
+  });
+
+  it('should keep the card categorized with no image and warn when the article image request fails', async () => {
+    const logger = makeLogger();
+    const neverCalledFetch: FetchLike = () => {
+      throw new Error('the thumbnail stage should not run when no picture was found');
+    };
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(neverCalledFetch, null, logger),
+      articleImageSource: failingArticleImageSource(new Error('frwiki unavailable')),
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Article image request failed',
+      expect.objectContaining({ error: 'frwiki unavailable' }),
+    );
+  });
+
+  it('should send no request to the article image source when the images are switched off', async () => {
+    const neverCalledFetch: FetchLike = () => {
+      throw new Error('no stage of the picture should run while the setting is off');
+    };
+    const articleImage: CommonsFile = { fileName: 'Poule.jpg', kind: 'picture' };
+    const articleSource = fakeArticleImageSource(new Map([[STUB_CARD.title, articleImage]]));
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(neverCalledFetch, null),
+      articleImageSource: articleSource,
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITHOUT_IMAGE_URLS);
+
+    expect(results[0]?.image).toBeNull();
+    expect(articleSource.calls).toHaveLength(0);
+  });
+
+  it('should remember that the article gave no image either, so a later categorization sends no request for it', async () => {
+    const firstReplay = createReplayFetch();
+    // A definite null for the stub card: the article was checked and it has
+    // no matching file, not merely that it was never asked about.
+    const firstSource = fakeArticleImageSource(new Map([[STUB_CARD.title, null]]));
+    await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(firstReplay.fetchImpl, null),
+        cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+        articleImageSource: firstSource,
+      },
+      WITH_IMAGE_URLS,
+    );
+    expect(firstSource.calls).toHaveLength(1);
+
+    const secondReplay = createReplayFetch();
+    const articleImage: CommonsFile = { fileName: 'Poule.jpg', kind: 'picture' };
+    const secondSource = fakeArticleImageSource(new Map([[STUB_CARD.title, articleImage]]));
+    const results = await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(secondReplay.fetchImpl, null),
+        cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+        articleImageSource: secondSource,
+      },
+      WITH_IMAGE_URLS,
+    );
+
+    // If the second run asked again it would find an image; it must not ask.
+    expect(secondSource.calls).toHaveLength(0);
+    expect(results[0]?.image).toBeNull();
+  });
+
+  it('should not remember an unresolved answer as tried, so a later categorization asks again', async () => {
+    const firstReplay = createReplayFetch();
+    // Omits the stub card entirely: unresolved, exactly like a title
+    // MediaWiki's continuation left unexamined.
+    const firstSource = fakeArticleImageSource(new Map());
+    await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(firstReplay.fetchImpl, null),
+        cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+        articleImageSource: firstSource,
+      },
+      WITH_IMAGE_URLS,
+    );
+    expect(firstSource.calls).toHaveLength(1);
+
+    const secondReplay = createReplayFetch();
+    const articleImage: CommonsFile = { fileName: 'Poule.jpg', kind: 'picture' };
+    const secondSource = fakeArticleImageSource(new Map([[STUB_CARD.title, articleImage]]));
+    const results = await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(secondReplay.fetchImpl, null),
+        cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+        articleImageSource: secondSource,
+      },
+      WITH_IMAGE_URLS,
+    );
+
+    // Nothing was ever confirmed, so the second run asks again and finds it.
+    expect(secondSource.calls).toHaveLength(1);
+    expect(results[0]?.image?.fileName).toBe(articleImage.fileName);
+  });
+
+  it('should ignore an image for a title outside the batch it was asked about', async () => {
+    const outOfScopeTitle = 'Un autre titre jamais demande';
+    const outOfScopeImage: CommonsFile = { fileName: 'Sans rapport.jpg', kind: 'picture' };
+    const misbehavingSource: ArticleImageSource = {
+      findArticleImages: (): Promise<Map<string, CommonsFile | null>> =>
+        Promise.resolve(new Map([[outOfScopeTitle, outOfScopeImage]])),
+    };
+    const deps: CategorizeCardsDeps = {
+      ...makeImageDeps(() => {
+        throw new Error('the thumbnail stage should not run when no picture was found');
+      }, null),
+      articleImageSource: misbehavingSource,
+    };
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.image).toBeNull();
+  });
+
+  it('should ignore an image for a card of the batch it deliberately did not ask about', async () => {
+    // The case above is unobservable on its own: a title that is in no card of
+    // the batch has no facts to be written into either. This one is the real
+    // hole the scope check closes, a card that IS in the batch and was left
+    // out of the request on purpose because it was already tried.
+    const triedCard: CardToCategorize = { title: 'Poulet', description: null };
+    const unwantedImage: CommonsFile = { fileName: 'Poulet.jpg', kind: 'picture' };
+    const bothTitlesResolver: TitleResolver = {
+      resolveTitles: (): Promise<Map<string, string | null>> =>
+        Promise.resolve(
+          new Map([
+            [STUB_CARD.title, STUB_QID],
+            [triedCard.title, STUB_QID],
+          ]),
+        ),
+    };
+    const sharedDeps = (source: ArticleImageSource): CategorizeCardsDeps => ({
+      ...makeImageDeps(createReplayFetch().fetchImpl, null),
+      titleResolver: bothTitlesResolver,
+      cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+      thumbnailUrlSource: emptyThumbnailUrlSource(),
+      thumbnailUrlCache: emptyThumbnailUrlCache(),
+      articleImageSource: source,
+    });
+
+    // First run marks the second card as tried, with a definite "no file".
+    await categorizeCards(
+      [triedCard],
+      sharedDeps(fakeArticleImageSource(new Map([[triedCard.title, null]]))),
+      WITH_IMAGE_URLS,
+    );
+
+    // Built by hand rather than with the fake above, which only ever answers
+    // about the titles it was given: the point here is a source that does not.
+    const calls: string[][] = [];
+    const misbehavingSource: ArticleImageSource = {
+      findArticleImages: (titles: readonly string[]): Promise<Map<string, CommonsFile | null>> => {
+        calls.push([...titles]);
+        return Promise.resolve(
+          new Map<string, CommonsFile | null>([
+            [STUB_CARD.title, null],
+            [triedCard.title, unwantedImage],
+          ]),
+        );
+      },
+    };
+    const results = await categorizeCards(
+      [STUB_CARD, triedCard],
+      sharedDeps(misbehavingSource),
+      WITH_IMAGE_URLS,
+    );
+
+    // Asked about one card only, and the answer about the other one is dropped
+    // rather than shown or written back.
+    expect(calls).toEqual([[STUB_CARD.title]]);
+    expect(byTitle(results).get(triedCard.title)?.image).toBeNull();
+  });
+
+  it('should remember the article image so a later categorization of the same card sends no request for it', async () => {
+    const articleImage: CommonsFile = { fileName: 'Poule.jpg', kind: 'picture' };
+    const firstReplay = createReplayFetch();
+    const firstSource = fakeArticleImageSource(new Map([[STUB_CARD.title, articleImage]]));
+    // The stub deps of every other test never write to a real cache: this one
+    // does, because the point of the test is exactly what the cache remembers.
+    await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(firstReplay.fetchImpl, null),
+        cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+        articleImageSource: firstSource,
+      },
+      WITH_IMAGE_URLS,
+    );
+    expect(firstSource.calls).toHaveLength(1);
+
+    const secondReplay = createReplayFetch();
+    // A source that fails would prove the point just as well; an empty one
+    // proves it without needing to also assert on a warning that must not fire.
+    const secondSource = fakeArticleImageSource(new Map());
+    const results = await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(secondReplay.fetchImpl, null),
+        cardFactsCache: createCardFactsCache(SYSTEM_CLOCK),
+        articleImageSource: secondSource,
+      },
+      WITH_IMAGE_URLS,
+    );
+
+    expect(secondSource.calls).toHaveLength(0);
+    expect(results[0]?.image?.fileName).toBe(articleImage.fileName);
   });
 
   it('should report an error when the class roots request fails for an uncached class', async () => {

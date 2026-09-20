@@ -1,3 +1,4 @@
+import type { CommonsFile } from '../../missing-image/domain/card-image';
 import type { CategoryId, PersonSubtypeId } from './category';
 import type { EntityFacts } from './entity-facts';
 
@@ -26,6 +27,13 @@ export interface CachedCardFacts {
   status: CardFactsStatus;
   /** Null when `status` is `not_found`. */
   facts: EntityFacts | null;
+  /**
+   * Whether the article's own image (phase 7d) was already looked up for this
+   * card. Always false for a `not_found` card, which never reaches that
+   * stage, and for a card whose answer MediaWiki's continuation left
+   * unresolved: only a definite yes or no marks a card as tried.
+   */
+  articleImageTried: boolean;
 }
 
 export interface TitleResolver {
@@ -63,6 +71,16 @@ export interface CardFactsCache {
  */
 export interface ThumbnailUrlSource {
   resolveThumbnailUrls(fileNames: readonly string[]): Promise<Map<string, string | null>>;
+}
+
+/**
+ * The image an article uses for itself, for a card whose Wikidata image
+ * properties (P18 and friends) leave it without one. Null is an answer: none
+ * of the guards of this second image source were satisfied, and the card
+ * stays without a picture exactly as before this source existed.
+ */
+export interface ArticleImageSource {
+  findArticleImages(titles: readonly string[]): Promise<Map<string, CommonsFile | null>>;
 }
 
 export interface ThumbnailUrlCache {

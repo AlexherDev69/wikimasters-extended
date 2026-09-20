@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Logger } from '../../../core/logger/logger';
+import type { CommonsFile } from '../../missing-image/domain/card-image';
 import type { CardCategory } from '../domain/category';
 import type { CategorizeCardsDeps } from '../domain/categorize-cards';
 import type { CachedCardFacts, ClassResolution } from '../domain/ports';
@@ -40,6 +41,7 @@ function makeDeps(): CategorizeCardsDeps {
       },
       image: null,
     },
+    articleImageTried: false,
   };
   const logger: Logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
@@ -65,7 +67,11 @@ function makeDeps(): CategorizeCardsDeps {
         Promise.resolve(new Map()),
       putOccupationTargets: (): Promise<void> => Promise.resolve(),
     },
-    // The test card has no image, so neither of these is ever reached.
+    // The test card's Wikidata image is null, so this one is asked and finds
+    // nothing either: the thumbnail stage after it is never reached.
+    articleImageSource: {
+      findArticleImages: (): Promise<Map<string, CommonsFile | null>> => Promise.resolve(new Map()),
+    },
     thumbnailUrlSource: { resolveThumbnailUrls: vi.fn() },
     thumbnailUrlCache: { getFresh: vi.fn(), putMany: vi.fn() },
     logger,

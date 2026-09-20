@@ -12,7 +12,7 @@ const START_TIME = new Date('2026-01-01T00:00:00.000Z').getTime();
 
 /** Version 1 held the same facts without the image of the card. */
 const PREVIOUS_SCHEMA_VERSION = 1;
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 4;
 
 const FACTS: EntityFacts = {
   qid: 'Q937',
@@ -33,8 +33,16 @@ const FACTS: EntityFacts = {
   image: { fileName: 'Albert Einstein Head.jpg', kind: 'picture' },
 };
 
-const RESOLVED_ENTRY: CachedCardFacts = { status: 'resolved', facts: FACTS };
-const NOT_FOUND_ENTRY: CachedCardFacts = { status: 'not_found', facts: null };
+const RESOLVED_ENTRY: CachedCardFacts = {
+  status: 'resolved',
+  facts: FACTS,
+  articleImageTried: false,
+};
+const NOT_FOUND_ENTRY: CachedCardFacts = {
+  status: 'not_found',
+  facts: null,
+  articleImageTried: false,
+};
 
 const systemClock: Clock = { now: (): number => Date.now() };
 
@@ -148,6 +156,49 @@ describe('createCardFactsCache', () => {
     const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
 
     expect(fresh.size).toBe(0);
+  });
+
+  it('should ignore an entry written before the article itself was tried as a second image source', async () => {
+    // Version 3 already reused the image field for the article's own
+    // picture, but had no field remembering whether that lookup was
+    // attempted: this entry fails both the version number check and, on its
+    // own, the structural one below, since it carries no `articleImageTried`
+    // at all.
+    const PREVIOUS_ARTICLE_IMAGE_SCHEMA_VERSION = 3;
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: PREVIOUS_ARTICLE_IMAGE_SCHEMA_VERSION,
+      status: 'resolved',
+      facts: { ...FACTS, image: null },
+      fetchedAt: START_TIME,
+    });
+
+    const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
+
+    expect(fresh.size).toBe(0);
+  });
+
+  it('should ignore a current version entry that never recorded whether the article image was tried', async () => {
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      status: 'resolved',
+      facts: FACTS,
+      fetchedAt: START_TIME,
+      // articleImageTried omitted on purpose.
+    });
+
+    const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
+
+    expect(fresh.size).toBe(0);
+  });
+
+  it('should round-trip an entry whose article image was already tried', async () => {
+    const cache = createCardFactsCache(systemClock);
+    const triedEntry: CachedCardFacts = { ...RESOLVED_ENTRY, articleImageTried: true };
+    await cache.putMany(new Map([['Albert Einstein', triedEntry]]));
+
+    const fresh = await cache.getFresh(['Albert Einstein']);
+
+    expect(fresh.get('Albert Einstein')).toEqual(triedEntry);
   });
 
   it('should ignore an entry whose stored image is not usable', async () => {
