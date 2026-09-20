@@ -6,7 +6,7 @@ Objectif : afficher sur chaque carte une catégorie (via Wikidata) et un lien Le
 
 ## État actuel
 
-Phases 1 à 3, 4a, 4c, 5 et 6a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+Phases 1 à 3, 4a, 4c, 4d, 5 et 6a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
 
 ### Badge de catégorie sur les cartes
 
@@ -26,9 +26,19 @@ Quand tu parcours ta collection (la page `/collection` elle-même, pagination co
 
 L'index ne mémorise pas la catégorie des cartes, seulement ce que le site affiche. La catégorie est recalculée à la lecture depuis les caches, comme partout ailleurs dans l'extension : ajuster les listes de racines ne demande jamais de reparcourir la collection.
 
+### Complétion par rareté
+
+La page "Toutes les cartes" du site (`/global-collection`) affiche en en-tête le nombre de cartes du jeu par rareté, ainsi qu'un total général. Quand tu ouvres cette page, l'extension lit ces six nombres et les mémorise. Elle ne les récupère jamais autrement : elle n'appelle aucune API du site, ne tourne aucune page et ne déclenche aucune recherche. Les nombres ne sont retenus que s'ils sont certains : les six raretés présentes une fois chacune, et leur somme égale au total affiché. Sinon, rien n'est enregistré et la dernière lecture valide est conservée. C'est notamment le cas quand une recherche est active sur la page : le site remplace alors le bloc d'en-tête, et l'extension attend la prochaine fois où les nombres seront visibles.
+
+Une fois ces totaux connus, la fenêtre de statistiques remplace la simple répartition par rareté par une complétion : `L 3 / 1 761` avec la part correspondante, pour chacune des six raretés du jeu, y compris celles dont tu ne possèdes encore aucune carte. Une ligne discrète rappelle la date du relevé et le fait que la complétion est calculée sur les cartes vues dans ta collection, donc sur l'index local. Tant que tu n'as jamais ouvert la page du catalogue, la fenêtre affiche la répartition habituelle et t'invite à l'ouvrir.
+
+La complétion par catégorie, elle, n'est pas réalisable : le catalogue compte 2 773 461 cartes sur 55 470 pages, aucune carte du catalogue ne porte de marqueur de possession, et l'extension ne navigue jamais à ta place. Il n'existe donc aucun moyen de connaître le nombre de cartes du jeu par catégorie. La rareté, elle, est le seul dénominateur que le site affiche directement.
+
+Ces totaux décrivent le jeu, pas toi : ils ne sont donc effacés ni par "Vider le cache de catégorisation" ni par "Réinitialiser l'index de collection". Ils suivent en revanche le réglage "Index de collection" : désactivé, plus aucune lecture n'est faite et plus aucune complétion n'est calculée.
+
 ### Fenêtre de statistiques
 
-Un clic sur l'icône de l'extension ouvre une fenêtre qui résume l'index : le nombre de cartes vues, la date de la dernière mise à jour, la répartition par rareté, puis une ligne par catégorie avec son nombre de cartes, son pourcentage et une barre proportionnelle. La ligne "Personne" se déplie sur ses sous-types. Un clic sur une catégorie affiche la liste de ses cartes, chaque titre étant un lien vers l'article Wikipédia en français. Le bouton "Réinitialiser l'index" demande une confirmation sur place avant de tout effacer.
+Un clic sur l'icône de l'extension ouvre une fenêtre qui résume l'index : le nombre de cartes vues, la date de la dernière mise à jour, la répartition par rareté (remplacée par la complétion par rareté quand les totaux du catalogue sont connus, voir la section ci-dessus), puis une ligne par catégorie avec son nombre de cartes, son pourcentage et une barre proportionnelle. La ligne "Personne" se déplie sur ses sous-types. Un clic sur une catégorie affiche la liste de ses cartes, chaque titre étant un lien vers l'article Wikipédia en français. Le bouton "Réinitialiser l'index" demande une confirmation sur place avant de tout effacer.
 
 Ces statistiques sont calculées uniquement à partir des caches locaux : ouvrir la fenêtre ne déclenche aucune requête vers Wikipédia ou Wikidata. Une carte dont les données ne sont pas disponibles (cache expiré, article introuvable, classe non résolue) est comptée dans "Non catégorisées", et retrouve sa catégorie la prochaine fois que tu l'affiches sur le site.
 
@@ -49,7 +59,7 @@ Section "Fonctionnalités" : quatre cases à cocher, toutes activées par défau
 | Badge de catégorie | La pastille de catégorie sur les cartes et la ligne "Catégorie" dans la modale de détail |
 | Mise en évidence par catégorie | Le panneau flottant des catégories de la page et le voile posé sur les cartes hors du filtre choisi |
 | Lien Letterboxd | Le lien vers Letterboxd dans la modale de détail |
-| Index de collection | L'enregistrement des cartes que tu affiches sur ta collection, qui alimente la fenêtre de statistiques |
+| Index de collection | L'enregistrement des cartes que tu affiches sur ta collection, qui alimente la fenêtre de statistiques, et la lecture des totaux par rareté affichés par la page "Toutes les cartes" |
 
 Un changement est enregistré immédiatement et un petit message "Enregistré" le confirme. Si l'enregistrement échoue, la page relit les réglages réellement stockés, les affiche et signale l'erreur : ce qui est coché correspond toujours à ce qui est réellement stocké, y compris quand une autre case a été cochée entre-temps.
 
@@ -57,12 +67,14 @@ Les onglets du site déjà ouverts suivent le changement sans rechargement : une
 
 Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et de cartes dans l'index de collection, avec deux actions qui demandent chacune une confirmation sur place.
 
-- "Vider le cache de catégorisation" efface les faits Wikidata gardés par carte et les catégories gardées par classe. Les cartes seront redemandées à `fr.wikipedia.org` et à `query.wikidata.org` la prochaine fois que tu les affiches. Les réglages, l'index de collection et les pauses en cours sur un hôte ne sont pas touchés.
-- "Réinitialiser l'index de collection" efface la liste des cartes vues dans ta collection, comme le bouton du même nom dans la fenêtre de statistiques. Le cache de catégorisation n'est pas touché.
+- "Vider le cache de catégorisation" efface les faits Wikidata gardés par carte et les catégories gardées par classe. Les cartes seront redemandées à `fr.wikipedia.org` et à `query.wikidata.org` la prochaine fois que tu les affiches. Les réglages, l'index de collection, les totaux du catalogue et les pauses en cours sur un hôte ne sont pas touchés.
+- "Réinitialiser l'index de collection" efface la liste des cartes vues dans ta collection, comme le bouton du même nom dans la fenêtre de statistiques. Le cache de catégorisation et les totaux du catalogue ne sont pas touchés.
 
 Section "Confidentialité" : le même texte que la section ci-dessous, rappelé dans la page.
 
 La dernière réponse au besoin de filtre prévue par la phase 4 reste à faire : la synergie avec les étiquettes natives du site, que tu poses toi-même avec la sélection en lot.
+
+L'extension ne modifie jamais la page du catalogue : elle y lit six nombres et n'y ajoute aucun élément.
 
 Voir [docs/PLAN.md](docs/PLAN.md) pour l'analyse de faisabilité et la feuille de route complète.
 
@@ -106,6 +118,7 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - L'extension ne contacte jamais Letterboxd : elle se contente de construire une adresse à partir des identifiants publics de Wikidata. Rien n'est envoyé à Letterboxd tant que tu ne cliques pas toi-même sur le lien.
 - Les résultats sont mis en cache localement dans le stockage de l'extension (`chrome.storage.local`), sur ta machine uniquement : 90 jours pour une carte résolue, 7 jours pour une carte introuvable.
 - L'index de collection (titre, rareté, dates de première et de dernière apparition) est stocké au même endroit, sur ta machine uniquement. Il n'est envoyé nulle part, pas même au site, et le bouton "Réinitialiser l'index" l'efface entièrement.
+- Les totaux du catalogue par rareté sont lus sur la page "Toutes les cartes" quand tu l'ouvres, et stockés au même endroit. Ce sont six nombres publics affichés par le site, sans rapport avec ton compte. Rien n'est demandé au site pour les obtenir.
 - Les réglages de la page d'options sont stockés au même endroit, sur ta machine uniquement.
 - La fenêtre de statistiques et la page d'options sont des pages de l'extension : elles lisent et effacent uniquement ce qui est stocké localement, et ne font aucun appel réseau.
 - Si tu désactives les quatre fonctionnalités dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.

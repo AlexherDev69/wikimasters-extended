@@ -77,7 +77,7 @@ Reste à capturer : `/collection` une fois chargée (DOM des étiquettes natives
 | --- | --- | --- |
 | 1. Catégorisation (badge sur carte, stats locales) | Faisable, validé sur cartes réelles | Coût réseau faible, cache très efficace |
 | 1. Filtres et tri dans la collection | Faisable mais limité par la pagination | Un filtre DOM ne voit que la page courante. Trois réponses complémentaires, voir phase 4 |
-| 1. Taux de complétion par catégorie | Infaisable tel quel | Le catalogue compte 2,77 millions de cartes sur 55 470 pages et l'extension ne navigue jamais seule : impossible de connaître le nombre de cartes par catégorie, et le taux serait de toute façon proche de zéro. Faisable à la place : complétion par rareté (index local contre les totaux affichés en en-tête du catalogue), et éventuellement complétion par catégorie limitée aux légendaires (1761 cartes, 36 pages) si l'utilisateur les parcourt. La répartition de la collection par catégorie, sans dénominateur, est livrée (phase 4c) |
+| 1. Taux de complétion par catégorie | Infaisable tel quel | Le catalogue compte 2,77 millions de cartes sur 55 470 pages et l'extension ne navigue jamais seule : impossible de connaître le nombre de cartes par catégorie, et le taux serait de toute façon proche de zéro. Livré à la place : complétion par rareté (index local contre les totaux affichés en en-tête du catalogue, phase 4d). Variante possible plus tard : complétion par catégorie limitée aux légendaires (1761 cartes, 36 pages) si l'utilisateur les parcourt. La répartition de la collection par catégorie, sans dénominateur, est livrée (phase 4c) |
 | 2. Lien Letterboxd | Faisable | 3 niveaux de fallback pour les films, 2 pour les personnes. Emplacement idéal trouvé : la modale de détail, à côté du lien Wikipédia |
 
 ## 4. Architecture proposée
@@ -278,6 +278,17 @@ Question close le 2026-09-20 : la liste de souhaits n'existe pas sur `/collectio
 
 Reste à faire par l'utilisateur : contrôle visuel de la fenêtre dans Chrome.
 
+#### Phase 4d : complétion par rareté (faite le 2026-09-20, revue indépendante passée)
+
+- Décision de l'utilisateur après l'analyse du catalogue : pas de taux de complétion par catégorie (2,77 millions de cartes, 55 470 pages, aucun marqueur de possession), mais une complétion par rareté
+- Quand l'utilisateur ouvre lui-même `/global-collection`, le content script lit les six totaux par rareté affichés dans le bloc d'en-tête `div.card-frame`. Le service worker les garde dans une clé versionnée de `chrome.storage.local` avec la date du relevé. Rien n'est téléchargé, l'extension ne navigue jamais seule, aucun noeud n'est ajouté au site
+- Lecture stricte, par le texte et non par les classes Tailwind : les six raretés exactement une fois chacune, et leur somme égale au total général affiché dans le même bloc. Sinon rien n'est relevé : un dénominateur faux serait pire qu'absent. Cas réel confirmé par l'utilisateur : pendant une recherche, le site remplace le bloc par une notice ("Recherche active : pas de décompte par rareté ni de total exact"), le lecteur ne relève alors rien et les totaux déjà connus sont conservés
+- La fenêtre de statistiques affiche, par rareté, les cartes de l'index contre le total du catalogue ("L 3 / 1 761") avec la part en pourcentage et la date du relevé. Sans relevé : l'affichage d'avant, plus une invitation à ouvrir la page "Toutes les cartes"
+- Le relevé suit le réglage "index de collection". Il survit au vidage du cache de catégorisation et à la remise à zéro de l'index : ce sont des faits du catalogue, pas des données personnelles
+- Limite assumée : le numérateur est le nombre de cartes VUES sur `/collection`, il sous-estime la collection tant que toutes ses pages n'ont pas été affichées
+- Le premier scan qui suit un changement de route ne relève rien, comme pour l'index : l'URL peut déjà nommer le catalogue alors que le DOM lu est encore celui de la page quittée, et le lecteur accepterait n'importe quel bloc de même forme
+- Une part non nulle qui s'arrondirait à zéro s'affiche "< 0,01 %" : 88 communes sur 1 996 125 ne doivent pas se lire "0 %", qui reste réservé à "aucune carte"
+
 #### Suite de la phase 4
 
 Plan initial, avec l'état de chaque point :
@@ -288,7 +299,7 @@ Plan initial, avec l'état de chaque point :
   2. Vue "Ma collection par catégorie" dans l'extension (popup ou page dédiée), alimentée par l'index local des cartes déjà vues. Tri, filtres et regroupements sans limite de page : fait (4c), sous forme de popup
   3. Synergie avec les étiquettes natives : l'extension indique la catégorie, l'utilisateur pose lui-même l'étiquette avec la sélection en lot du site. Le filtre natif marche alors sur toutes les pages, côté serveur. L'extension ne clique jamais à la place de l'utilisateur. Le badge donne déjà l'information ; rien de plus à coder tant que le DOM des étiquettes natives n'a pas été observé (export de `/collection` attendu)
 - Popup de stats : nombre de cartes par catégorie et sous-type : fait (4c)
-- Taux de complétion par catégorie : infaisable contre le catalogue entier (2,77 millions de cartes, voir le verdict de faisabilité). Variantes possibles, à décider : complétion par rareté, complétion par catégorie limitée aux légendaires
+- Taux de complétion par catégorie : infaisable contre le catalogue entier (2,77 millions de cartes, voir le verdict de faisabilité). Remplacé par la complétion par rareté : fait (4d). Variante non retenue pour l'instant : complétion par catégorie limitée aux légendaires
 - Vérification : scénarios manuels de la section 7
 
 ### Phase 5 : lien Letterboxd (faite le 2026-09-20)
