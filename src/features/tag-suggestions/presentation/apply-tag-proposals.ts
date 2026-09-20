@@ -72,8 +72,8 @@ function ariaLabelFor(tag: string): string {
  * or written to by this.
  */
 function selectProposalText(button: HTMLButtonElement): void {
-  const selection = button.ownerDocument.defaultView?.getSelection();
-  if (selection == null) {
+  const selection = button.ownerDocument.defaultView?.getSelection() ?? null;
+  if (selection === null) {
     return;
   }
   const range = button.ownerDocument.createRange();
