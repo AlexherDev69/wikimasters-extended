@@ -267,7 +267,7 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 
 Reste à faire par l'utilisateur : contrôle visuel dans Chrome (lisibilité du badge sur les petites cartes de la grille, emplacement du panneau) et validation des choix de présentation.
 
-#### Phase 4c : index local de la collection et fenêtre de statistiques (faite le 2026-09-20, revue indépendante passée)
+#### Phase 4c : index local de la collection et fenêtre de statistiques (faite le 2026-09-20, RETIRÉE le 2026-09-20, voir phase 8a)
 
 - Index local : les cartes détectées sur la page `/collection` sont mémorisées par le service worker, `{ rareté, première vue, dernière vue }` par titre, dans une seule clé versionnée de `chrome.storage.local` (environ 80 octets par carte). Les autres pages (marché, échanges, tirages, collection globale) n'alimentent jamais l'index : ces cartes ne sont pas possédées
 - L'extension ne navigue jamais à la place de l'utilisateur : l'index ne grandit qu'avec les pages de collection affichées. La fenêtre indique le nombre de cartes vues et la date de la dernière mise à jour (parade du risque R6)
@@ -288,7 +288,7 @@ Question close le 2026-09-20 : la liste de souhaits n'existe pas sur `/collectio
 
 Reste à faire par l'utilisateur : contrôle visuel de la fenêtre dans Chrome.
 
-#### Phase 4d : complétion par rareté (faite le 2026-09-20, revue indépendante passée)
+#### Phase 4d : complétion par rareté (faite le 2026-09-20, RETIRÉE le 2026-09-20, voir phase 8a)
 
 - Décision de l'utilisateur après l'analyse du catalogue : pas de taux de complétion par catégorie (2,77 millions de cartes, 55 470 pages, aucun marqueur de possession), mais une complétion par rareté
 - Quand l'utilisateur ouvre lui-même `/global-collection`, le content script lit les six totaux par rareté affichés dans le bloc d'en-tête `div.card-frame`. Le service worker les garde dans une clé versionnée de `chrome.storage.local` avec la date du relevé. Rien n'est téléchargé, l'extension ne navigue jamais seule, aucun noeud n'est ajouté au site
@@ -366,7 +366,31 @@ Plan initial, avec l'état de chaque point :
 - L'extension ajoute pour la première fois une balise `img` dans une racine de carte. La règle "uniquement `div` et `span`" protège la lecture du titre (`h3`) et de la description (`p`) ; une `img` ne les touche pas, et la détection du logo ignore ce qui se trouve dans un noeud de l'extension
 - La ligne de crédit s'affiche dès qu'une image est connue, même si son chargement échoue ensuite : conditionner l'affichage au chargement coûterait une passe de synchronisation de plus par modale
 - `SAMPLE` choisit une valeur parmi plusieurs sans ordre défini : un article portant plusieurs P18 peut changer d'image après expiration du cache
-- Le coût des six propriétés dans la requête SPARQL n'a pas pu être mesuré proprement le jour de la livraison : query.wikidata.org était dégradé (une requête triviale à 26 s, des 502 en série). À mesurer et à consigner ici
+- Coût des six propriétés dans la requête SPARQL, mesuré le 2026-09-20 sur 50 cartes réelles du catalogue, en alternant les deux formes sur les mêmes QID, six tirages par taille, délai d'attente à 90 s :
+
+| Taille du lot | Sans images | Avec images |
+| --- | --- | --- |
+| 10 | médiane 17,9 s, 0 échec | médiane 19,4 s, 1 échec (minimum 0,9 s) |
+| 25 | médiane 2,6 s, 3 échecs | médiane 3,4 s, 2 échecs (maximum 4,0 s contre 40,1 s) |
+| 50 | médiane 24,8 s, 2 échecs | médiane 10,7 s, 1 échec |
+
+Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre les deux formes est plus petit que l'écart d'un tirage à l'autre de la même forme, et à 50 cartes la forme avec images a même la meilleure médiane. Le service était dégradé ce jour-là (une requête triviale entre 1,4 s et 45 s, des 502 en série), ce qui explique des médianes très au-dessus des 1,1 s relevés en phase 3. La mesure vaut donc comme comparaison, pas comme référence absolue : à refaire sur un service sain
+- Piste écartée en revue : envelopper chaque propriété image dans `{ SELECT ... LIMIT 1 }` pour borner le produit cartésien. Une sous-requête SPARQL n'est pas corrélée, ce `LIMIT 1` renverrait une seule ligne pour tout le lot, donc une seule carte sur cinquante aurait son image
+
+### Phase 8 : étiquettes
+
+#### Phase 8a : retrait de l'index de collection (faite le 2026-09-20, revue indépendante passée)
+
+- Décision de l'utilisateur, voir le tableau de la section 5. L'extension ne peut pas voir une carte quitter la collection sans interagir avec le site ou deviner ; des chiffres qui dérivent valent moins que pas de chiffres
+- Retirés : la fonctionnalité `collection-index` en entier, la fenêtre de statistiques (le popup), la complétion par rareté, le réglage correspondant, les deux enregistreurs du content script et les messages associés. 6 362 lignes en moins, 35 fichiers supprimés
+- Le bouton de la barre d'outils reste, sans popup : un clic ouvre la page d'options. WXT dérivant toute l'entrée `action` du popup, elle est désormais déclarée à la main dans `wxt.config.ts`, sinon l'icône disparaissait avec lui
+- Mise à jour d'une installation existante : la clé `collectionIndex` laissée dans les réglages est simplement ignorée (la normalisation n'itère que sur les réglages connus) et disparaît au premier enregistrement. Les deux clés de données, `wme:collection-index:v1` et `wme:catalogue-totals:v1`, ne partent pas toutes seules : la page d'options affiche un bouton de suppression unique, visible seulement tant qu'au moins l'une des deux est présente, qui les vise nommément et jamais par préfixe
+- Conservé : catégories, mise en évidence, lien Letterboxd, images manquantes, réglages, page d'options, les deux caches et leur entretien. Permissions et hôtes inchangés
+
+Écarts assumés :
+
+- `RARITIES_RAREST_FIRST` a été supprimé bien que la spec le range dans ce qui doit rester : après le retrait il n'avait plus aucun consommateur, et "aucun code mort" et "knip sort à 0" ne pouvaient pas tenir en même temps que lui. Le reste de `rarity.ts` (type `Rarity`, `RARITIES`, `isRarity`, lecture de la classe `glow-*`) est intact et toujours utilisé
+- `isValidTitle`, `CATEGORY_IDS` et `PERSON_SUBTYPE_IDS` ne sont plus exportés, pour la même raison : leurs seuls consommateurs externes étaient dans l'index. Les fonctions et les constantes restent, à l'intérieur de leur module
 
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
