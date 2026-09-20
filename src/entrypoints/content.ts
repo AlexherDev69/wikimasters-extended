@@ -2,12 +2,8 @@ import { browser, defineContentScript } from '#imports';
 import { SITE_MATCH_PATTERNS } from '../core/config/site';
 import { createLogger } from '../core/logger/logger';
 import { observeCards } from '../features/card-detection/data/card-observer';
-import { findDetailModal } from '../features/card-detection/data/detail-modal';
 import { scanCards, type ObservedCard } from '../features/card-detection/data/scan-cards';
-import {
-  handleScan,
-  type ScheduleRetry,
-} from '../features/card-detection/presentation/handle-scan';
+import type { ScheduleRetry } from '../features/card-detection/presentation/handle-scan';
 import type { CardCategory } from '../features/categorization/domain/category';
 import type { CardToCategorize } from '../features/categorization/domain/categorize-cards';
 import {
@@ -15,26 +11,15 @@ import {
   isCategorizeCardsResponse,
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
-import {
-  rememberCategories,
-  type CategoryMemory,
-} from '../features/categorization/presentation/remember-categories';
-import { removeCardBadges } from '../features/category-badge/data/card-badge';
-import { removeModalCategoryLines } from '../features/category-badge/data/modal-category-line';
-import { syncCardBadges } from '../features/category-badge/presentation/sync-card-badges';
-import { syncModalCategory } from '../features/category-badge/presentation/sync-modal-category';
-import {
-  createCategoryHighlight,
-} from '../features/category-highlight/presentation/category-highlight';
 import type { RecordedCard } from '../features/collection-index/domain/collection-index';
 import {
   isRecordCollectionCardsResponse,
   RECORD_COLLECTION_CARDS_MESSAGE,
   type RecordCollectionCardsRequest,
 } from '../features/collection-index/presentation/messages';
-import { createCollectionRecorder } from '../features/collection-index/presentation/record-collection-cards';
-import { removeModalLink } from '../features/letterboxd/data/modal-link';
-import { syncModalLink } from '../features/letterboxd/presentation/sync-modal-link';
+import { createSettingsRepository } from '../features/settings/data/settings-repository';
+import type { Settings } from '../features/settings/domain/settings';
+import { createOverlay } from '../features/settings/presentation/overlay';
 import '../features/category-badge/presentation/category-badge.css';
 import '../features/category-highlight/presentation/category-highlight.css';
 
@@ -79,19 +64,10 @@ async function recordCollectionCards(cards: readonly RecordedCard[]): Promise<vo
 export default defineContentScript({
   matches: [...SITE_MATCH_PATTERNS],
   runAt: 'document_idle',
-  main(ctx): void {
+  async main(ctx): Promise<void> {
     const logger = createLogger('content-script');
     const root = document.body;
-    // Results of the cards met so far, read by every part of the overlay, and
-    // the titles already asked for. Bounded together, so a title dropped from
-    // one is dropped from the other and can be asked again if its card returns.
-    const memory: CategoryMemory = {
-      categoriesByTitle: new Map<string, CardCategory>(),
-      seenTitles: new Set<string>(),
-    };
-    /** Titles of the last scan, the cards the page shows right now. */
-    let visibleTitles: ReadonlySet<string> = new Set<string>();
-    const highlight = createCategoryHighlight(root);
+    const settingsRepository = createSettingsRepository();
     /**
      * The retry of a failed categorization is armed on the context, so it is
      * cleared with it: a timer of its own would fire long after the teardown.
@@ -100,39 +76,44 @@ export default defineContentScript({
       ctx.setTimeout(callback, delayMs);
     };
     /**
-     * Remembers the cards of the collection pages, and only those: the cards
-     * of the marketplace, of the trades and of the packs are not owned.
+     * A change that lands while the first read is on its way is in neither of
+     * them, so it is held here until there is an overlay to hand it to. An open
+     * tab follows a switch flipped in the options page, without asking the user
+     * to reload the site.
      */
-    const collectionRecorder = createCollectionRecorder({
-      send: recordCollectionCards,
-      logger,
-      scheduleRetry,
+    let latestSettings: Settings | null = null;
+    let applySettings = (changed: Settings): void => {
+      latestSettings = changed;
+    };
+    // Registered BEFORE the read, which is what makes the line above enough.
+    const unwatchSettings = settingsRepository.watch((changed) => {
+      applySettings(changed);
     });
 
-    /**
-     * Brings the whole overlay in line with what is known of the cards given.
-     * Every sync writes only what differs, so running it on every scan costs
-     * nothing once the page already shows the right thing.
-     */
-    function syncOverlay(observedCards: readonly ObservedCard[]): void {
-      syncCardBadges(observedCards, memory.categoriesByTitle);
-      highlight.sync(observedCards, memory.categoriesByTitle);
-      // The observer of the cards also fires when the modal opens, so no
-      // observer, no polling and no timer of its own is needed here. The modal
-      // is looked up once and shared: both features write in the same one.
-      const modal = findDetailModal(root);
-      syncModalLink(modal, memory.categoriesByTitle);
-      syncModalCategory(modal, memory.categoriesByTitle);
+    // The settings are read BEFORE the first scan: a feature switched off must
+    // never show up for the instant it takes to read them back.
+    const settings = await settingsRepository.read();
+
+    // The extension may have been reloaded during that read. A listener added
+    // to an already aborted signal is never called, so nothing would take the
+    // overlay back: it is simply never put on the page.
+    if (ctx.isInvalid) {
+      unwatchSettings();
+      return;
     }
 
-    async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
-      const results = await requestCategories(cards);
-      rememberCategories(memory, visibleTitles, results);
-      // The page has kept mutating while the answer was on its way, so the
-      // cards are read again rather than taken from the scan that asked.
-      syncOverlay(scanCards(root));
-      return results;
-    }
+    const overlay = createOverlay({
+      root,
+      settings: latestSettings ?? settings,
+      logger,
+      categorize: requestCategories,
+      recordCards: recordCollectionCards,
+      scheduleRetry,
+      readPathname: (): string => window.location.pathname,
+    });
+    applySettings = (changed): void => {
+      overlay.applySettings(changed);
+    };
 
     function onScan(observedCards: ObservedCard[]): void {
       // Reading `isInvalid` is what makes WXT notice that the extension was
@@ -141,26 +122,17 @@ export default defineContentScript({
       if (ctx.isInvalid) {
         return;
       }
-      visibleTitles = new Set(observedCards.map((observed) => observed.card.title));
-
-      handleScan(observedCards, memory.seenTitles, logger, categorize, scheduleRetry);
-      collectionRecorder.record(observedCards, window.location.pathname);
-      rememberCategories(memory, visibleTitles);
-      syncOverlay(observedCards);
+      overlay.onScan(observedCards);
     }
 
     onScan(scanCards(root));
 
     const disconnect = observeCards({ root, onScan });
+
     ctx.onInvalidated(() => {
       disconnect();
-      // Reloading the extension leaves the page open: everything the overlay
-      // added goes away with it, rather than staying behind with nobody to
-      // keep it in line with the cards on screen.
-      highlight.destroy();
-      removeCardBadges(root);
-      removeModalCategoryLines(root);
-      removeModalLink(root);
+      unwatchSettings();
+      overlay.destroy();
     });
   },
 });

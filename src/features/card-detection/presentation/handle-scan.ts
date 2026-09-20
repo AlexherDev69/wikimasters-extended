@@ -74,7 +74,7 @@ function selectRetryableTitles(
  * Exported so it can be unit-tested independently of the WXT runtime.
  */
 export function handleScan(
-  observedCards: ObservedCard[],
+  observedCards: readonly ObservedCard[],
   seenTitles: Set<string>,
   logger: Logger,
   categorize: CategorizeCards,

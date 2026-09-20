@@ -12,6 +12,9 @@ import { createCollectionRecorder, type SendRecordedCards } from './record-colle
 const COLLECTION_PATH = '/collection';
 const MARKETPLACE_PATH = '/marketplace';
 
+/** The setting is on, which is what every test but the ones about it needs. */
+const ALWAYS_ENABLED = (): boolean => true;
+
 interface CapturedRetries {
   scheduleRetry: (callback: () => void, delayMs: number) => void;
   delays: number[];
@@ -77,6 +80,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record([makeObservedCard('Alpha'), makeObservedCard('Beta')], COLLECTION_PATH);
@@ -95,6 +99,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
     const cards = [makeObservedCard('Alpha')];
 
@@ -111,6 +116,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
@@ -125,6 +131,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     // The grid card and the detail modal opened on it are the same card.
@@ -139,6 +146,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record([makeObservedCard('Alpha')], MARKETPLACE_PATH);
@@ -153,6 +161,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record([], COLLECTION_PATH);
@@ -172,7 +181,12 @@ describe('createCollectionRecorder', () => {
       }
       return Promise.resolve();
     };
-    const recorder = createCollectionRecorder({ send, logger, scheduleRetry: retries.scheduleRetry });
+    const recorder = createCollectionRecorder({
+      send,
+      logger,
+      scheduleRetry: retries.scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
+    });
 
     recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
     await vi.waitFor(() => {
@@ -195,6 +209,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
     const tooLong = 'A'.repeat(MAX_TITLE_LENGTH + 1);
 
@@ -219,6 +234,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record([makeObservedCard('Alpha|Beta')], COLLECTION_PATH);
@@ -232,6 +248,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record(makeObservedCards(MAX_CARDS_PER_REQUEST + 1), COLLECTION_PATH);
@@ -249,7 +266,12 @@ describe('createCollectionRecorder', () => {
         ? Promise.reject(new Error('port closed'))
         : Promise.resolve();
     };
-    const recorder = createCollectionRecorder({ send, logger, scheduleRetry: retries.scheduleRetry });
+    const recorder = createCollectionRecorder({
+      send,
+      logger,
+      scheduleRetry: retries.scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
+    });
     const cards = makeObservedCards(MAX_CARDS_PER_REQUEST + 1);
 
     recorder.record(cards, COLLECTION_PATH);
@@ -268,6 +290,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
     const marketplaceCards = [makeObservedCard('Alpha')];
 
@@ -287,6 +310,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     // At load the URL and the DOM agree, so there is nothing to skip.
@@ -301,6 +325,7 @@ describe('createCollectionRecorder', () => {
       send,
       logger,
       scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
     });
 
     recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
@@ -312,10 +337,74 @@ describe('createCollectionRecorder', () => {
     expect(batches[1]).toEqual([{ title: 'Gamma', rarity: 'sr' }]);
   });
 
+  it('should send nothing while the setting is off', () => {
+    const { send, batches } = captureSends();
+    const recorder = createCollectionRecorder({
+      send,
+      logger,
+      scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: (): boolean => false,
+    });
+
+    recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
+
+    expect(batches).toHaveLength(0);
+  });
+
+  it('should skip one scan again when the route changed while the setting was off', () => {
+    const { send, batches } = captureSends();
+    let enabled = false;
+    const recorder = createCollectionRecorder({
+      send,
+      logger,
+      scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: (): boolean => enabled,
+    });
+    const marketplaceCards = [makeObservedCard('Alpha')];
+
+    recorder.record(marketplaceCards, COLLECTION_PATH);
+    recorder.record(marketplaceCards, MARKETPLACE_PATH);
+    enabled = true;
+    // The recorder was called on the scans it had nothing to do with, so it
+    // knows the route has just changed and that this scan can still be showing
+    // the cards of the marketplace.
+    recorder.record(marketplaceCards, COLLECTION_PATH);
+    expect(batches).toHaveLength(0);
+
+    recorder.record([makeObservedCard('Beta')], COLLECTION_PATH);
+    expect(batches).toEqual([[{ title: 'Beta', rarity: 'sr' }]]);
+  });
+
+  it('should send a card seen while the setting was off once it is back on', () => {
+    const { send, batches } = captureSends();
+    let enabled = false;
+    const recorder = createCollectionRecorder({
+      send,
+      logger,
+      scheduleRetry: captureRetries().scheduleRetry,
+      isEnabled: (): boolean => enabled,
+    });
+
+    recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
+    expect(batches).toHaveLength(0);
+
+    // Nothing was remembered as sent while the feature was off, so the card is
+    // not lost: the next scan takes it.
+    enabled = true;
+    recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
+
+    expect(batches).toEqual([[{ title: 'Alpha', rarity: 'sr' }]]);
+  });
+
   it('should log a warning when the send rejects', async () => {
     const retries = captureRetries();
     const send: SendRecordedCards = () => Promise.reject(new Error('port closed'));
-    const recorder = createCollectionRecorder({ send, logger, scheduleRetry: retries.scheduleRetry });
+    const recorder = createCollectionRecorder({
+      send,
+      logger,
+      scheduleRetry: retries.scheduleRetry,
+      isEnabled: ALWAYS_ENABLED,
+    });
 
     recorder.record([makeObservedCard('Alpha')], COLLECTION_PATH);
 
