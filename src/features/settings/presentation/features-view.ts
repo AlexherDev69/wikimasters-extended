@@ -46,6 +46,13 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       'Affiche une image de Wikimedia Commons sur les cartes que le site laisse sans illustration, ' +
       "quand Wikidata en connaît une. L'image est chargée par ton navigateur depuis Wikimedia.",
   },
+  hideCardStats: {
+    label: 'Masquer les statistiques des cartes',
+    hint:
+      "Masque les valeurs d'attaque et de défense sur les cartes et dans la modale de détail. " +
+      "Rien n'est envoyé ni modifié sur le site, et décocher cette case les fait réapparaître " +
+      'immédiatement.',
+  },
 };
 
 const LABEL_TAG = 'label';

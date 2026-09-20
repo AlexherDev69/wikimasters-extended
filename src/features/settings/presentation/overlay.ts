@@ -14,6 +14,7 @@ import { removeModalCategoryLines } from '../../category-badge/data/modal-catego
 import { syncCardBadges } from '../../category-badge/presentation/sync-card-badges';
 import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
 import { createCategoryHighlight } from '../../category-highlight/presentation/category-highlight';
+import { applyHideCardStats, removeHideCardStats } from '../../hide-card-stats/data/hide-stats-style';
 import { removeCardButtons } from '../../letterboxd/data/card-button';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
 import { syncCardButtons } from '../../letterboxd/presentation/sync-card-buttons';
@@ -95,6 +96,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.missingImages) {
       syncCardImages(cards, categoriesByTitle);
     }
+    // Global to the page rather than per card, and needs nothing that came
+    // from a scan: it can run before the cards are even looked at.
+    if (settings.hideCardStats) {
+      applyHideCardStats(root.ownerDocument);
+    }
     if (!settings.categoryBadges && !settings.letterboxdLink && !settings.missingImages) {
       return;
     }
@@ -162,6 +168,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCardImages(root);
       removeModalCreditLines(root);
     }
+    if (previous.hideCardStats && !settings.hideCardStats) {
+      removeHideCardStats(root.ownerDocument);
+    }
   }
 
   return {
@@ -189,6 +198,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCardButtons(root);
       removeCardImages(root);
       removeModalCreditLines(root);
+      removeHideCardStats(root.ownerDocument);
     },
   };
 }
