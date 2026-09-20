@@ -23,7 +23,6 @@ function emptyExternalIds(): ExternalIds {
     letterboxdWriter: null,
     letterboxdProducer: null,
     letterboxdStudio: null,
-    imdbId: null,
     tmdbMovieId: null,
     tmdbPersonId: null,
   };

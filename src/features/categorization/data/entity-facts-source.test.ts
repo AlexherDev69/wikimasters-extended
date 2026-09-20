@@ -99,7 +99,6 @@ describe('createEntityFactsSource', () => {
 
     expect(facts.get(PULP_FICTION_QID)?.externalIds).toMatchObject({
       letterboxdFilm: 'pulp-fiction',
-      imdbId: 'tt0110912',
       tmdbMovieId: '680',
     });
   });
@@ -112,7 +111,7 @@ describe('createEntityFactsSource', () => {
       classIds: [],
       parentClassIds: [],
       occupationIds: [],
-      externalIds: expect.objectContaining({ imdbId: null }) as unknown,
+      externalIds: expect.objectContaining({ tmdbMovieId: null }) as unknown,
       image: null,
     });
   });

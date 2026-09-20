@@ -26,7 +26,6 @@ const FACTS: EntityFacts = {
     letterboxdWriter: null,
     letterboxdProducer: null,
     letterboxdStudio: null,
-    imdbId: 'tt0000001',
     tmdbMovieId: null,
     tmdbPersonId: null,
   },

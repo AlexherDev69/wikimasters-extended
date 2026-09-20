@@ -129,7 +129,7 @@ Table statique classe vers catégorie : reportée. Les mesures montrent que la r
 
 | Type de carte | Ordre de résolution |
 | --- | --- |
-| Film | P6127 `/film/<id>/`, sinon P4947 `/tmdb/<id>/`, sinon P345 `/imdb/<id>/`, sinon `/search/<titre sans parenthèse>/` |
+| Film | P6127 `/film/<id>/`, sinon P4947 `/tmdb/<id>/`, sinon `/search/<titre sans parenthèse>/` (P345 retiré le 2026-09-21, voir phase 5d) |
 | Personne avec métier cinéma | ID du métier dominant (réalisateur P12383 `/director/`, acteur P6119 `/actor/`, scénariste P14583 `/writer/`, producteur P14196 `/producer/`), sinon ID d'un autre métier de cinéma de la personne, sinon `/search/<nom>/` |
 | Studio | P13273 `/studio/<id>/` (vérifié), sinon pas de lien |
 | Série TV | P6127 `/film/<id>/` si Letterboxd la référence, sinon pas de lien (corrigé le 2026-09-20, voir ci-dessous) |
@@ -355,6 +355,14 @@ Plan initial, avec l'état de chaque point :
 - La carte est en `rounded-2xl overflow-hidden` : l'arc du coin mange cette bande, environ 6,7 px de retrait à 3 px du bord bas. La marque est calée en dehors de l'arc, calculs dans le commentaire du CSS
 - Tailles en pixels entiers, et plus un `clamp` sur le viewport : la bande est un padding `p-3`, donc 12 px quels que soient l'écran et le format de carte. Le clamp n'apportait rien et garantissait des positions fractionnaires, donc un antialiasing différent d'un disque à l'autre. C'est ce que l'utilisateur voyait comme un décalage vertical, alors que les trois disques partagent le même `cy` et qu'un décalage vertical est impossible : les trois ne diffèrent que par leur x, donc chaque ligne de pixels reçoit la même couverture
 
+#### Phase 5d : retrait du repli IMDb (faite le 2026-09-21)
+
+- Signalé par l'utilisateur depuis `/pulls` : la carte "La Main dans le sac (film, 1916)" renvoyait sur `letterboxd.com/imdb/tt0427485/`, où Letterboxd répond "No-one has added tt0427485 yet"
+- Mesure sur Wikidata le 2026-09-21, échantillon d'un seizième du corpus par hachage (4 802 films de frwiki portant un identifiant IMDb) : 95,1 % portent aussi P6127 et 96,0 % portent P4947. Le repli IMDb ne se déclenchait donc que pour 186 films sur 4 802, soit 3,9 %
+- Et ces 3,9 % sont exactement les films que Letterboxd n'a pas : son catalogue vient de TMDB, donc un film sans P4947 n'y figure presque jamais. Q60833146, le film signalé, ne porte ni P6127 ni P4947, et la page de Letterboxd invite d'ailleurs à l'ajouter sur TMDB. Ce maillon ne pouvait quasiment marcher que là où il ne servait pas
+- Choix de l'utilisateur entre trois options mesurées : le repli devient la recherche par titre, qui dit la même chose qu'une page vide quand le film est absent et le trouve quand Wikidata n'a simplement jamais posé l'identifiant. C'est déjà le dernier recours d'un film sans aucun identifiant, donc aucune règle nouvelle
+- P345 n'avait plus aucun lecteur : retiré de `ExternalIds`, de la requête SPARQL (une valeur optionnelle de moins par élément) et des faits mis en cache. Cache des faits de carte en version 7, cette fois pour un vrai changement de forme
+
 ### Phase 6 : finitions et diffusion
 
 #### Phase 6a : réglages, page d'options, entretien du cache (faite le 2026-09-20, revue indépendante passée)
@@ -568,7 +576,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
 2. should show "Personne / Science" and no Letterboxd link when the card is "Albert Einstein"
 3. should link to `/film/pulp-fiction/` when the card is "Pulp Fiction"
-4. should fall back to `/imdb/<id>/` when a film has no P6127 but has P345
+4. should fall back to a title search when a film has neither P6127 nor P4947
 5. should classify "Saint-Malo" as "Lieu" and not "Organisation"
 6. should classify "Hibou" as "Vivant" (classe Q55983715)
 7. should resolve a renamed article through the frwiki redirect
