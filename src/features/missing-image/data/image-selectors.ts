@@ -36,6 +36,15 @@ export const IMAGE_KIND_ATTRIBUTE = 'data-wme-image-kind';
  */
 export const IMAGE_LOADED_ATTRIBUTE = 'data-wme-image-loaded';
 
+/**
+ * Marks the small node naming where the picture comes from, inside the
+ * container. Named apart from `IMAGE_SOURCE_ATTRIBUTES` above, which are the
+ * two attributes of the site this feature reads a source address in: one
+ * belongs to us and is written, the others belong to the site and are only
+ * ever read.
+ */
+export const IMAGE_SOURCE_MARK_ATTRIBUTE = 'data-wme-image-source';
+
 /** Marks the credit line added to the detail modal. */
 export const IMAGE_CREDIT_ATTRIBUTE = 'data-wme-image-credit';
 

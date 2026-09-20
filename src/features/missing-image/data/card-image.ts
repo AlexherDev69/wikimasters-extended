@@ -8,19 +8,29 @@ import {
   IMAGE_FILE_ATTRIBUTE,
   IMAGE_KIND_ATTRIBUTE,
   IMAGE_LOADED_ATTRIBUTE,
+  IMAGE_SOURCE_MARK_ATTRIBUTE,
 } from './image-selectors';
 
 /**
- * Our container is a bare `div` holding a single `img`: the scanner reads the
- * title of a card in its first `h3` and its description in its first `p`, and
- * a card without description has no `p` at all, so neither tag may appear
- * inside a card root.
+ * Our container is a bare `div` holding an `img` and a `span`: the scanner
+ * reads the title of a card in its first `h3` and its description in its first
+ * `p`, and a card without description has no `p` at all, so neither tag may
+ * appear inside a card root.
  */
 const CONTAINER_TAG = 'div';
 const IMAGE_TAG = 'img';
+const MARK_TAG = 'span';
 
 const CONTAINER_CLASS = 'wme-card-image';
 const IMAGE_CLASS = 'wme-card-image-media';
+const MARK_CLASS = 'wme-card-image-source';
+
+/**
+ * What the mark reads. It names the source of the picture, so it doubles as
+ * the shortest attribution there is, and it tells at a glance that the picture
+ * was added by the extension rather than served by the site.
+ */
+const IMAGE_SOURCE_LABEL = 'Commons';
 
 /** The image is decorative: the card already carries its title as text. */
 const IMAGE_ALT = '';
@@ -43,9 +53,9 @@ const LOAD_EVENT = 'load';
  * The card roots one of our containers was appended in. Three cards out of
  * four carry a picture of their own and have no placeholder at all: without
  * this set, each of them would pay a full subtree query on every scan, looking
- * for a container that was never added. A mark left behind by
+ * for a container that was never added. A card left in `rootsWithContainer` by
  * `removeCardImages` costs one query the next time that card is synced, and is
- * dropped right there.
+ * dropped from the set right there.
  */
 const rootsWithContainer = new WeakSet<HTMLElement>();
 
@@ -77,21 +87,34 @@ function buildContainer(document: Document, image: CardImage, url: string): HTML
   });
   picture.src = url;
 
+  // The mark naming the source. It lives and dies with the container, so it
+  // can never name the source of a picture that is not there any more, and the
+  // style sheet keeps it hidden until the container is marked as loaded: a
+  // mark over the logo of the site would name a source it does not come from.
+  const mark = document.createElement(MARK_TAG);
+  mark.className = MARK_CLASS;
+  mark.setAttribute(IMAGE_SOURCE_MARK_ATTRIBUTE, '');
+  mark.textContent = IMAGE_SOURCE_LABEL;
+
   container.appendChild(picture);
+  container.appendChild(mark);
   return container;
 }
 
 /**
- * True while the container already shows exactly this image. Its `img` is read
- * back as well, the way the credit line reads its link back: a container that
- * lost it would otherwise stay empty and invisible for as long as the site
- * keeps that card on screen.
+ * True while the container already shows exactly this image. Its `img` and its
+ * mark are read back as well, the way the credit line reads its link back: a
+ * container that lost either one would otherwise stay half drawn for as long
+ * as the site keeps that card on screen.
  */
 function showsImage(container: Element, image: CardImage): boolean {
   return (
     container.getAttribute(IMAGE_FILE_ATTRIBUTE) === image.fileName &&
     container.getAttribute(IMAGE_KIND_ATTRIBUTE) === image.kind &&
-    container.querySelector(`${IMAGE_TAG}.${IMAGE_CLASS}`) !== null
+    container.querySelector(`${IMAGE_TAG}.${IMAGE_CLASS}`) !== null &&
+    // The mark is the last child of the container, so this helper answers on
+    // its first step: this runs for every card of the page on every scan.
+    findChildWithAttribute(container, IMAGE_SOURCE_MARK_ATTRIBUTE) !== null
   );
 }
 
