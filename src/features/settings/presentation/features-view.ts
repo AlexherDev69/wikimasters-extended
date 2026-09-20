@@ -44,6 +44,13 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       'Affiche une image de Wikimedia Commons sur les cartes que le site laisse sans illustration, ' +
       "quand Wikidata en connaît une. L'image est chargée par ton navigateur depuis Wikimedia.",
   },
+  tradeCards: {
+    label: "Cartes sur la page d'échange",
+    hint:
+      "Dessine les cartes d'une offre d'échange à la place des noms tronqués de la page, " +
+      'avec leur rareté et leur image quand Wikidata en connaît une, pour ne plus avoir à ' +
+      'ouvrir chaque offre.',
+  },
   hideCardStats: {
     label: 'Masquer les statistiques des cartes',
     hint:

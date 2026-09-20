@@ -23,6 +23,9 @@ import { removeModalCreditLines } from '../../missing-image/data/modal-credit-li
 import { syncCardImages } from '../../missing-image/presentation/sync-card-images';
 import { syncModalCredit } from '../../missing-image/presentation/sync-modal-credit';
 import { removeTagProposals } from '../../tag-suggestions/presentation/apply-tag-proposals';
+import { scanTradeChips, type ObservedTradeCard } from '../../trade-cards/data/scan-trade-chips';
+import { removeTradePreviews } from '../../trade-cards/data/trade-preview';
+import { syncTradePreviews } from '../../trade-cards/presentation/sync-trade-previews';
 import { syncTagSuggestions } from '../../tag-suggestions/presentation/sync-tag-suggestions';
 import { hasEnabledFeature, type Settings } from '../domain/settings';
 
@@ -94,7 +97,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * differs, so running it on every scan costs nothing once the page already
    * shows the right thing.
    */
-  function sync(cards: readonly ObservedCard[]): void {
+  function sync(cards: readonly ObservedCard[], trades: readonly ObservedTradeCard[]): void {
     const { categoriesByTitle } = memory;
 
     if (settings.categoryBadges) {
@@ -105,6 +108,12 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
     if (settings.missingImages) {
       syncCardImages(cards, categoriesByTitle);
+    }
+    // Not a part of a card of the site but a card of its own, drawn beside
+    // the chip that names it, and never inside the detail modal: it is synced
+    // before the modal is even looked for.
+    if (settings.tradeCards) {
+      syncTradePreviews(root, trades, categoriesByTitle);
     }
     // Global to the page rather than per card, and needs nothing that came
     // from a scan: it can run before the cards are even looked at.
@@ -141,16 +150,30 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
   }
 
+  /**
+   * The cards the trade offers on screen name, empty while the feature is
+   * off: a switch that is off must cost neither a query of the DOM nor a
+   * request about the cards it would have drawn.
+   */
+  function scanTrades(): ObservedTradeCard[] {
+    return settings.tradeCards ? scanTradeChips(root) : [];
+  }
+
   async function categorize(cards: readonly CardToCategorize[]): Promise<CardCategory[]> {
     // The setting is read here, when the batch leaves, and not captured when
     // the overlay was built: a user who switches the images off stops the
     // requests for their addresses from the very next batch, and switching
     // them back on resolves again.
-    const results = await deps.categorize(cards, { resolveImageUrls: settings.missingImages });
+    const results = await deps.categorize(cards, {
+      // Two features draw a picture of Wikimedia: the one that fills in what
+      // the site left empty, and the cards of a trade offer, which the page
+      // shows no picture of at all. Either one asks for the addresses.
+      resolveImageUrls: settings.missingImages || settings.tradeCards,
+    });
     rememberCategories(memory, visibleTitles, results);
     // The page has kept mutating while the answer was on its way, so the cards
     // are read again rather than taken from the scan that asked.
-    sync(scanCards(root));
+    sync(scanCards(root), scanTrades());
     return results;
   }
 
@@ -161,15 +184,20 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * would have asked for it.
    */
   function processScan(cards: readonly ObservedCard[]): void {
-    visibleTitles = new Set(cards.map((observed) => observed.card.title));
+    // The cards of the page and the cards its trade offers name go through
+    // the same batch and the same memory: a title is a title, wherever it was
+    // read, and one met in both places is asked for once.
+    const trades = scanTrades();
+    const scanned = [...cards, ...trades];
+    visibleTitles = new Set(scanned.map((observed) => observed.card.title));
 
     // Nothing at all is asked of Wikimedia while every feature is off: a user
     // who turns the whole overlay off generates no traffic.
     if (hasEnabledFeature(settings)) {
-      handleScan(cards, memory.seenTitles, logger, categorize, scheduleRetry);
+      handleScan(scanned, memory.seenTitles, logger, categorize, scheduleRetry);
     }
     rememberCategories(memory, visibleTitles);
-    sync(cards);
+    sync(cards, trades);
   }
 
   /** Takes back the nodes of the parts that `previous` had and `settings` has not. */
@@ -191,6 +219,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
     if (previous.tagSuggestions && !settings.tagSuggestions) {
       removeTagProposals(root);
+    }
+    if (previous.tradeCards && !settings.tradeCards) {
+      removeTradePreviews(root);
     }
   }
 
@@ -220,6 +251,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeModalCreditLines(root);
       removeHideCardStats(root.ownerDocument);
       removeTagProposals(root);
+      removeTradePreviews(root);
     },
   };
 }

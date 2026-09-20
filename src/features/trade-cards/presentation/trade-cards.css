@@ -1,0 +1,123 @@
+/*
+ * Styles of the nodes this feature adds to a trade offer. Every selector
+ * starts with one of our data attributes, the last rule of the file included:
+ * it reaches a node of the site, but only one standing immediately after a
+ * preview of ours, which is a place only this extension ever creates.
+ */
+
+[data-wme-trade-preview] {
+  /*
+   * Defaults, overridden right below by the rarity the preview carries. A
+   * preview whose rarity variable the site stopped shipping keeps a readable
+   * neutral colour rather than losing its border entirely.
+   */
+  --wme-trade-colour: rgba(230, 237, 243, 0.55);
+  --wme-trade-width: 84px;
+  --wme-trade-art-height: 54px;
+  display: block;
+  width: var(--wme-trade-width);
+  box-sizing: border-box;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--wme-trade-colour) 45%, transparent);
+  background-color: rgba(9, 12, 17, 0.55);
+  /*
+   * The whole offer is one button of the site, which opens the detail of the
+   * trade. A click on our preview must do exactly what a click on the chip it
+   * replaced did, so nothing of ours ever takes a click.
+   */
+  pointer-events: none;
+}
+
+/*
+ * One rule per rarity rather than an inline style written on the node: the
+ * colours belong to the site, which publishes them as these variables, and a
+ * style attribute of ours would carry a value read from the page back into
+ * the page.
+ */
+[data-wme-trade-rarity='c'] {
+  --wme-trade-colour: var(--color-rarity-c);
+}
+
+[data-wme-trade-rarity='pc'] {
+  --wme-trade-colour: var(--color-rarity-pc);
+}
+
+[data-wme-trade-rarity='r'] {
+  --wme-trade-colour: var(--color-rarity-r);
+}
+
+[data-wme-trade-rarity='sr'] {
+  --wme-trade-colour: var(--color-rarity-sr);
+}
+
+[data-wme-trade-rarity='ur'] {
+  --wme-trade-colour: var(--color-rarity-ur);
+}
+
+[data-wme-trade-rarity='l'] {
+  --wme-trade-colour: var(--color-rarity-l);
+}
+
+[data-wme-trade-preview] .wme-trade-art {
+  position: relative;
+  height: var(--wme-trade-art-height);
+  background-color: color-mix(in srgb, var(--wme-trade-colour) 18%, rgba(9, 12, 17, 0.9));
+}
+
+[data-wme-trade-preview] .wme-trade-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* A logo is shown whole on the ground of its rarity, a photograph is cropped. */
+[data-wme-trade-kind='emblem'] .wme-trade-media {
+  object-fit: contain;
+  padding: 3px;
+}
+
+/* A picture that failed to load leaves the flat ground, never a broken glyph. */
+[data-wme-trade-failed] .wme-trade-media {
+  display: none;
+}
+
+[data-wme-trade-preview] .wme-trade-rarity {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.02em;
+  /* The ink of the site's own rarity chip, on the colour of the rarity. */
+  color: rgb(13, 17, 23);
+  background-color: var(--wme-trade-colour);
+}
+
+[data-wme-trade-preview] .wme-trade-title {
+  display: block;
+  padding: 3px 4px 4px;
+  font-size: 10px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: rgba(230, 237, 243, 0.92);
+  /* A title longer than the card wraps rather than overflowing or being cut. */
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The chip our preview stands in for. The only rule of this extension that
+ * paints a node of the site, and it is scoped by construction: it needs one
+ * of our previews immediately before that chip, which only ever happens where
+ * this feature has just drawn the very same card. With the feature off there
+ * is no preview, so this rule matches nothing at all.
+ */
+[data-wme-trade-preview] + span {
+  display: none;
+}

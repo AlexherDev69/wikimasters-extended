@@ -16,6 +16,8 @@ import {
 } from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
+import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
+
 import {
   TAG_INPUT_SELECTOR,
   TAG_PROPOSAL_BUTTON_SELECTOR,
@@ -31,12 +33,16 @@ const LARGE_HTML = readFileSync(join(FIXTURES_DIR, 'card-large-with-description.
 const MODAL_HTML = readFileSync(join(FIXTURES_DIR, 'card-detail-modal.html'), 'utf-8');
 
 const PLACEHOLDER_HTML = readFileSync(join(FIXTURES_DIR, 'placeholder-cards.html'), 'utf-8');
+/** Two offers of the exchange page, seven chips naming six distinct cards. */
+const TRADES_HTML = readFileSync(join(FIXTURES_DIR, 'trades-list.html'), 'utf-8');
 
 const GRID_CARD_TITLE = "Jeu d'horreur";
 const LARGE_CARD_TITLE = 'Foza';
 const MODAL_CARD_TITLE = 'Dvorichté';
 /** A card of the catalogue export the site shows its own logo for. */
 const PLACEHOLDER_CARD_TITLE = 'Adan Canto';
+/** Named by both offers of the trade fixture, so two chips carry it. */
+const TRADE_CARD_TITLE = 'Saison 1 de Severance';
 
 const CARD_IMAGE: CardImage = {
   fileName: 'Adan Canto 2015.jpg',
@@ -50,6 +56,7 @@ const ALL_OFF: Settings = {
   categoryBadges: false,
   letterboxdLink: false,
   missingImages: false,
+  tradeCards: false,
   hideCardStats: false,
   tagSuggestions: false,
   tagAutoFill: false,
@@ -80,6 +87,7 @@ const RESULTS: CardCategory[] = [
     suggestedTags: ['Cinéma et TV'],
   }),
   makeCategory(PLACEHOLDER_CARD_TITLE, { categoryId: 'person', image: CARD_IMAGE }),
+  makeCategory(TRADE_CARD_TITLE, { categoryId: 'film_tv', image: CARD_IMAGE }),
 ];
 
 function makeLogger(): Logger {
@@ -149,6 +157,13 @@ function cardImages(): NodeListOf<Element> {
 
 function hideStatsStyle(): Element | null {
   return document.head.querySelector(HIDE_STATS_STYLE_SELECTOR);
+}
+
+/** The picture of a trade card, which only a card with a known file has. */
+const TRADE_PREVIEW_IMAGE_SELECTOR = TRADE_PREVIEW_SELECTOR + ' img';
+
+function tradePreviews(): NodeListOf<Element> {
+  return document.body.querySelectorAll(TRADE_PREVIEW_SELECTOR);
 }
 
 function tagProposals(): Element | null {
@@ -439,6 +454,62 @@ describe('createOverlay', () => {
     expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(drawn);
   });
 
+  it('should draw the cards a trade offer names, with the picture of the ones it knows', async () => {
+    document.body.innerHTML = TRADES_HTML;
+    const { overlay, categorize } = mount();
+
+    scan(overlay);
+
+    await vi.waitFor(() => {
+      expect(document.body.querySelectorAll(TRADE_PREVIEW_IMAGE_SELECTOR)).toHaveLength(2);
+    });
+    // Seven chips, six distinct cards, and the one named twice is drawn twice.
+    expect(tradePreviews()).toHaveLength(7);
+    const asked = categorize.mock.calls[0]?.[0] ?? [];
+    expect(asked.map((card) => card.title)).toContain(TRADE_CARD_TITLE);
+    expect(asked).toHaveLength(6);
+  });
+
+  it('should draw no trade card and ask for nothing while every setting is off', () => {
+    document.body.innerHTML = TRADES_HTML;
+    const { overlay, categorize } = mount(ALL_OFF);
+
+    scan(overlay);
+
+    expect(tradePreviews()).toHaveLength(0);
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should take the cards of the trade offers back when the setting is turned off', async () => {
+    document.body.innerHTML = TRADES_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount({ ...ALL_OFF, tradeCards: true });
+    scan(overlay);
+    await vi.waitFor(() => {
+      expect(tradePreviews().length).toBeGreaterThan(0);
+    });
+
+    overlay.applySettings({ ...ALL_OFF, tradeCards: false });
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should resolve the addresses of the pictures while only the trade cards need them', async () => {
+    document.body.innerHTML = TRADES_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, tradeCards: true });
+
+    scan(overlay);
+
+    await vi.waitFor(() => {
+      expect(categorize).toHaveBeenCalledOnce();
+    });
+    // The images of the cards of the site are off, but a trade card shows
+    // nothing at all without a picture, so the batch asks for the addresses.
+    expect(categorize).toHaveBeenNthCalledWith(1, expect.anything(), {
+      resolveImageUrls: true,
+    });
+  });
+
   it('should ask for no categorization at all when every setting is off', () => {
     document.body.innerHTML = GRID_HTML + LARGE_HTML;
     const { overlay, categorize } = mount(ALL_OFF);
@@ -487,7 +558,13 @@ describe('createOverlay', () => {
 
   it('should ask for the addresses of the pictures only while the images are on', async () => {
     document.body.innerHTML = GRID_HTML;
-    const { overlay, categorize } = mount({ ...DEFAULT_SETTINGS, missingImages: false });
+    // The trade cards are off as well: they are the other feature that draws
+    // a picture of Wikimedia, and one of them being on is enough to ask.
+    const { overlay, categorize } = mount({
+      ...DEFAULT_SETTINGS,
+      missingImages: false,
+      tradeCards: false,
+    });
 
     scan(overlay);
 
@@ -569,7 +646,7 @@ describe('createOverlay', () => {
   });
 
   it('should leave no node of ours behind when every feature is off', () => {
-    document.body.innerHTML = GRID_HTML + LARGE_HTML + MODAL_HTML;
+    document.body.innerHTML = GRID_HTML + LARGE_HTML + MODAL_HTML + TRADES_HTML;
     const siteHtml = document.body.innerHTML;
     const { overlay } = mount(ALL_OFF);
 
