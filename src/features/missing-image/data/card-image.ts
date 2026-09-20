@@ -1,7 +1,6 @@
 import { findChildWithAttribute } from '../../../core/dom/find-child-with-attribute';
 import { isCommonsFileName, type CardImage } from '../domain/card-image';
-import { commonsThumbnailUrl } from '../domain/commons-url';
-import { isWikimediaThumbnailUrl } from '../domain/thumbnail-url';
+import { thumbnailAddress } from '../domain/thumbnail-address';
 import { findPictureArea } from './find-placeholder';
 import {
   CARD_IMAGE_ATTRIBUTE,
@@ -120,22 +119,6 @@ function buildContainer(document: Document, image: CardImage, url: string): HTML
   container.appendChild(picture);
   container.appendChild(mark);
   return container;
-}
-
-/**
- * Address the picture is asked for at: the one resolved by the service worker
- * when there is one, and the one built from the file name otherwise. The
- * resolved address is checked again here, whatever the caller believes it
- * holds: this is the last step before an `src`.
- *
- * The fallback is not a failure, it is the path that shipped before this
- * phase: the same picture, reached through two redirects the browser is told
- * not to cache.
- */
-function thumbnailAddress(image: CardImage): string {
-  return isWikimediaThumbnailUrl(image.thumbnailUrl)
-    ? image.thumbnailUrl
-    : commonsThumbnailUrl(image.fileName);
 }
 
 /**

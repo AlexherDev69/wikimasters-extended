@@ -20,6 +20,11 @@ export interface Settings {
   letterboxdLink: boolean;
   /** Image of Wikimedia Commons on the cards the site leaves without one. */
   missingImages: boolean;
+  /**
+   * Draws the cards a trade offer names, in place of the truncated chips the
+   * page of the exchanges shows instead.
+   */
+  tradeCards: boolean;
   /** Hides the ATK/DEF numbers of the cards and of the detail modal. */
   hideCardStats: boolean;
   /** Proposals in the tag area of the detail modal. Read-only: see tagAutoFill. */
@@ -38,6 +43,7 @@ export const SETTING_KEYS = [
   'categoryBadges',
   'letterboxdLink',
   'missingImages',
+  'tradeCards',
   'hideCardStats',
   'tagSuggestions',
   'tagAutoFill',
@@ -49,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryBadges: true,
   letterboxdLink: true,
   missingImages: true,
+  tradeCards: true,
   hideCardStats: false,
   tagSuggestions: true,
   tagAutoFill: false,
@@ -68,6 +75,7 @@ const CATEGORIZATION_SETTING_KEYS = [
   'categoryBadges',
   'letterboxdLink',
   'missingImages',
+  'tradeCards',
   'tagSuggestions',
 ] as const satisfies readonly (keyof Settings)[];
 

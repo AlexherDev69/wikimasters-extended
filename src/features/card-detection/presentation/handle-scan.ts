@@ -6,9 +6,18 @@ import type {
   PersonSubtypeId,
 } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
-import type { ObservedCard } from '../data/scan-cards';
 import type { DetectedCard } from '../domain/detected-card';
 import { selectUnseenCards } from '../domain/select-unseen-cards';
+
+/**
+ * What this module needs of one thing observed on the page: the card it
+ * names, never the node that names it. A card of the page comes from the
+ * scanner with its root, a card of a trade offer from the chip that names it,
+ * and one batch may hold both.
+ */
+export interface ScannedCard {
+  card: DetectedCard;
+}
 
 /** Asks the service worker for the category of each card. */
 export type CategorizeCards = (cards: readonly CardToCategorize[]) => Promise<CardCategory[]>;
@@ -74,7 +83,7 @@ function selectRetryableTitles(
  * Exported so it can be unit-tested independently of the WXT runtime.
  */
 export function handleScan(
-  observedCards: readonly ObservedCard[],
+  observedCards: readonly ScannedCard[],
   seenTitles: Set<string>,
   logger: Logger,
   categorize: CategorizeCards,
