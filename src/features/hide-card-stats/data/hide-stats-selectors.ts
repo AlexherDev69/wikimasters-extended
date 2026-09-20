@@ -1,4 +1,8 @@
-import { CARD_ROOT_SELECTOR, MODAL_FRAME_SELECTOR } from '../../card-detection/data/card-selectors';
+import {
+  CARD_ROOT_SELECTOR,
+  MODAL_FRAME_SELECTOR,
+  MODAL_ROOT_SELECTOR,
+} from '../../card-detection/data/card-selectors';
 
 /**
  * Everything this feature matches on the site's own DOM. Both shapes are
@@ -24,13 +28,18 @@ export const CARD_DEFENSE_VALUE_SELECTOR = `${CARD_ROOT_SELECTOR} div:has(> ${DE
 
 /**
  * The grid holding the two big ATK/DEF panels of the detail modal (not the
- * small card it also shows, matched above). Scoped by the site's own
- * semantic class for a panel of that modal (MODAL_FRAME_SELECTOR,
- * `card-frame`) rather than by the bare Tailwind `grid` class alone, which
- * would otherwise match any grid layout on the page.
+ * small card it also shows, matched above).
+ *
+ * Scoped to the modal layer itself, and not to `card-frame` alone:
+ * docs/DOM_NOTES.md lists that class on the header block of
+ * `/global-collection` and on the tiles of the marketplace as well, so it
+ * names a panel of the site in general, not a panel of this modal. Without
+ * the layer in front, a grid of `card-frame` panels showing an attack value
+ * anywhere else on the site would be taken down whole, its other panels with
+ * it, on a route this extension has never even looked at.
  */
-export const MODAL_ATTACK_PANELS_SELECTOR = `div.grid:has(> ${MODAL_FRAME_SELECTOR} > div > ${ATTACK_ICON_SELECTOR})`;
-export const MODAL_DEFENSE_PANELS_SELECTOR = `div.grid:has(> ${MODAL_FRAME_SELECTOR} > div > ${DEFENSE_ICON_SELECTOR})`;
+export const MODAL_ATTACK_PANELS_SELECTOR = `${MODAL_ROOT_SELECTOR} div.grid:has(> ${MODAL_FRAME_SELECTOR} > div > ${ATTACK_ICON_SELECTOR})`;
+export const MODAL_DEFENSE_PANELS_SELECTOR = `${MODAL_ROOT_SELECTOR} div.grid:has(> ${MODAL_FRAME_SELECTOR} > div > ${DEFENSE_ICON_SELECTOR})`;
 
 /** Marks the one style element this feature adds, always in `document.head`. */
 export const HIDE_STATS_STYLE_ATTRIBUTE = 'data-wme-hide-stats';

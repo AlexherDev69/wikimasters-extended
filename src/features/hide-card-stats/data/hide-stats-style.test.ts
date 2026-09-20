@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -114,6 +114,29 @@ describe('applyHideCardStats', () => {
     expect(document.head.children).toHaveLength(headChildrenBefore + 1);
   });
 
+  it('should never act on a node of the site, not even through a method that leaves no trace', () => {
+    // The comparison above reads the serialized body, which cannot show a
+    // dispatched event, a scroll or a focus: the site sanctions an automated
+    // interaction with a ban, so those are pinned here by name rather than
+    // left to a check that could never see them.
+    // Spied on the prototype the DOM implementation actually resolves the
+    // method from, which is not always EventTarget itself.
+    const dispatchEvent = vi.spyOn(HTMLElement.prototype, 'dispatchEvent');
+    const click = vi.spyOn(HTMLElement.prototype, 'click');
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    const scrollTo = vi.spyOn(Element.prototype, 'scrollTo');
+
+    applyHideCardStats(document);
+    applyHideCardStats(document);
+    removeHideCardStats(document);
+
+    expect(dispatchEvent).not.toHaveBeenCalled();
+    expect(click).not.toHaveBeenCalled();
+    expect(focus).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
   it('should carry the two card selectors with visibility hidden', () => {
     applyHideCardStats(document);
 
@@ -154,7 +177,31 @@ describe('applyHideCardStats', () => {
     const panels = document.body.querySelector(MODAL_ATTACK_PANELS_SELECTOR);
 
     expect(panels).not.toBeNull();
+    // The node reached is the GRID and not one of its panels: asserted on the
+    // shape it has on the page, never on the constant that selected it, or a
+    // rule aimed at each panel would satisfy this test just as well and leave
+    // two empty frames behind.
+    expect((panels as Element).classList.contains('grid')).toBe(true);
+    expect((panels as Element).querySelectorAll(':scope > div.card-frame')).toHaveLength(2);
     expect(getComputedStyle(panels as Element).display).toBe('none');
+  });
+
+  it('should reach neither panel grid when the same shape sits outside the detail modal', () => {
+    // `card-frame` is a panel class of the SITE, not of the modal: it also
+    // carries the header of the collection page and the tiles of the market,
+    // so the same grid of panels can exist on a route with no modal at all.
+    document.body.innerHTML = `
+      <main>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="card-frame"><div><svg class="lucide lucide-swords"></svg>900</div></div>
+          <div class="card-frame"><div><svg class="lucide lucide-shield"></svg>700</div></div>
+        </div>
+      </main>
+    `;
+    applyHideCardStats(document);
+
+    expect(document.body.querySelector(MODAL_ATTACK_PANELS_SELECTOR)).toBeNull();
+    expect(document.body.querySelector(MODAL_DEFENSE_PANELS_SELECTOR)).toBeNull();
   });
 
   it('should still let scanCards read the same cards once the style is applied', () => {

@@ -330,7 +330,7 @@ Plan initial, avec l'état de chaque point :
 - Page d'options intégrée (TypeScript sans framework) : cases à cocher enregistrées immédiatement, relecture du stockage si un enregistrement échoue, nombre de cartes et de classes en cache et de cartes dans l'index, "Vider le cache de catégorisation" et "Réinitialiser l'index de collection" avec confirmation, rappel de confidentialité. La fenêtre de statistiques gagne un accès "Options"
 - Vider le cache retire les faits par carte et les rattachements par classe, et rien d'autre : réglages, index de collection et délai d'attente imposé par Wikidata sont conservés
 - Manifest : seule l'entrée `options_ui` est ajoutée, permissions inchangées, aucun appel réseau dans cette phase
-- Cette section décrit ce qui a été livré ce jour-là. La liste des réglages a changé depuis : "index de collection" est parti avec la phase 8a, "images manquantes" est arrivé avec la phase 7a. Ils restent quatre, tous actifs par défaut
+- Cette section décrit ce qui a été livré ce jour-là. La liste des réglages a changé depuis : "index de collection" est parti avec la phase 8a, "images manquantes" est arrivé avec la phase 7a. "masquer les statistiques" est arrivé avec la phase 10a. Ils sont cinq, dont quatre actifs par défaut
 
 Écarts assumés et décisions :
 

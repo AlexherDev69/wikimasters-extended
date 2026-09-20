@@ -614,4 +614,19 @@ describe('createOverlay', () => {
 
     expect(document.body.innerHTML).toBe(siteHtml);
   });
+
+  it('should take back the hide-stats style when the context is invalidated', async () => {
+    // Its own case, and not the comparison above: the style sheet lives in
+    // document.head, where comparing the body cannot see it. Without this,
+    // an extension reloaded while a tab is open would leave the numbers of
+    // the site hidden with nothing left on the page able to bring them back.
+    document.body.innerHTML = GRID_HTML + MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
+    await scanUntilDrawn(overlay);
+    expect(hideStatsStyle()).not.toBeNull();
+
+    overlay.destroy();
+
+    expect(hideStatsStyle()).toBeNull();
+  });
 });

@@ -66,7 +66,7 @@ if (container === null) {
 
   mountOptions(container, {
     // The strict read: a page that showed the defaults it had not read would
-    // write those four switches over the saved ones on the next toggle.
+    // write those switches over the saved ones on the next toggle.
     readSettings: (): Promise<Settings> => settingsRepository.readStrict(),
     writeSettings: (settings: Settings): Promise<void> => settingsRepository.write(settings),
     readStats,
