@@ -122,4 +122,5 @@ describe('createClassTargetCache', () => {
     expect((await cache.getCategoryTargets([])).size).toBe(0);
     expect(Object.keys(await storage.snapshot('local'))).toHaveLength(0);
   });
+
 });

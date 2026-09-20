@@ -1,3 +1,4 @@
+import { createBlock, createButton, createText } from '../../../core/dom/create-elements';
 import {
   CATEGORY_LABELS,
   PERSON_SUBTYPE_LABELS,
@@ -6,11 +7,8 @@ import { frwikiArticleUrl } from '../domain/frwiki-article-url';
 import type { CategorySummary, SummaryCard } from '../domain/collection-summary';
 import {
   COUNT_CLASS,
-  createBlock,
-  createButton,
   createCategoryDot,
   createLink,
-  createText,
   LABEL_CLASS,
   RARITY_LABELS,
 } from './popup-elements';

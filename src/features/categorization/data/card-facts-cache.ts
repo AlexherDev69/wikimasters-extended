@@ -10,8 +10,11 @@ import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '..
  *
  * The key holds the article title as it is. The WXT storage API splits a key on
  * its FIRST colon only, so the title keeps any colon it contains.
+ *
+ * The prefix is exported so the maintenance of the options page can count and
+ * remove these entries without knowing what they hold.
  */
-const KEY_PREFIX = 'wme:card:';
+export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
 
 /** Bump when the stored shape changes: entries of another version are misses. */
 const SCHEMA_VERSION = 1;
@@ -28,7 +31,7 @@ interface StoredCardFacts {
 }
 
 function cardKey(title: string): StorageItemKey {
-  return `local:${KEY_PREFIX}${title}`;
+  return `local:${CARD_FACTS_KEY_PREFIX}${title}`;
 }
 
 function isCardFactsStatus(value: unknown): value is CardFactsStatus {

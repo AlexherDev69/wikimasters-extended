@@ -45,6 +45,7 @@ function makePorts(overrides: Partial<PopupPorts> = {}): PopupPorts {
   return {
     loadSummary: (): Promise<CollectionSummary> => Promise.resolve(SUMMARY),
     clearIndex: (): Promise<void> => Promise.resolve(),
+    openOptions: (): void => undefined,
     ...overrides,
   };
 }
@@ -154,7 +155,7 @@ describe('mountPopup', () => {
     const clearIndex = vi.fn(() => Promise.resolve());
     let summary: CollectionSummary = SUMMARY;
     const loadSummary = (): Promise<CollectionSummary> => Promise.resolve(summary);
-    mountPopup(container, { loadSummary, clearIndex });
+    mountPopup(container, makePorts({ loadSummary, clearIndex }));
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-reset')).not.toBeNull();
     });
@@ -270,6 +271,30 @@ describe('mountPopup', () => {
         "L'index n'a pas pu être lu",
       );
     });
+  });
+
+  it('should open the options page when the options control is clicked', async () => {
+    const container = makeContainer();
+    const openOptions = vi.fn();
+    mountPopup(container, makePorts({ openOptions }));
+    await vi.waitFor(() => {
+      expect(container.querySelector('.wme-row-main')).not.toBeNull();
+    });
+
+    click(container, '.wme-options');
+
+    expect(openOptions).toHaveBeenCalledOnce();
+  });
+
+  it('should offer the options page even when the index holds no card', async () => {
+    const container = makeContainer();
+
+    mountPopup(container, makePorts({ loadSummary: () => Promise.resolve(EMPTY_SUMMARY) }));
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('.wme-message')?.textContent).toContain('Aucune carte');
+    });
+    expect(container.querySelector('.wme-options')).not.toBeNull();
   });
 
   it('should build every node of the popup without assigning HTML strings', () => {

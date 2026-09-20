@@ -13,8 +13,12 @@ import type { ClassResolution, ClassTargetCache } from '../domain/ports';
  * Resolved target of each Wikidata class, per kind. There is no TTL: a class
  * rarely changes its parents. An entry written with another ROOTS_VERSION is a
  * miss, which is how a change in the root lists is rolled out.
+ *
+ * Both kinds share the prefix, which is exported so the maintenance of the
+ * options page can count and remove these entries without knowing what they
+ * hold.
  */
-const KEY_PREFIX = 'wme:class:';
+export const CLASS_TARGET_KEY_PREFIX = 'wme:class:';
 
 type ClassKind = 'category' | 'occupation';
 
@@ -28,7 +32,7 @@ interface StoredClassTarget {
 type TargetGuard<TTarget> = (value: unknown) => value is TTarget;
 
 function classKey(kind: ClassKind, classId: string): StorageItemKey {
-  return `local:${KEY_PREFIX}${kind}:${classId}`;
+  return `local:${CLASS_TARGET_KEY_PREFIX}${kind}:${classId}`;
 }
 
 function isStoredClassTarget(value: unknown): value is StoredClassTarget {

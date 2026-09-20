@@ -143,4 +143,5 @@ describe('createCardFactsCache', () => {
 
     expect(fresh.size).toBe(1);
   });
+
 });

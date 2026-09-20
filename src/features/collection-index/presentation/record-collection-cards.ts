@@ -21,6 +21,14 @@ export interface CollectionRecorderDeps {
    * script context: a timer of its own would fire after the teardown.
    */
   scheduleRetry: ScheduleRetry;
+  /**
+   * Whether the setting of the feature is on, asked on every scan. The recorder
+   * is called on every scan whatever the answer, so that the path of the
+   * previous scan keeps following the route while the feature is off: a
+   * recorder that stops looking would take the first scan after a client side
+   * navigation for an ordinary one and record the page being left.
+   */
+  isEnabled: () => boolean;
 }
 
 export interface CollectionRecorder {
@@ -103,7 +111,10 @@ export function createCollectionRecorder(deps: CollectionRecorderDeps): Collecti
       const routeChanged = previousPathname !== null && previousPathname !== pathname;
       previousPathname = pathname;
 
-      if (!isCollectionPath(pathname) || routeChanged) {
+      // Nothing is sent and nothing is remembered as sent while the feature is
+      // off, so the cards seen meanwhile are sent by the first scan that
+      // follows it being switched back on.
+      if (!deps.isEnabled() || !isCollectionPath(pathname) || routeChanged) {
         return;
       }
 

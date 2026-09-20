@@ -13,6 +13,8 @@ import { mountPopup } from '../../features/collection-index/presentation/popup-a
 
 const APP_ELEMENT_ID = 'app';
 
+const logger = createLogger('popup');
+
 const INVALID_SUMMARY_RESPONSE = 'Unexpected collection summary response';
 const INVALID_CLEAR_RESPONSE = 'Unexpected clear index response';
 
@@ -40,9 +42,22 @@ async function clearIndex(): Promise<void> {
   }
 }
 
+/**
+ * The browser decides where the options page opens, and closes the popup on
+ * its own. There is no popup left to show a failure in, so a rejection is
+ * logged rather than shown: swallowing it would leave no trace at all.
+ */
+function openOptions(): void {
+  browser.runtime.openOptionsPage().catch((error: unknown) => {
+    logger.error('The options page could not be opened', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
+}
+
 const container = document.getElementById(APP_ELEMENT_ID);
 if (container === null) {
-  createLogger('popup').error('The popup has no container element');
+  logger.error('The popup has no container element');
 } else {
-  mountPopup(container, { loadSummary, clearIndex });
+  mountPopup(container, { loadSummary, clearIndex, openOptions });
 }

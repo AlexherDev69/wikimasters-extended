@@ -25,18 +25,22 @@ export function createCategorizeMessageHandler(
       return false;
     }
 
-    void categorizeCards(message.cards, deps)
-      .then((cards) => {
+    // The rejection handler is the second argument of `then` and not a `catch`
+    // after it: a `catch` would also run when `sendResponse` itself throws, and
+    // answer a second time for a categorization that had succeeded.
+    void categorizeCards(message.cards, deps).then(
+      (cards) => {
         sendResponse({ cards });
-      })
-      .catch((error: unknown) => {
+      },
+      (error: unknown) => {
         // The use case is not supposed to reject: answer anyway so that the
         // content script never waits for a response that will not come.
         deps.logger.error('Categorization failed', {
           error: error instanceof Error ? error.message : String(error),
         });
         sendResponse({ cards: [] });
-      });
+      },
+    );
 
     return true;
   };
