@@ -519,6 +519,14 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Aucune requête nouvelle, aucune propriété SPARQL nouvelle : les libellés de métier étaient déjà récupérés pour départager les occupations et jetés ensuite. Manifest inchangé, à l'exception de sa description, qui disait "en lecture seule" et dit désormais "en lecture seule par défaut" : c'est le seul texte que lit quelqu'un qui n'ouvre jamais la page d'options
 - Défaut de couverture connu, faute de capture : aucune fixture d'une carte NON possédée. Le cas est fabriqué en mémoire à partir d'une carte possédée. Si le site rendait un champ désactivé plutôt qu'absent sur une carte d'autrui, le test de possession tomberait, et c'est alors la garde `disabled` ci-dessus qui protégerait
 
+#### Phase 8c : état d'attente des étiquettes suggérées (faite le 2026-09-21)
+
+- Demande de l'utilisateur : "Mettre un loading pour montrer que c'est en train de les charger, on dirait qu'il se passe rien sinon"
+- La zone restait vide pendant toute la requête, et une zone vide est exactement ce qu'affiche une carte sans proposition : les deux situations se ressemblaient alors qu'elles n'ont rien à voir
+- Le mot "recherche…" est écrit à la place des propositions tant que la carte n'a aucun résultat, quelle qu'en soit la raison (lot en vol, ou lot échoué attendant sa temporisation de 60 s). Dès qu'un résultat arrive, quel que soit son statut, l'état se résout tout seul
+- Même noeud, même clé de comparaison, donc les mêmes garanties. L'état fait partie de la clé et non des étiquettes, sinon une carte dont la seule proposition serait ce mot garderait le noeud d'attente. Une sync qui retrouve la même attente n'écrit rien
+- Le mot respire par une animation CSS, qui ne touche pas au DOM et ne peut donc pas relancer l'observateur, et s'arrête sur `prefers-reduced-motion`. Il porte `role="status"` : son apparition puis son remplacement sont exactement le changement qu'un lecteur d'écran manquerait
+
 ### Phase 10 : préférences d'affichage
 
 #### Phase 10a : option pour masquer les statistiques des cartes (faite le 2026-09-20, revue indépendante passée)

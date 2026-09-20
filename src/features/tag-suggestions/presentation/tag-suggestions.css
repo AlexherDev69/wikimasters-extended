@@ -17,6 +17,35 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
+/*
+ * The waiting state, drawn in the place the proposals will take. It breathes
+ * rather than sitting still: the section is otherwise unchanged while the
+ * request travels, which is exactly what reads as nothing happening.
+ */
+[data-wme-tag-suggestions] .wme-tag-suggestions-pending {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  animation: wme-tag-suggestions-waiting 1400ms ease-in-out infinite;
+}
+
+@keyframes wme-tag-suggestions-waiting {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Movement is refused: the word stays, and says the same thing on its own. */
+@media (prefers-reduced-motion: reduce) {
+  [data-wme-tag-suggestions] .wme-tag-suggestions-pending {
+    animation: none;
+    opacity: 0.75;
+  }
+}
+
 /* Clickable, unlike every read-only node this extension otherwise draws. */
 [data-wme-tag-suggestion] {
   padding: 2px 8px;

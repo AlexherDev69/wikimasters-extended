@@ -2,6 +2,7 @@ import type { DetailModal } from '../../card-detection/data/detail-modal';
 import type { CardCategory } from '../../categorization/domain/category';
 import { findTagSection } from '../data/find-tag-section';
 import {
+  applyPendingProposals,
   applyTagProposals,
   findTagProposalsTarget,
   removeTagProposals,
@@ -9,13 +10,7 @@ import {
 } from './apply-tag-proposals';
 
 /** Suggested tags the card does not already carry, case-insensitively. */
-function remainingProposals(
-  category: CardCategory | undefined,
-  existingTags: readonly string[],
-): string[] {
-  if (category === undefined) {
-    return [];
-  }
+function remainingProposals(category: CardCategory, existingTags: readonly string[]): string[] {
   const existing = new Set(existingTags.map((tag) => tag.toLowerCase()));
   return category.suggestedTags.filter((tag) => !existing.has(tag.toLowerCase()));
 }
@@ -55,6 +50,15 @@ export function syncTagSuggestions(
   }
 
   const category = categoriesByTitle.get(modal.title);
-  const tags = remainingProposals(category, section.tags);
-  applyTagProposals(findTagProposalsTarget(modal.title, section), tags, callbacks);
+  const target = findTagProposalsTarget(modal.title, section);
+
+  // Nothing known of this card yet: the facts are being fetched, or a failed
+  // batch is waiting on its cooldown. Either way something is coming, and an
+  // empty section says the opposite.
+  if (category === undefined) {
+    applyPendingProposals(target);
+    return;
+  }
+
+  applyTagProposals(target, remainingProposals(category, section.tags), callbacks);
 }

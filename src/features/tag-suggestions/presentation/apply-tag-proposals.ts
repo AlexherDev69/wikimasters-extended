@@ -16,10 +16,23 @@ const BUTTON_TYPE = 'button';
 const NODE_CLASS = 'wme-tag-suggestions';
 const LABEL_CLASS = 'wme-tag-suggestions-label';
 const BUTTON_CLASS = 'wme-tag-suggestion';
+const PENDING_CLASS = 'wme-tag-suggestions-pending';
 
 const NODE_LABEL_TEXT = 'Étiquettes suggérées';
+/**
+ * Shown while the facts of the card have not come back yet. Written out
+ * rather than drawn as three dots: the section is otherwise empty, and an
+ * empty section reads as "this card has nothing to propose" when it only
+ * means "not yet".
+ */
+const PENDING_TEXT = 'recherche…';
 
 const ARIA_LABEL_ATTRIBUTE = 'aria-label';
+const ROLE_ATTRIBUTE = 'role';
+const STATUS_ROLE = 'status';
+
+/** Which of the two things the node shows, so one key can never read as the other. */
+type ProposalsState = 'pending' | 'ready';
 
 export type TagProposalsCallbacks = FillTagFieldDeps;
 
@@ -54,12 +67,19 @@ export function findTagProposalsTarget(title: string | null, section: TagSection
 const inputByNode = new WeakMap<HTMLElement, HTMLInputElement>();
 
 /**
- * The comparison key of the whole node: the card title together with the
- * proposals, so a sync writes nothing when the section already shows this
- * very list for this very card, and rebuilds when either changes.
+ * The comparison key of the whole node: the card title and the state,
+ * together with the proposals, so a sync writes nothing when the section
+ * already shows this very list for this very card, and rebuilds when any of
+ * them changes. The state is part of the key and not a tag among the others:
+ * a card whose only proposal was the word below would otherwise keep the
+ * waiting node once its facts arrived.
  */
-function proposalsKey(title: string | null, tags: readonly string[]): string {
-  return JSON.stringify([title, ...tags]);
+function proposalsKey(
+  title: string | null,
+  state: ProposalsState,
+  tags: readonly string[],
+): string {
+  return JSON.stringify([title, state, ...tags]);
 }
 
 function ariaLabelFor(tag: string): string {
@@ -115,13 +135,8 @@ function buildButton(
   return button;
 }
 
-function buildNode(
-  document: Document,
-  tags: readonly string[],
-  key: string,
-  input: HTMLInputElement,
-  callbacks: TagProposalsCallbacks,
-): HTMLElement {
+/** The node and its label, all a waiting node ever needs. */
+function buildShell(document: Document, key: string): HTMLElement {
   const node = document.createElement(NODE_TAG);
   node.className = NODE_CLASS;
   node.setAttribute(TAG_PROPOSALS_ATTRIBUTE, '');
@@ -132,9 +147,35 @@ function buildNode(
   label.textContent = NODE_LABEL_TEXT;
   node.appendChild(label);
 
+  return node;
+}
+
+function buildNode(
+  document: Document,
+  tags: readonly string[],
+  key: string,
+  input: HTMLInputElement,
+  callbacks: TagProposalsCallbacks,
+): HTMLElement {
+  const node = buildShell(document, key);
+
   for (const tag of tags) {
     node.appendChild(buildButton(document, tag, input, callbacks));
   }
+  return node;
+}
+
+function buildPendingNode(document: Document, key: string): HTMLElement {
+  const node = buildShell(document, key);
+
+  const pending = document.createElement(LABEL_TAG);
+  pending.className = PENDING_CLASS;
+  // Announced when it appears and when it is replaced by the proposals, which
+  // is exactly the change a reader who cannot see the section would miss.
+  pending.setAttribute(ROLE_ATTRIBUTE, STATUS_ROLE);
+  pending.textContent = PENDING_TEXT;
+  node.appendChild(pending);
+
   return node;
 }
 
@@ -161,7 +202,7 @@ export function applyTagProposals(
     return;
   }
 
-  const key = proposalsKey(target.title, tags);
+  const key = proposalsKey(target.title, 'ready', tags);
   if (
     ourNode !== null &&
     ourNode.getAttribute(TAG_PROPOSALS_KEY_ATTRIBUTE) === key &&
@@ -174,6 +215,28 @@ export function applyTagProposals(
   const document = target.section.inputWrapper.ownerDocument;
   const node = buildNode(document, tags, key, target.section.input, callbacks);
   inputByNode.set(node, target.section.input);
+  target.section.inputWrapper.insertAdjacentElement('afterend', node);
+}
+
+/**
+ * Says that the facts of the card are on their way, in the very place the
+ * proposals will take. Without it the section stays empty for as long as the
+ * request lasts, which reads as a card with nothing to propose rather than as
+ * a card still being looked up.
+ *
+ * Idempotent like the call above, and through the same key: a card left
+ * waiting across several syncs is written once.
+ */
+export function applyPendingProposals(target: TagProposalsTarget): void {
+  const { ourNode } = target;
+  const key = proposalsKey(target.title, 'pending', []);
+
+  if (ourNode !== null && ourNode.getAttribute(TAG_PROPOSALS_KEY_ATTRIBUTE) === key) {
+    return;
+  }
+
+  ourNode?.remove();
+  const node = buildPendingNode(target.section.inputWrapper.ownerDocument, key);
   target.section.inputWrapper.insertAdjacentElement('afterend', node);
 }
 
