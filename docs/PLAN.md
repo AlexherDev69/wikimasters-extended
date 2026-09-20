@@ -469,6 +469,18 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - `pageimages` a été envisagée comme source supplémentaire, mesurée, puis écartée : elle ne renvoie rien pour Backrooms, L'Esquive, Paprika, Corinne Hermès, Fonds souverain, ni même pour Parti québécois que la règle de nom trouve pourtant. Trop inégale sur frwiki pour valoir une source
 - Vérifié sur les cartes que l'utilisateur voyait sans image : trois de leurs articles n'affichent aucune image (champ `image` de l'infobox vide ou absent) et le quatrième, Paprika, porte une affiche hébergée en local sur frwiki sous exception de fichier non libre, que la règle 5 refuse et doit continuer de refuser
 
+#### Phase 7f : l'illustration que Wikipédia désigne elle-même (faite le 2026-09-21)
+
+- Signalé par l'utilisateur sur la page des échanges : "parfois j'ai pas l'image alors que je devrais (ex janet jackson)". La carte "Discographie de Janet Jackson" restait sans image alors que le site, lui, en affiche une
+- Diagnostic fait sur l'API avant de toucher au code : l'article utilise 18 fichiers, dont 16 drapeaux et une icône, et aucun ne porte son nom. La règle du nom exact comme celle du nom qualifié ne peuvent rien y trouver. Mais `pageprops.page_image_free` nomme exactement la photographie que le site affiche, et elle est sur Commons
+- La phase 7e avait mesuré `pageimages` puis l'avait écartée comme "trop inégale". La mesure était juste, la conclusion trop large : les articles cités (Paprika, Parti québécois, L'Esquive, Corinne Hermès) n'ont pas d'illustration LIBRE, et leur affiche ou leur logo, hébergé sur frwiki sous exception de fichier non libre, est de toute façon refusé par la règle 5. Là où cette source ne répond rien, l'extension ne pouvait de toute façon rien afficher
+- Nouvelle mesure, 2026-09-21, sur 22 articles de cartes réelles (celles des captures de l'utilisateur et les contre-exemples de la 7e) : 10 articles ont une illustration libre, 9 sur Commons et 1 en local (Severance, refusée), et aucune ne montre un sujet étranger à son article. Les deux pièges de la 7d, "Affaire Romand" et "Affaire Daval", ne renvoient rien ici, là où "n'importe quel fichier" y posait un téléphone Nokia et le portrait d'un avocat
+- Propriété demandée : `page_image_free` et jamais `page_image`. La variante libre par construction, l'autre nommant aussi les fichiers non libres que frwiki héberge lui-même
+- Coût : zéro requête de plus. La propriété est ajoutée au `ppprop` de la requête qui existait déjà, à côté de `disambiguation`, et revient dans la même réponse
+- Règle 7, dernière essayée : le nom exact puis le nom qualifié passent avant, un fichier qui porte le nom de l'article étant l'article qui dit "c'est moi", là où l'illustration principale est la lecture que MediaWiki fait de l'article
+- Garde reprise des règles voisines : l'illustration n'est retenue que si la liste de fichiers reçue la contient. Une réponse tronquée ne porte pas la liste complète d'une page, et un titre qui n'y trouve rien reste non résolu plutôt que mémorisé sans image. Les noms de `pageprops` sont écrits avec des soulignés, ceux des listes de fichiers avec des espaces : conversion à la lecture, les deux étant le même titre pour MediaWiki
+- Cache des faits de carte en version 6. Aucune forme ne change : comme en 7e, c'est la règle qui change, donc une carte mémorisée "sans image d'article" garderait cette réponse pour rien
+
 ### Phase 8 : étiquettes
 
 #### Phase 8a : retrait de l'index de collection (faite le 2026-09-20, revue indépendante passée)

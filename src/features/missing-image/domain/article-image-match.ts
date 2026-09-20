@@ -2,7 +2,8 @@ import { isCommonsFileName, type CardImageKind, type CommonsFile } from './card-
 
 /**
  * Whether a Commons file used by an article is a plausible lead picture of
- * that very article: rules 3, 4 and 6 of the second image source (phase 7d).
+ * that very article: rules 3, 4, 6 and 7 of the second image source (phases
+ * 7d, 7e and 7f).
  *
  * Rules 1 (Wikidata already gave an image), 2 (the article is a
  * disambiguation page) and 5 (the file is hosted on Commons, not on frwiki
@@ -90,16 +91,43 @@ function isQualifiedTitle(baseName: string, strippedTitle: string): boolean {
 }
 
 /**
+ * The picture MediaWiki itself designates as the free lead picture of the
+ * article, `page_image_free`, which is the last rule tried and the only one
+ * that does not read the file's name at all (rule 7, phase 7f).
+ *
+ * It is accepted only while the article actually uses it, which is also the
+ * shape of rule 4 everywhere else here: a lead name answered for a page whose
+ * file list this batch never received says nothing about that article, and a
+ * truncated list must leave the title unresolved rather than settle it.
+ */
+function leadArticleImage(
+  leadFileName: string | null,
+  usedFileNames: readonly string[],
+): CommonsFile | null {
+  if (
+    leadFileName === null ||
+    !isCommonsFileName(leadFileName) ||
+    !usedFileNames.includes(leadFileName)
+  ) {
+    return null;
+  }
+  return { fileName: leadFileName, kind: articleFileKind(leadFileName) };
+}
+
+/**
  * The file among `usedFileNames` whose name, without its extension, is
  * `strippedTitle` exactly, or failing that the title followed by one word
- * that names a picture. No fuzzy matching, no "contains", no accent folding:
- * the comparison is on the exact string, because a looser rule is what puts
- * a wrong picture on a card (measured on 2026-09-20 against the live API,
- * see the phase 7d specification).
+ * that names a picture, or failing that the lead picture of the article. No
+ * fuzzy matching, no "contains", no accent folding: the comparison is on the
+ * exact string, because a looser rule is what puts a wrong picture on a card
+ * (measured on 2026-09-20 against the live API, see the phase 7d
+ * specification).
  *
  * The exact name is searched across every file before the qualified one is
  * considered at all: a file carrying the title alone is the article saying
  * "this is me", and it outranks a logo whatever order the API listed them in.
+ * The lead picture comes last for the same reason: it is MediaWiki's reading
+ * of the article, while a file named after the article is the article's own.
  *
  * `usedFileNames` must already be restricted to the files the article itself
  * links to (rule 4): this function has no way to tell where a name came from,
@@ -108,6 +136,7 @@ function isQualifiedTitle(baseName: string, strippedTitle: string): boolean {
 export function findArticleImageFile(
   strippedTitle: string,
   usedFileNames: readonly string[],
+  leadFileName: string | null,
 ): CommonsFile | null {
   for (const fileName of usedFileNames) {
     if (isCommonsFileName(fileName) && fileBaseName(fileName) === strippedTitle) {
@@ -119,5 +148,5 @@ export function findArticleImageFile(
       return { fileName, kind: articleFileKind(fileName) };
     }
   }
-  return null;
+  return leadArticleImage(leadFileName, usedFileNames);
 }
