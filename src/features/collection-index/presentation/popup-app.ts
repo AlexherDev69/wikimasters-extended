@@ -1,6 +1,7 @@
 import type { CategoryId } from '../../categorization/domain/category';
 import type { CategorySummary, CollectionSummary } from '../domain/collection-summary';
 import { BACK_SELECTOR, renderCategoryCards } from './category-cards-view';
+import { createOptionsBar } from './popup-elements';
 import {
   categoryRowSelector,
   renderEmptySummary,
@@ -21,6 +22,8 @@ import {
 export interface PopupPorts {
   loadSummary: () => Promise<CollectionSummary>;
   clearIndex: () => Promise<void>;
+  /** Opens the options page of the extension. */
+  openOptions: () => void;
 }
 
 /**
@@ -72,7 +75,9 @@ export function mountPopup(container: HTMLElement, ports: PopupPorts): void {
   }
 
   function render(): void {
-    container.replaceChildren(currentScreen());
+    // The way to the options page sits under the screen rather than in it, so
+    // it is there whichever screen is shown, the empty one included.
+    container.replaceChildren(currentScreen(), createOptionsBar(ports.openOptions));
 
     // Nothing to focus when the render does not follow a move of the user:
     // the popup opens where the browser put the focus and leaves it there.

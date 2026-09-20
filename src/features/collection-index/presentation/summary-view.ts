@@ -1,3 +1,4 @@
+import { createBlock, createButton, createText } from '../../../core/dom/create-elements';
 import type { CategoryId } from '../../categorization/domain/category';
 import { CATEGORY_ATTRIBUTE } from '../../category-badge/data/badge-selectors';
 import {
@@ -10,15 +11,7 @@ import type {
   RarityCount,
   SubtypeCount,
 } from '../domain/collection-summary';
-import {
-  COUNT_CLASS,
-  createBlock,
-  createButton,
-  createCategoryDot,
-  createText,
-  LABEL_CLASS,
-  RARITY_LABELS,
-} from './popup-elements';
+import { COUNT_CLASS, createCategoryDot, LABEL_CLASS, RARITY_LABELS } from './popup-elements';
 
 /**
  * The first screen of the popup: what the index holds, category by category.
