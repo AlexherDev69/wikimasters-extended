@@ -27,6 +27,10 @@ import {
 } from '../../collection-index/presentation/record-collection-cards';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
 import { syncModalLink } from '../../letterboxd/presentation/sync-modal-link';
+import { removeCardImages } from '../../missing-image/data/card-image';
+import { removeModalCreditLines } from '../../missing-image/data/modal-credit-line';
+import { syncCardImages } from '../../missing-image/presentation/sync-card-images';
+import { syncModalCredit } from '../../missing-image/presentation/sync-modal-credit';
 import { hasEnabledFeature, type Settings } from '../domain/settings';
 
 /**
@@ -125,18 +129,24 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.categoryHighlight) {
       highlight.sync(cards, categoriesByTitle);
     }
-    if (!settings.categoryBadges && !settings.letterboxdLink) {
+    if (settings.missingImages) {
+      syncCardImages(cards, categoriesByTitle);
+    }
+    if (!settings.categoryBadges && !settings.letterboxdLink && !settings.missingImages) {
       return;
     }
     // The observer of the cards also fires when the modal opens, so no
     // observer, no polling and no timer of its own is needed here. The modal
-    // is looked up once and shared: both features write in the same one.
+    // is looked up once and shared: the three features write in the same one.
     const modal = findDetailModal(root);
     if (settings.letterboxdLink) {
       syncModalLink(modal, categoriesByTitle);
     }
     if (settings.categoryBadges) {
       syncModalCategory(modal, categoriesByTitle);
+    }
+    if (settings.missingImages) {
+      syncModalCredit(modal, categoriesByTitle);
     }
   }
 
@@ -187,6 +197,10 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (previous.letterboxdLink && !settings.letterboxdLink) {
       removeModalLink(root);
     }
+    if (previous.missingImages && !settings.missingImages) {
+      removeCardImages(root);
+      removeModalCreditLines(root);
+    }
   }
 
   return {
@@ -211,6 +225,8 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCardBadges(root);
       removeModalCategoryLines(root);
       removeModalLink(root);
+      removeCardImages(root);
+      removeModalCreditLines(root);
     },
   };
 }

@@ -10,6 +10,10 @@ const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
 const ONE_MILLISECOND = 1;
 const START_TIME = new Date('2026-01-01T00:00:00.000Z').getTime();
 
+/** Version 1 held the same facts without the image of the card. */
+const PREVIOUS_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2;
+
 const FACTS: EntityFacts = {
   qid: 'Q937',
   classIds: ['Q5'],
@@ -26,6 +30,7 @@ const FACTS: EntityFacts = {
     tmdbMovieId: null,
     tmdbPersonId: null,
   },
+  image: { fileName: 'Albert Einstein Head.jpg', kind: 'picture' },
 };
 
 const RESOLVED_ENTRY: CachedCardFacts = { status: 'resolved', facts: FACTS };
@@ -120,7 +125,38 @@ describe('createCardFactsCache', () => {
   });
 
   it('should ignore an entry whose stored shape is not the expected one', async () => {
-    await storage.setItem('local:wme:card:Albert Einstein', { schemaVersion: 1, status: 'oops' });
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      status: 'oops',
+    });
+
+    const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
+
+    expect(fresh.size).toBe(0);
+  });
+
+  it('should ignore an entry written before the image was part of the facts', async () => {
+    const { qid, classIds, parentClassIds, occupationIds, externalIds } = FACTS;
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: PREVIOUS_SCHEMA_VERSION,
+      status: 'resolved',
+      // Version 1 held exactly these fields, and no image at all.
+      facts: { qid, classIds, parentClassIds, occupationIds, externalIds },
+      fetchedAt: START_TIME,
+    });
+
+    const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
+
+    expect(fresh.size).toBe(0);
+  });
+
+  it('should ignore an entry whose stored image is not usable', async () => {
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      status: 'resolved',
+      facts: { ...FACTS, image: { fileName: 'Albert Einstein.exe', kind: 'picture' } },
+      fetchedAt: START_TIME,
+    });
 
     const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
 
@@ -143,5 +179,4 @@ describe('createCardFactsCache', () => {
 
     expect(fresh.size).toBe(1);
   });
-
 });

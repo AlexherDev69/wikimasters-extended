@@ -66,6 +66,7 @@ function makeFacts(overrides: Partial<EntityFacts> = {}): EntityFacts {
       tmdbMovieId: null,
       tmdbPersonId: null,
     },
+    image: null,
     ...overrides,
   };
 }

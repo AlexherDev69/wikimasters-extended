@@ -1,0 +1,77 @@
+/*
+ * Styles of the nodes this feature adds to the page. Every selector starts
+ * with one of our data attributes, so no rule of ours can reach a node of the
+ * site, and no rule of the site is overridden.
+ */
+
+[data-wme-card-image] {
+  /*
+   * The two grounds our image is laid on. Wikimedia files are often
+   * transparent, and the logo of the site shows through them otherwise: a
+   * light one for emblems, which are drawn for a white page, and a dark one
+   * for photographs, which sits closer to the card itself.
+   */
+  --wme-image-ground-light: #eef1f5;
+  --wme-image-ground-dark: #0d1117;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* The card is clickable everywhere: our image must never take that click. */
+  pointer-events: none;
+  /*
+   * Inside the image area of the site, which is its own stacking context: the
+   * rarity badge, the favourite button, our category badge and the veil of the
+   * highlight all stay above it.
+   */
+  z-index: 1;
+  /* Invisible until our own load listener marks it, see data/card-image.ts. */
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+[data-wme-card-image][data-wme-image-loaded] {
+  opacity: 1;
+}
+
+[data-wme-card-image][data-wme-image-loaded][data-wme-image-kind='picture'] {
+  background-color: var(--wme-image-ground-dark);
+}
+
+[data-wme-card-image][data-wme-image-loaded][data-wme-image-kind='emblem'] {
+  background-color: var(--wme-image-ground-light);
+}
+
+[data-wme-card-image] .wme-card-image-media {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+[data-wme-card-image][data-wme-image-kind='picture'] .wme-card-image-media {
+  object-fit: cover;
+  /* Faces sit in the upper part of a portrait, which is most of these files. */
+  object-position: 50% 25%;
+}
+
+[data-wme-card-image][data-wme-image-kind='emblem'] .wme-card-image-media {
+  /* A logo, a flag or a coat of arms is shown whole, never cropped. */
+  object-fit: contain;
+  padding: 6%;
+}
+
+[data-wme-image-credit] {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+[data-wme-image-credit] .wme-credit-link {
+  color: inherit;
+  text-decoration: underline;
+}

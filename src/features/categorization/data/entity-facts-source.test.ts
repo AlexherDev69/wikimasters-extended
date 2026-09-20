@@ -33,6 +33,29 @@ const emptyResultFetch: FetchLike = () =>
     }),
   );
 
+const ENTITY_URI_PREFIX = 'http://www.wikidata.org/entity/';
+const FILE_PATH_URI_PREFIX = 'http://commons.wikimedia.org/wiki/Special:FilePath/';
+
+/**
+ * Answers one row for Einstein with the given cells. The recording predates
+ * the image properties, so the values of those are written here by hand.
+ */
+function bindingFetch(cells: Readonly<Record<string, string>>): FetchLike {
+  const binding = Object.fromEntries(
+    Object.entries({ item: `${ENTITY_URI_PREFIX}${EINSTEIN_QID}`, ...cells }).map(
+      ([variable, value]) => [variable, { value }],
+    ),
+  );
+
+  return () =>
+    Promise.resolve(
+      new Response(JSON.stringify({ head: { vars: [] }, results: { bindings: [binding] } }), {
+        status: HTTP_OK,
+        headers: { 'Content-Type': JSON_MEDIA_TYPE },
+      }),
+    );
+}
+
 /** A private cooldown store per source: no rate limit leaks between tests. */
 function makeSource(fetchImpl: FetchLike): EntityFactsSource {
   return createEntityFactsSource({ fetchImpl, cooldownStore: createMemoryCooldownStore() });
@@ -90,6 +113,62 @@ describe('createEntityFactsSource', () => {
       parentClassIds: [],
       occupationIds: [],
       externalIds: expect.objectContaining({ imdbId: null }) as unknown,
+      image: null,
+    });
+  });
+
+  it('should keep the first image property of the table that the item holds', async () => {
+    const source = makeSource(
+      bindingFetch({
+        imageLogo: `${FILE_PATH_URI_PREFIX}Logo.svg`,
+        imagePicture: `${FILE_PATH_URI_PREFIX}Einstein%201921.jpg`,
+      }),
+    );
+
+    const facts = await source.fetchFacts([EINSTEIN_QID]);
+
+    expect(facts.get(EINSTEIN_QID)?.image).toEqual({
+      fileName: 'Einstein 1921.jpg',
+      kind: 'picture',
+    });
+  });
+
+  it('should try the next property when the first value yields no usable name', async () => {
+    const source = makeSource(
+      bindingFetch({
+        imagePicture: 'https://evil.example/wiki/Special:FilePath/Einstein.jpg',
+        imageLogo: `${FILE_PATH_URI_PREFIX}Logo%20-%20R%C3%A9publique%20fran%C3%A7aise.svg`,
+      }),
+    );
+
+    const facts = await source.fetchFacts([EINSTEIN_QID]);
+
+    expect(facts.get(EINSTEIN_QID)?.image).toEqual({
+      fileName: 'Logo - République française.svg',
+      kind: 'emblem',
+    });
+  });
+
+  it('should give no image when the item holds none and when none is usable', async () => {
+    const withoutImage = await makeSource(bindingFetch({})).fetchFacts([EINSTEIN_QID]);
+    const withUnusableImage = await makeSource(
+      bindingFetch({ imagePicture: `${FILE_PATH_URI_PREFIX}Einstein.ogv` }),
+    ).fetchFacts([EINSTEIN_QID]);
+
+    expect(withoutImage.get(EINSTEIN_QID)?.image).toBeNull();
+    expect(withUnusableImage.get(EINSTEIN_QID)?.image).toBeNull();
+  });
+
+  it('should read the image of a flag as an emblem', async () => {
+    const source = makeSource(
+      bindingFetch({ imageFlag: `${FILE_PATH_URI_PREFIX}Flag%20of%20the%20Azores.svg` }),
+    );
+
+    const facts = await source.fetchFacts([EINSTEIN_QID]);
+
+    expect(facts.get(EINSTEIN_QID)?.image).toEqual({
+      fileName: 'Flag of the Azores.svg',
+      kind: 'emblem',
     });
   });
 

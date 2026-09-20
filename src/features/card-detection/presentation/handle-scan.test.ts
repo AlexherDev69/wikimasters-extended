@@ -61,6 +61,7 @@ function makeCategory(title: string): CardCategory {
     primarySubtype: null,
     personSubtypes: [],
     letterboxdUrl: null,
+    image: null,
   };
 }
 
@@ -152,6 +153,7 @@ describe('handleScan', () => {
           primarySubtype: 'cinema',
           personSubtypes: ['cinema'],
           letterboxdUrl: 'https://letterboxd.com/actor/alpha/',
+          image: null,
         },
       ]);
 
@@ -246,6 +248,7 @@ describe('handleScan', () => {
           primarySubtype: null,
           personSubtypes: [],
           letterboxdUrl: null,
+          image: null,
         },
         {
           title: 'Gamma',
@@ -255,6 +258,7 @@ describe('handleScan', () => {
           primarySubtype: null,
           personSubtypes: [],
           letterboxdUrl: null,
+          image: null,
         },
       ]);
 

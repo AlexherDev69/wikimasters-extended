@@ -1,3 +1,5 @@
+import type { CardImage } from '../../missing-image/domain/card-image';
+
 /**
  * External identifiers fetched with the rest of the facts because the same
  * query returns them for free. Phase 5 (Letterboxd links) is their only
@@ -38,4 +40,9 @@ export interface EntityFacts {
   /** P106 occupation. */
   occupationIds: string[];
   externalIds: ExternalIds;
+  /**
+   * First image property the item holds, in the order of IMAGE_PROPERTIES.
+   * Null when Wikidata knows none, which is the case of three cards in four.
+   */
+  image: CardImage | null;
 }

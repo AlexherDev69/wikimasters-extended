@@ -1,3 +1,4 @@
+import { IMAGE_PROPERTIES, type ImageProperty } from '../../missing-image/domain/image-properties';
 import { isQid } from './wikidata-uri';
 
 /**
@@ -26,9 +27,33 @@ function assertQid(qid: string): string {
   return qid;
 }
 
+/** Raw variable of an image property, distinct from the projected one. */
+function imageVariable(property: ImageProperty): string {
+  return property.propertyId.toLowerCase();
+}
+
+/** One SAMPLE per image property, built from the shared table. */
+function imageProjections(): string {
+  return IMAGE_PROPERTIES.map(
+    (property) => `(SAMPLE(?${imageVariable(property)}) AS ?${property.variable})`,
+  ).join(' ');
+}
+
+/** One OPTIONAL per image property, built from the same table. */
+function imagePatterns(): string {
+  return IMAGE_PROPERTIES.map(
+    (property) => `OPTIONAL { ?item wdt:${property.propertyId} ?${imageVariable(property)}. }`,
+  ).join(' ');
+}
+
 /**
- * P31 classes, P279 parents, P106 occupations and the external ids of each
- * item, one row per item. Measured at about 1.1 s and 19 KB for 50 items.
+ * P31 classes, P279 parents, P106 occupations, the external ids and the image
+ * properties of each item, one row per item.
+ *
+ * The figure of about 1.1 s and 19 KB for 50 items predates the six image
+ * properties: it was measured on the shape without them. The shape that
+ * carries them adds one optional value per property and per item, and has not
+ * been measured against the live service yet.
  */
 export function buildEntityFactsQuery(qids: readonly string[]): string {
   return `SELECT ?item
@@ -38,12 +63,14 @@ export function buildEntityFactsQuery(qids: readonly string[]): string {
   (SAMPLE(?lbFilm) AS ?letterboxdFilm) (SAMPLE(?lbActor) AS ?letterboxdActor) (SAMPLE(?lbDirector) AS ?letterboxdDirector)
   (SAMPLE(?lbWriter) AS ?letterboxdWriter) (SAMPLE(?lbProducer) AS ?letterboxdProducer) (SAMPLE(?lbStudio) AS ?letterboxdStudio)
   (SAMPLE(?imdb) AS ?imdbId) (SAMPLE(?tmdbMovie) AS ?tmdbMovieId) (SAMPLE(?tmdbPerson) AS ?tmdbPersonId)
+  ${imageProjections()}
 WHERE {
   VALUES ?item { ${toEntityValues(qids)} }
   OPTIONAL { ?item wdt:P31 ?class. } OPTIONAL { ?item wdt:P279 ?parent. } OPTIONAL { ?item wdt:P106 ?occupation. }
   OPTIONAL { ?item wdt:P6127 ?lbFilm. } OPTIONAL { ?item wdt:P6119 ?lbActor. } OPTIONAL { ?item wdt:P12383 ?lbDirector. }
   OPTIONAL { ?item wdt:P14583 ?lbWriter. } OPTIONAL { ?item wdt:P14196 ?lbProducer. } OPTIONAL { ?item wdt:P13273 ?lbStudio. }
   OPTIONAL { ?item wdt:P345 ?imdb. } OPTIONAL { ?item wdt:P4947 ?tmdbMovie. } OPTIONAL { ?item wdt:P4985 ?tmdbPerson. }
+  ${imagePatterns()}
 } GROUP BY ?item`;
 }
 

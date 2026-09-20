@@ -12,6 +12,8 @@ import { DIM_SELECTOR, PANEL_SELECTOR } from '../../category-highlight/data/high
 import type { CatalogueTotals } from '../../collection-index/domain/catalogue-totals';
 import type { RecordedCard } from '../../collection-index/domain/collection-index';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
+import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
+import type { CardImage } from '../../missing-image/domain/card-image';
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
 
@@ -22,9 +24,15 @@ const LARGE_HTML = readFileSync(join(FIXTURES_DIR, 'card-large-with-description.
 const MODAL_HTML = readFileSync(join(FIXTURES_DIR, 'card-detail-modal.html'), 'utf-8');
 const CATALOGUE_HTML = readFileSync(join(FIXTURES_DIR, 'global-collection-page.html'), 'utf-8');
 
+const PLACEHOLDER_HTML = readFileSync(join(FIXTURES_DIR, 'placeholder-cards.html'), 'utf-8');
+
 const GRID_CARD_TITLE = "Jeu d'horreur";
 const LARGE_CARD_TITLE = 'Foza';
 const MODAL_CARD_TITLE = 'Dvorichté';
+/** A card of the catalogue export the site shows its own logo for. */
+const PLACEHOLDER_CARD_TITLE = 'Adan Canto';
+
+const CARD_IMAGE: CardImage = { fileName: 'Adan Canto 2015.jpg', kind: 'picture' };
 
 const FILM_URL = 'https://letterboxd.com/film/lost-river/';
 
@@ -50,6 +58,7 @@ const ALL_OFF: Settings = {
   categoryHighlight: false,
   letterboxdLink: false,
   collectionIndex: false,
+  missingImages: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -61,6 +70,7 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
     primarySubtype: null,
     personSubtypes: [],
     letterboxdUrl: null,
+    image: null,
     ...overrides,
   };
 }
@@ -70,6 +80,7 @@ const RESULTS: CardCategory[] = [
   makeCategory(GRID_CARD_TITLE, { categoryId: 'science_concept' }),
   makeCategory(LARGE_CARD_TITLE),
   makeCategory(MODAL_CARD_TITLE, { categoryId: 'film_tv', letterboxdUrl: FILM_URL }),
+  makeCategory(PLACEHOLDER_CARD_TITLE, { categoryId: 'person', image: CARD_IMAGE }),
 ];
 
 function makeLogger(): Logger {
@@ -131,6 +142,24 @@ function badges(): NodeListOf<Element> {
   return document.body.querySelectorAll(BADGE_SELECTOR);
 }
 
+function cardImages(): NodeListOf<Element> {
+  return document.body.querySelectorAll(CARD_IMAGE_SELECTOR);
+}
+
+/**
+ * The page showing a card the site has no picture for, in the grid and in the
+ * open detail modal: the card of the modal export is replaced by a card of the
+ * catalogue export, which is what the site renders when such a card is opened.
+ */
+function showPlaceholderCardAndModal(): void {
+  document.body.innerHTML = MODAL_HTML + PLACEHOLDER_HTML;
+  const [modalCard, placeholderCard] = document.body.querySelectorAll('div[class*="glow-"]');
+  if (modalCard === undefined || placeholderCard === undefined) {
+    throw new Error('The fixtures hold no card');
+  }
+  modalCard.replaceWith(placeholderCard);
+}
+
 function observeBody(): MutationObserver {
   const observer = new MutationObserver(() => undefined);
   observer.observe(document.body, {
@@ -148,7 +177,7 @@ describe('createOverlay', () => {
     currentPathname = MARKETPLACE_PATH;
   });
 
-  it('should show every part of the overlay when the four settings are on', async () => {
+  it('should show every part of the overlay when the five settings are on', async () => {
     document.body.innerHTML = GRID_HTML + MODAL_HTML;
     const { overlay } = mount();
 
@@ -197,6 +226,83 @@ describe('createOverlay', () => {
     expect(badges()).toHaveLength(drawn);
   });
 
+  it('should show the image of a card the site left without one once the results arrive', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount();
+
+    await scanUntilDrawn(overlay);
+
+    expect(cardImages().length).toBeGreaterThan(0);
+    expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).not.toBeNull();
+  });
+
+  it('should add no image and no credit line when the images are off at load', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, missingImages: false });
+
+    await scanUntilDrawn(overlay);
+
+    expect(cardImages()).toHaveLength(0);
+    expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).toBeNull();
+  });
+
+  it('should take back the images and the credit line at once when they are turned off', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    expect(cardImages().length).toBeGreaterThan(0);
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, missingImages: false });
+
+    expect(cardImages()).toHaveLength(0);
+    expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).toBeNull();
+    expect(badges().length).toBeGreaterThan(0);
+  });
+
+  it('should bring the images back at once when they are turned on again', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    const drawn = cardImages().length;
+    overlay.applySettings({ ...DEFAULT_SETTINGS, missingImages: false });
+
+    overlay.applySettings(DEFAULT_SETTINGS);
+
+    expect(cardImages()).toHaveLength(drawn);
+    expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).not.toBeNull();
+  });
+
+  it('should write nothing on a second scan while an image and its credit are shown', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+    expect(cardImages().length).toBeGreaterThan(0);
+    expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).not.toBeNull();
+    scan(overlay);
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
+  it('should write nothing on a second scan while only the images are left on', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount({ ...ALL_OFF, missingImages: true });
+    scan(overlay);
+    await vi.waitFor(() => {
+      expect(cardImages().length).toBeGreaterThan(0);
+    });
+    scan(overlay);
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
   it('should take back the panel and every veil when the highlight is turned off', async () => {
     document.body.innerHTML = GRID_HTML + LARGE_HTML;
     const { overlay } = mount();
@@ -237,7 +343,7 @@ describe('createOverlay', () => {
     expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).not.toBeNull();
   });
 
-  it('should ask for no categorization at all when the four settings are off', () => {
+  it('should ask for no categorization at all when the five settings are off', () => {
     document.body.innerHTML = GRID_HTML + LARGE_HTML;
     const { overlay, categorize } = mount(ALL_OFF);
 

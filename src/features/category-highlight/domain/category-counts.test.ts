@@ -12,6 +12,7 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
     primarySubtype: null,
     personSubtypes: [],
     letterboxdUrl: null,
+    image: null,
     ...overrides,
   };
 }

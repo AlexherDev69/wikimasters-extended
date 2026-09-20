@@ -1,5 +1,6 @@
 import { storage, type StorageItemKey } from '#imports';
 import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
+import { isCardImage } from '../../missing-image/domain/card-image';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
 import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '../domain/ports';
 
@@ -16,8 +17,12 @@ import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '..
  */
 export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
 
-/** Bump when the stored shape changes: entries of another version are misses. */
-const SCHEMA_VERSION = 1;
+/**
+ * Bump when the stored shape changes: entries of another version are misses.
+ * Version 2 added the image of the card, which entries written before do not
+ * hold: they are fetched again, once, on the next display of their card.
+ */
+const SCHEMA_VERSION = 2;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
@@ -49,7 +54,8 @@ function isEntityFacts(value: unknown): value is EntityFacts {
     isStringArray(value['classIds']) &&
     isStringArray(value['parentClassIds']) &&
     isStringArray(value['occupationIds']) &&
-    isExternalIds(value['externalIds'])
+    isExternalIds(value['externalIds']) &&
+    (value['image'] === null || isCardImage(value['image']))
   );
 }
 

@@ -24,6 +24,7 @@ function makeFacts(partial: Partial<EntityFacts>): EntityFacts {
     parentClassIds: [],
     occupationIds: [],
     externalIds: EMPTY_EXTERNAL_IDS,
+    image: null,
     ...partial,
   };
 }

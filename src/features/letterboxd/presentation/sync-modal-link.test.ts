@@ -24,6 +24,7 @@ function makeCategory(title: string, letterboxdUrl: string | null): CardCategory
     primarySubtype: null,
     personSubtypes: [],
     letterboxdUrl,
+    image: null,
   };
 }
 

@@ -1,3 +1,5 @@
+import type { CardImage } from '../../missing-image/domain/card-image';
+
 /** Exported so a view can give every category a place in a display order. */
 export const CATEGORY_IDS = [
   'person',
@@ -69,4 +71,6 @@ export interface CardCategory {
   personSubtypes: PersonSubtypeId[];
   /** Null unless `status` is `categorized` and the card has a Letterboxd page. */
   letterboxdUrl: string | null;
+  /** Null unless `status` is `categorized` and Wikidata holds an image. */
+  image: CardImage | null;
 }

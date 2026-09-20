@@ -1,9 +1,9 @@
 import { isRecord } from '../../../core/types/guards';
 
 /**
- * What the user can switch off, one boolean per part of the overlay. All four
- * are on by default: an extension that was installed and never configured does
- * exactly what its description says.
+ * What the user can switch off, one boolean per part of the overlay. All of
+ * them are on by default: an extension that was installed and never configured
+ * does exactly what its description says.
  */
 export interface Settings {
   /** Badge on the cards, and category line in the detail modal. */
@@ -14,6 +14,8 @@ export interface Settings {
   letterboxdLink: boolean;
   /** Recording of the cards displayed on the collection pages. */
   collectionIndex: boolean;
+  /** Image of Wikimedia Commons on the cards the site leaves without one. */
+  missingImages: boolean;
 }
 
 /** Exported so a view can give every switch a place in a display order. */
@@ -22,6 +24,7 @@ export const SETTING_KEYS = [
   'categoryHighlight',
   'letterboxdLink',
   'collectionIndex',
+  'missingImages',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -31,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryHighlight: true,
   letterboxdLink: true,
   collectionIndex: true,
+  missingImages: true,
 };
 
 /**
