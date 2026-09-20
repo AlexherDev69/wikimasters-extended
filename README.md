@@ -6,7 +6,7 @@ Objectif : afficher sur chaque carte une catégorie (via Wikidata) et un lien Le
 
 ## État actuel
 
-Phases 1 à 3, 4a et 5 : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+Phases 1 à 3, 4a, 4c et 5 : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
 
 ### Badge de catégorie sur les cartes
 
@@ -20,11 +20,25 @@ Quand la modale de détail est ouverte, une ligne "Catégorie : ..." est ajouté
 
 Un petit panneau flottant en bas à gauche liste les catégories présentes parmi les cartes actuellement détectées, avec leur nombre, triées par nombre décroissant puis par libellé. Il est replié par défaut ("Catégories (N)") et se déplie d'un clic. Cliquer une catégorie l'active comme filtre : les cartes des autres catégories sont assombries par un voile ajouté par l'extension, qui laisse passer les clics vers la carte. Un second clic sur la même catégorie, ou le bouton "Tout afficher", annule le filtre. Le filtre reste actif quand tu changes de page de la collection : si la page suivante ne contient aucune carte de cette catégorie, elle est entièrement assombrie, et le panneau le dit (ligne de la catégorie active avec un compte de 0, titre "Catégories (N) · Lieu"). Le bouton "Tout afficher" reste accessible même quand le panneau est replié. Le panneau ne compte qu'une fois une carte affichée deux fois (dans la grille et dans la modale), disparaît quand aucune carte n'est détectée (aucun voile n'est alors posé), et son état n'est pas mémorisé : il repart replié et sans filtre à chaque chargement de page.
 
+### Index de collection
+
+Quand tu parcours ta collection (la page `/collection` elle-même, pagination comprise), l'extension retient le titre et la rareté des cartes affichées, avec la date de leur première et de leur dernière apparition. Rien d'autre n'alimente cet index : les cartes du marché, des échanges, des ouvertures de paquet, de la collection globale et de toute autre page ne t'appartiennent pas. L'extension ne tourne jamais les pages à ta place, donc l'index ne grandit qu'avec ce que tu affiches toi-même.
+
+L'index ne mémorise pas la catégorie des cartes, seulement ce que le site affiche. La catégorie est recalculée à la lecture depuis les caches, comme partout ailleurs dans l'extension : ajuster les listes de racines ne demande jamais de reparcourir la collection.
+
+### Fenêtre de statistiques
+
+Un clic sur l'icône de l'extension ouvre une fenêtre qui résume l'index : le nombre de cartes vues, la date de la dernière mise à jour, la répartition par rareté, puis une ligne par catégorie avec son nombre de cartes, son pourcentage et une barre proportionnelle. La ligne "Personne" se déplie sur ses sous-types. Un clic sur une catégorie affiche la liste de ses cartes, chaque titre étant un lien vers l'article Wikipédia en français. Le bouton "Réinitialiser l'index" demande une confirmation sur place avant de tout effacer.
+
+Ces statistiques sont calculées uniquement à partir des caches locaux : ouvrir la fenêtre ne déclenche aucune requête vers Wikipédia ou Wikidata. Une carte dont les données ne sont pas disponibles (cache expiré, article introuvable, classe non résolue) est comptée dans "Non catégorisées", et retrouve sa catégorie la prochaine fois que tu l'affiches sur le site.
+
+Approximation connue : l'index ne stocke pas la description des cartes, alors que c'est elle qui départage les métiers d'une personne. Le sous-type principal affiché dans la fenêtre est donc décidé par vote majoritaire, et peut différer de celui du badge posé sur la carte, où la description est lue.
+
 ### Lien Letterboxd
 
 Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il n'apparaît que pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une série, une saison, un épisode ou une personnalité sans métier de cinéma n'en reçoivent aucun, même si Wikidata leur connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives).
 
-Les deux autres réponses au besoin de filtre prévues par la phase 4 restent à faire : la vue "Ma collection par catégorie" dans l'extension, et la synergie avec les étiquettes natives du site.
+La dernière réponse au besoin de filtre prévue par la phase 4 reste à faire : la synergie avec les étiquettes natives du site, que tu poses toi-même avec la sélection en lot.
 
 Voir [docs/PLAN.md](docs/PLAN.md) pour l'analyse de faisabilité et la feuille de route complète.
 
@@ -67,6 +81,8 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - Rien n'est envoyé au site WikiMasters ni à aucun autre serveur. L'extension n'appelle aucune API du site.
 - L'extension ne contacte jamais Letterboxd : elle se contente de construire une adresse à partir des identifiants publics de Wikidata. Rien n'est envoyé à Letterboxd tant que tu ne cliques pas toi-même sur le lien.
 - Les résultats sont mis en cache localement dans le stockage de l'extension (`chrome.storage.local`), sur ta machine uniquement : 90 jours pour une carte résolue, 7 jours pour une carte introuvable.
+- L'index de collection (titre, rareté, dates de première et de dernière apparition) est stocké au même endroit, sur ta machine uniquement. Il n'est envoyé nulle part, pas même au site, et le bouton "Réinitialiser l'index" l'efface entièrement.
+- La fenêtre de statistiques est une page de l'extension : elle lit les caches locaux et ne fait aucun appel réseau.
 
 ## Contrainte fondamentale
 
