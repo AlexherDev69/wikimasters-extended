@@ -235,6 +235,30 @@ Essai réel du 2026-09-20 sur une page de `/collection` : 50 cartes catégorisé
 
 ### Phase 4 : UI catégorisation
 
+#### Phase 4a : badge, ligne dans la modale, mise en évidence par page (faite le 2026-09-20, revue indépendante passée)
+
+- Badge sur chaque carte catégorisée : pastille de couleur et libellé court ("Personne · Cinéma", "Lieu"...), en bas à gauche de la zone image, `pointer-events: none`. Aucun badge pour une carte introuvable, en erreur ou pas encore catégorisée
+- Modale de détail : une ligne "Catégorie : ..." après le lien Wikipédia (et après le lien Letterboxd quand il existe), avec les autres sous-types d'une personne ("aussi : ...")
+- Panneau flottant en bas à gauche, replié par défaut ("Catégories (N)") : catégories présentes sur la page avec leur nombre de cartes (titres distincts), clic pour filtrer. Les cartes hors catégorie reçoivent un voile, qui est un noeud de l'extension posé dans la carte : aucun noeud du site n'est restylé
+- Le filtre choisi survit à la pagination du site. Une page sans carte de la catégorie est entièrement voilée, et le panneau le dit toujours : libellé du filtre dans le bouton, ligne à 0, bouton "Tout afficher" visible même panneau replié. L'état du panneau n'est jamais stocké, il repart de zéro au rechargement
+
+Écarts assumés et décisions :
+
+- Pas de Shadow DOM (prévu dans "Robustesse de l'intégration DOM") : un badge doit vivre dans la racine de la carte pour la suivre et se positionner par rapport à elle. L'isolation passe par des sélecteurs tous préfixés par nos attributs `data-wme-*`, sans sélecteur d'élément ni règle globale. La feuille de style est déclarée dans le manifest (seul changement : une entrée `css`, permissions inchangées)
+- Nos noeuds sont invisibles pour la détection des cartes : uniquement des `div` et `span` dans une carte (un `p` de notre part serait lu comme la description d'une carte qui n'en a pas), aucune classe contenant `glow-`. Testé : le scan donne la même carte avant et après nos ajouts
+- Zéro écriture DOM quand l'état est déjà le bon, prouvé par des tests avec MutationObserver : l'observateur du content script voit nos propres écritures, une synchronisation qui écrirait toujours bouclerait sans fin. La couleur d'une pastille n'est écrite que si la catégorie change (le navigateur normalise les couleurs, les relire ne permet pas de comparer)
+- Noeud de carte réutilisé par React : le badge, le voile et la ligne de modale sont recalculés depuis le titre courant à chaque scan
+- Pas de `stopPropagation()` sur les clics de notre panneau (retiré après revue) : bloquer un écouteur que le site a posé sur le document serait une interception, alors que laisser remonter le clic ne donne au site que ce qu'il reçoit déjà pour tout clic sur la page
+- Panneau absent tant qu'aucune carte n'est détectée, et aucun voile sans panneau : un filtre sans moyen visible de le quitter laisserait la page assombrie
+- Nettoyage complet quand le contexte du content script est invalidé (rechargement, désactivation ou désinstallation de l'extension) : badges, voiles, panneau, ligne de modale et lien Letterboxd. WXT ne détecte la désactivation que si `ctx.isInvalid` est lu : il l'est à chaque scan
+- Coût par scan linéaire : nos noeuds sont cherchés parmi les enfants directs de la carte, en partant du dernier, et la modale n'est recherchée qu'une fois par passe
+- Couplage accepté : la ligne de catégorie de la modale connaît le sélecteur du lien Letterboxd pour se placer après lui (dépendance à sens unique, sans cycle)
+- La mémoire des résultats (`rememberCategories`) a rejoint `categorization/presentation` et la recherche de la modale `card-detection/data` : elles servent désormais à plusieurs fonctionnalités
+
+Reste à faire par l'utilisateur : contrôle visuel dans Chrome (lisibilité du badge sur les petites cartes de la grille, emplacement du panneau) et validation des choix de présentation.
+
+#### Suite de la phase 4
+
 - Badge de catégorie sur chaque carte (toutes pages) et catégorie détaillée dans la modale
 - La collection étant paginée, trois réponses complémentaires au besoin de filtre, par ordre de coût :
   1. Mise en évidence par catégorie sur la page courante (atténuer les cartes hors catégorie). Simple, mais limité à la page affichée
