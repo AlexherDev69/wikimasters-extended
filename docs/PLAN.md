@@ -164,8 +164,8 @@ Fonction pure, sans effet de bord, donc entièrement testable.
 - Lecture seule du DOM rendu. Aucun clic, aucun scroll automatique, aucune saisie
 - Aucune interception réseau : pas de patch de `fetch` ou `XMLHttpRequest`, pas de `webRequest`
 - Aucun appel à l'API du site ni à Supabase, aucune lecture du token de session
-- Seuls appels sortants : fr.wikipedia.org, www.wikidata.org, query.wikidata.org
-- Permissions minimales : `storage`, `unlimitedStorage`, et les hôtes ci-dessus plus wiki-masters.com
+- Seuls appels sortants : fr.wikipedia.org et query.wikidata.org, depuis le service worker uniquement, sans cookies (www.wikidata.org, envisagé au départ, n'a pas été nécessaire)
+- Permissions minimales, état réel : `storage` et ces deux hôtes. wiki-masters.com n'apparaît que dans les motifs du content script, pas dans les permissions d'hôte ; `unlimitedStorage` n'a pas été nécessaire
 - Conséquence assumée : l'index local ne connaît que les cartes déjà affichées à l'écran par l'utilisateur
 - Recommandé avant toute publication : prévenir le développeur de WikiMasters et obtenir son accord
 
@@ -300,9 +300,31 @@ Plan initial, avec l'état de chaque point :
 
 ### Phase 6 : finitions et diffusion
 
-- Page d'options (activer ou non chaque fonctionnalité, vider le cache), icônes, note de confidentialité (seuls des titres d'articles partent vers Wikimedia)
-- `pnpm lint`, `pnpm build`, `pnpm knip`, zip de release
-- Contact avec le développeur de WikiMasters avant publication sur le Chrome Web Store
+#### Phase 6a : réglages, page d'options, entretien du cache (faite le 2026-09-20, revue indépendante passée)
+
+- Quatre réglages, tous actifs par défaut : badges de catégorie (carte et modale), mise en évidence par page, lien Letterboxd, index de collection. Une seule clé versionnée dans `chrome.storage.local` ; une valeur absente, partielle ou corrompue retombe sur les valeurs par défaut
+- Le content script suit les réglages en direct, sans rechargement de l'onglet : une fonctionnalité coupée retire aussitôt ses noeuds et ne synchronise plus rien ; une fonctionnalité rallumée relance d'elle-même la catégorisation et repose ses noeuds, sans attendre une mutation du site. Tout coupé : plus aucune demande de catégorisation, donc plus aucun trafic vers Wikimedia
+- Page d'options intégrée (TypeScript sans framework) : cases à cocher enregistrées immédiatement, relecture du stockage si un enregistrement échoue, nombre de cartes et de classes en cache et de cartes dans l'index, "Vider le cache de catégorisation" et "Réinitialiser l'index de collection" avec confirmation, rappel de confidentialité. La fenêtre de statistiques gagne un accès "Options"
+- Vider le cache retire les faits par carte et les rattachements par classe, et rien d'autre : réglages, index de collection et délai d'attente imposé par Wikidata sont conservés
+- Manifest : seule l'entrée `options_ui` est ajoutée, permissions inchangées, aucun appel réseau dans cette phase
+
+Écarts assumés et décisions :
+
+- Le pipeline par scan (catégorisation, enregistrement de la collection, synchronisations) a quitté `content.ts` pour une fabrique testée, `settings/presentation/overlay.ts` : ce sont les réglages qui allument ou éteignent chaque partie, et la garantie "tout coupé : aucune requête" ne serait pas testable dans le point d'entrée
+- L'enregistreur de collection voit tous les scans même quand son réglage est coupé : sa mémoire de la route doit continuer d'avancer, sinon le garde-fou du premier scan après un changement de route pourrait être contourné au moment de la réactivation
+- Compter et vider passent par un port étroit `CategorizationCacheMaintenance`, distinct des ports de lecture et d'écriture : le cas d'usage de catégorisation ne peut toujours pas vider un cache. Une seule énumération des clés par opération, pour les deux niveaux de cache à la fois. `chrome.storage.local.getKeys()` (Chrome 130 et plus) éviterait de charger les valeurs, mais le faux navigateur des tests ne l'implémente pas : la branche n'aurait jamais été exercée, elle n'a donc pas été écrite
+- Les deux nouveaux messages n'ont pas de charge utile, donc pas de branche "requête invalide" : elle serait du code mort
+- Le thème sombre est partagé entre la fenêtre et la page d'options (`src/core/ui/extension-page.css`) et n'entre jamais dans la feuille de style injectée dans le site
+- Deux lectures des réglages : celle du content script retombe sur les valeurs par défaut en cas d'échec (l'overlay doit démarrer), celle de la page d'options propage l'échec. Afficher des valeurs par défaut dans les options ferait écraser les choix enregistrés au premier clic : la page affiche alors une erreur et aucune case
+- La zone d'état "Enregistré" (`role="status"`) est créée une seule fois hors de la partie redessinée : une zone créée avec son texte n'est pas annoncée par les lecteurs d'écran
+
+#### Reste de la phase 6
+
+- Icônes de l'extension (aucune pour l'instant, Chrome affiche l'icône par défaut)
+- Licence du dépôt : décision de l'utilisateur
+- `pnpm zip` pour l'archive de publication, fiche du Chrome Web Store, politique de confidentialité publiée
+- Contact avec le développeur de WikiMasters avant toute publication (voir "Garde-fous")
+- Contrôles manuels dans Chrome des phases 4a, 4c et 6a
 
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
@@ -323,6 +345,15 @@ Plan initial, avec l'état de chaque point :
 15. should extract title, rarity and an empty description from the `card-large-no-description.html` fixture
 16. should read the article title from the Wikipedia link when the detail modal is open
 17. should classify "Hutte" as "Science et concept" when the item has P279 but no P31
+18. should show one badge "Personne · Cinéma" on the "Quentin Tarantino" card and no badge on a card whose article was not found
+19. should dim every card except the persons when "Personne" is chosen in the panel, and keep the filter on the next collection page
+20. should write nothing to the DOM when a sync runs on an unchanged page
+21. should record a card displayed on `/collection` and never a card displayed on `/marketplace`
+22. should count a card as "Non catégorisée" in the popup when its cached facts are missing, without any network call
+23. should remove every badge at once when "Badge de catégorie" is switched off in the options, and bring them back when switched on again without reloading the tab
+24. should send no categorization request when the four settings are off
+
+Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 
 ## 8. Risques
 

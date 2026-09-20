@@ -6,7 +6,7 @@ Objectif : afficher sur chaque carte une catégorie (via Wikidata) et un lien Le
 
 ## État actuel
 
-Phases 1 à 3, 4a, 4c et 5 : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+Phases 1 à 3, 4a, 4c, 5 et 6a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
 
 ### Badge de catégorie sur les cartes
 
@@ -37,6 +37,30 @@ Approximation connue : l'index ne stocke pas la description des cartes, alors qu
 ### Lien Letterboxd
 
 Quand la modale de détail d'une carte est ouverte, un lien "Voir sur Letterboxd" est ajouté juste après le lien "Voir l'article sur Wikipédia", et ouvre la page Letterboxd dans un nouvel onglet. Il n'apparaît que pour les films et pour les personnes ayant au moins un métier de cinéma (page du réalisateur, de l'acteur, du scénariste ou du producteur, sinon recherche par titre ou par nom), ainsi que pour les studios. Une série, une saison, un épisode ou une personnalité sans métier de cinéma n'en reçoivent aucun, même si Wikidata leur connaît un identifiant Letterboxd (Albert Einstein en a un, hérité d'images d'archives).
+
+### Options
+
+Un bouton "Options" en bas de la fenêtre de statistiques ouvre la page d'options de l'extension (également accessible depuis `chrome://extensions`, bouton "Détails" puis "Options de l'extension").
+
+Section "Fonctionnalités" : quatre cases à cocher, toutes activées par défaut.
+
+| Réglage | Ce qu'il active |
+| --- | --- |
+| Badge de catégorie | La pastille de catégorie sur les cartes et la ligne "Catégorie" dans la modale de détail |
+| Mise en évidence par catégorie | Le panneau flottant des catégories de la page et le voile posé sur les cartes hors du filtre choisi |
+| Lien Letterboxd | Le lien vers Letterboxd dans la modale de détail |
+| Index de collection | L'enregistrement des cartes que tu affiches sur ta collection, qui alimente la fenêtre de statistiques |
+
+Un changement est enregistré immédiatement et un petit message "Enregistré" le confirme. Si l'enregistrement échoue, la page relit les réglages réellement stockés, les affiche et signale l'erreur : ce qui est coché correspond toujours à ce qui est réellement stocké, y compris quand une autre case a été cochée entre-temps.
+
+Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Le filtre du panneau de catégories repart de zéro après une désactivation. Quand les quatre réglages sont désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata.
+
+Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et de cartes dans l'index de collection, avec deux actions qui demandent chacune une confirmation sur place.
+
+- "Vider le cache de catégorisation" efface les faits Wikidata gardés par carte et les catégories gardées par classe. Les cartes seront redemandées à `fr.wikipedia.org` et à `query.wikidata.org` la prochaine fois que tu les affiches. Les réglages, l'index de collection et les pauses en cours sur un hôte ne sont pas touchés.
+- "Réinitialiser l'index de collection" efface la liste des cartes vues dans ta collection, comme le bouton du même nom dans la fenêtre de statistiques. Le cache de catégorisation n'est pas touché.
+
+Section "Confidentialité" : le même texte que la section ci-dessous, rappelé dans la page.
 
 La dernière réponse au besoin de filtre prévue par la phase 4 reste à faire : la synergie avec les étiquettes natives du site, que tu poses toi-même avec la sélection en lot.
 
@@ -82,10 +106,12 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - L'extension ne contacte jamais Letterboxd : elle se contente de construire une adresse à partir des identifiants publics de Wikidata. Rien n'est envoyé à Letterboxd tant que tu ne cliques pas toi-même sur le lien.
 - Les résultats sont mis en cache localement dans le stockage de l'extension (`chrome.storage.local`), sur ta machine uniquement : 90 jours pour une carte résolue, 7 jours pour une carte introuvable.
 - L'index de collection (titre, rareté, dates de première et de dernière apparition) est stocké au même endroit, sur ta machine uniquement. Il n'est envoyé nulle part, pas même au site, et le bouton "Réinitialiser l'index" l'efface entièrement.
-- La fenêtre de statistiques est une page de l'extension : elle lit les caches locaux et ne fait aucun appel réseau.
+- Les réglages de la page d'options sont stockés au même endroit, sur ta machine uniquement.
+- La fenêtre de statistiques et la page d'options sont des pages de l'extension : elles lisent et effacent uniquement ce qui est stocké localement, et ne font aucun appel réseau.
+- Si tu désactives les quatre fonctionnalités dans les options, plus aucun titre ne part vers Wikipédia ni Wikidata.
 
 ## Contrainte fondamentale
 
 Cette extension est un overlay en lecture seule. Elle ne clique jamais, ne scrolle pas, ne saisit rien, n'intercepte pas le trafic réseau et n'appelle pas les API du site. Tout contournement de cette règle expose au bannissement du compte.
 
-Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, voile d'atténuation, panneau de catégories) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée ou désactivée.
+Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, lien Letterboxd, voile d'atténuation, panneau de catégories) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la page d'options.
