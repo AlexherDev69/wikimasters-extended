@@ -14,7 +14,9 @@ import { removeModalCategoryLines } from '../../category-badge/data/modal-catego
 import { syncCardBadges } from '../../category-badge/presentation/sync-card-badges';
 import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
 import { createCategoryHighlight } from '../../category-highlight/presentation/category-highlight';
+import { removeCardButtons } from '../../letterboxd/data/card-button';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
+import { syncCardButtons } from '../../letterboxd/presentation/sync-card-buttons';
 import { syncModalLink } from '../../letterboxd/presentation/sync-modal-link';
 import { removeCardImages } from '../../missing-image/data/card-image';
 import { removeModalCreditLines } from '../../missing-image/data/modal-credit-line';
@@ -87,6 +89,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.categoryHighlight) {
       highlight.sync(cards, categoriesByTitle);
     }
+    if (settings.letterboxdLink) {
+      syncCardButtons(cards, categoriesByTitle);
+    }
     if (settings.missingImages) {
       syncCardImages(cards, categoriesByTitle);
     }
@@ -151,6 +156,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
     if (previous.letterboxdLink && !settings.letterboxdLink) {
       removeModalLink(root);
+      removeCardButtons(root);
     }
     if (previous.missingImages && !settings.missingImages) {
       removeCardImages(root);
@@ -180,6 +186,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCardBadges(root);
       removeModalCategoryLines(root);
       removeModalLink(root);
+      removeCardButtons(root);
       removeCardImages(root);
       removeModalCreditLines(root);
     },

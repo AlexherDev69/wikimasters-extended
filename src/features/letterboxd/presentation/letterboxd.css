@@ -1,0 +1,78 @@
+/*
+ * Styles of the nodes this feature adds to the page. Every selector starts
+ * with one of our data attributes, so no rule of ours can reach a node of the
+ * site, and no rule of the site is overridden.
+ */
+
+[data-wme-letterboxd-card] {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /*
+   * The category badge now sits at the top of the text area, straddling the
+   * line between the picture and the text: this button sits at the bottom of
+   * the same area instead, over the empty middle of its stats row, so the two
+   * can never meet whatever either one shows. That middle stays empty because
+   * the row is `justify-between`, with the attack stat on the left and the
+   * defense stat on the right: on the narrowest card (320px viewport, card
+   * 137.6px wide, content 113.6px wide, each stat about 42px wide) the free
+   * middle is about 29.6px for a 16px button, so about 6.8px of clearance on
+   * each side; at 375px and above the card is clamped to 160px and the
+   * clearance grows to about 19px.
+   */
+  bottom: 4px;
+  box-sizing: border-box;
+  /*
+   * A clamp on the viewport cannot tell a grid card from a large one apart: a
+   * card cannot become a container without restyling a node of the site, so
+   * the size follows the viewport instead of the actual size of the card
+   * root. On a wide screen a grid card gets the same large size as a large
+   * card, even though its own root stays exactly as narrow as before.
+   */
+  width: clamp(16px, 1.6vw, 20px);
+  height: clamp(16px, 1.6vw, 20px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: rgba(9, 12, 17, 0.82);
+  /*
+   * The only node of the extension that takes a click on a card: every other
+   * one stays `pointer-events: none`. See data/card-button.ts for why this
+   * one click is allowed to reach a listener at all.
+   */
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+[data-wme-letterboxd-card]:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
+[data-wme-letterboxd-card] .wme-letterboxd-dot {
+  /*
+   * The button itself is the positioning context: it carries `position:
+   * absolute` above, which is enough to place these without a rule of its own.
+   */
+  position: absolute;
+  top: 20%;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+}
+
+/* The three discs of the mark, overlapping as the real logo does. */
+[data-wme-letterboxd-card] .wme-letterboxd-dot-1 {
+  left: 12%;
+  background-color: #ff8000;
+}
+
+[data-wme-letterboxd-card] .wme-letterboxd-dot-2 {
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #00e054;
+}
+
+[data-wme-letterboxd-card] .wme-letterboxd-dot-3 {
+  right: 12%;
+  background-color: #40bcf4;
+}

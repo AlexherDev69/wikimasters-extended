@@ -36,7 +36,9 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
   },
   letterboxdLink: {
     label: 'Lien Letterboxd',
-    hint: 'Lien vers Letterboxd dans la modale des films et des personnalités du cinéma.',
+    hint:
+      'Lien vers Letterboxd dans la modale de détail, et petit logo sous la photo sur la carte, ' +
+      'pour les films et les personnalités du cinéma.',
   },
   missingImages: {
     label: 'Images manquantes',
