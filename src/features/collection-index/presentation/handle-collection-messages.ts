@@ -43,18 +43,20 @@ function toErrorMessage(error: unknown): string {
  * Runs `task` and answers with its result. A rejection is logged and answered
  * with an error shape: whoever asked must never be left waiting for a response
  * that will not come.
+ *
+ * The rejection handler is the second argument of `then` and not a `catch`
+ * after it: a `catch` would also run when `sendResponse` itself throws, and
+ * answer a second time for an operation that had succeeded.
  */
 function answer(
   task: () => Promise<CollectionMessageResponse>,
   sendResponse: SendCollectionResponse,
   logger: Logger,
 ): boolean {
-  void task()
-    .then(sendResponse)
-    .catch((error: unknown) => {
-      logger.error('Collection index message failed', { error: toErrorMessage(error) });
-      sendResponse({ error: INDEX_UNAVAILABLE_ERROR });
-    });
+  void task().then(sendResponse, (error: unknown) => {
+    logger.error('Collection index message failed', { error: toErrorMessage(error) });
+    sendResponse({ error: INDEX_UNAVAILABLE_ERROR });
+  });
 
   return true;
 }
