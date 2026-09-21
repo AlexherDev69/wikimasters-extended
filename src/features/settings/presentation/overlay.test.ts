@@ -154,7 +154,7 @@ function mount(
 ): Harness {
   const retries: (() => void)[] = [];
   const frames: ((timeMs: number) => void)[] = [];
-  const chime: ChimePlayer = { play: vi.fn() };
+  const chime: ChimePlayer = { play: vi.fn(), close: vi.fn() };
   const deps: OverlayDeps = {
     root: document.body,
     settings,
@@ -1074,6 +1074,18 @@ describe('createOverlay', () => {
     scan(overlay);
 
     expect(chime.play).not.toHaveBeenCalled();
+  });
+
+  it('should give the audio of the page back when the context is invalidated', () => {
+    // The one thing this feature is given and the one thing it gives back: a
+    // browser hands out a limited number of audio contexts per page.
+    document.body.innerHTML = UNREAD_HEADER_HTML;
+    const { overlay, chime } = mount({ ...ALL_OFF, notificationSound: true });
+    scan(overlay);
+
+    overlay.destroy();
+
+    expect(chime.close).toHaveBeenCalledTimes(1);
   });
 
   it('should listen again from the count of the moment when the sound is switched back on', () => {

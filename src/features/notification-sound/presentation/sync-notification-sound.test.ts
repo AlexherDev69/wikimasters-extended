@@ -22,7 +22,7 @@ const GRID_HTML = readFileSync(join(FIXTURES_DIR, 'card-grid-with-description.ht
 const FIXTURE_COUNT = 5;
 
 function makeChime(): ChimePlayer {
-  return { play: vi.fn() };
+  return { play: vi.fn(), close: vi.fn() };
 }
 
 /** Shows the navigation with a badge reading `count`, or none at all at zero. */

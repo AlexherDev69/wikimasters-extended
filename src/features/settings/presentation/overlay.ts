@@ -369,6 +369,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCompactStyle(root.ownerDocument);
       stopLoadingPong(root, loadingPong);
       removeBrandMarks(root);
+      // The sound of the notifications adds no node, so it has nothing to
+      // take back but the audio it was given.
+      deps.chime.close();
     },
   };
 }

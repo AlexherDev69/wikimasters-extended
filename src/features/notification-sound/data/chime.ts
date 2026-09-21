@@ -35,6 +35,12 @@ const SILENT_GAIN = 0.0001;
 export interface ChimePlayer {
   /** Plays the chime, and does nothing at all when the browser refuses to. */
   play: () => void;
+  /**
+   * Gives the audio of the page back. Called when the content script is torn
+   * down: a browser hands out a limited number of contexts per page, and an
+   * extension reloaded over an open tab would hold one more each time.
+   */
+  close: () => void;
 }
 
 /**
@@ -46,7 +52,10 @@ export interface AudioCapableView {
 }
 
 /** Does nothing, for a page with no audio at all behind it. */
-const SILENT_PLAYER: ChimePlayer = { play: (): void => undefined };
+const SILENT_PLAYER: ChimePlayer = {
+  play: (): void => undefined,
+  close: (): void => undefined,
+};
 
 function playNote(context: AudioContext, note: Note): void {
   const startsAt = context.currentTime + note.startAt;
@@ -93,6 +102,15 @@ async function playWhenAllowed(context: AudioContext): Promise<void> {
   }
 }
 
+/** Gives one back, and says nothing when the page refuses that too. */
+async function closeContext(context: AudioContext): Promise<void> {
+  try {
+    await context.close();
+  } catch {
+    return;
+  }
+}
+
 /** Opens one, or answers nothing at all on a page that refuses to. */
 function openContext(AudioContextClass: typeof AudioContext): AudioContext | null {
   try {
@@ -121,6 +139,17 @@ export function createChimePlayer(view: AudioCapableView | null): ChimePlayer {
         return;
       }
       void playWhenAllowed(context);
+    },
+
+    close: (): void => {
+      const opened = context;
+      // Forgotten before it is closed, so nothing can reach a closed one: a
+      // chime asked for after the teardown opens a fresh context rather than
+      // throwing into the page.
+      context = null;
+      if (opened !== null) {
+        void closeContext(opened);
+      }
     },
   };
 }

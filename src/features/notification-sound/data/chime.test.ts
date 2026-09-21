@@ -44,6 +44,7 @@ interface FakeContext {
   state: AudioContextState;
   notes: ScheduledNote[];
   resumeCalls: number;
+  closeCalls: number;
 }
 
 interface FakeAudio {
@@ -68,6 +69,7 @@ function fakeAudio(options: Partial<FakeContextOptions> = {}): FakeAudio {
     public readonly destination = { name: 'destination' };
     public readonly notes: ScheduledNote[] = [];
     public resumeCalls = 0;
+    public closeCalls = 0;
 
     public constructor() {
       contexts.push(this);
@@ -76,6 +78,12 @@ function fakeAudio(options: Partial<FakeContextOptions> = {}): FakeAudio {
     public resume(): Promise<void> {
       this.resumeCalls += 1;
       this.state = resumesTo;
+      return Promise.resolve();
+    }
+
+    public close(): Promise<void> {
+      this.closeCalls += 1;
+      this.state = 'closed';
       return Promise.resolve();
     }
 
@@ -184,6 +192,39 @@ describe('createChimePlayer', () => {
       expect(audio.contexts[0]?.resumeCalls).toBe(1);
     });
     expect(audio.contexts[0]?.notes).toHaveLength(0);
+  });
+
+  it('should give the audio of the page back when it is closed', () => {
+    const audio = fakeAudio();
+    const player = createChimePlayer(audio.view);
+    player.play();
+
+    player.close();
+
+    expect(audio.contexts[0]?.closeCalls).toBe(1);
+  });
+
+  it('should close nothing when it was never asked for a chime', () => {
+    // Nothing was opened, so there is nothing to give back.
+    const audio = fakeAudio();
+
+    createChimePlayer(audio.view).close();
+
+    expect(audio.contexts).toHaveLength(0);
+  });
+
+  it('should open a fresh context rather than use the one it gave back', () => {
+    // Nothing asks for a chime after the teardown, but reaching into a closed
+    // context would throw into the page rather than stay quiet.
+    const audio = fakeAudio();
+    const player = createChimePlayer(audio.view);
+    player.play();
+    player.close();
+
+    player.play();
+
+    expect(audio.contexts).toHaveLength(2);
+    expect(audio.contexts[1]?.closeCalls).toBe(0);
   });
 
   it('should do nothing at all when the page has no audio to play with', () => {
