@@ -82,4 +82,13 @@ export const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       "jeu disparaît dès que la page affiche enfin quelque chose, et rien n'est envoyé ni " +
       'écrit sur le site.',
   },
+  notificationSound: {
+    label: 'Son de notification',
+    summary: 'Un petit son quand une notification arrive.',
+    hint:
+      'Joue un petit son de deux notes quand le compteur de la cloche augmente, pour remarquer ' +
+      "une notification sans avoir l'onglet sous les yeux. Rien n'est ajouté à la page et rien " +
+      "n'est envoyé nulle part : le son se déclenche sur le nombre que le site affiche déjà. Le " +
+      "navigateur ne le joue pas tant que tu n'as pas cliqué au moins une fois sur le site.",
+  },
 };

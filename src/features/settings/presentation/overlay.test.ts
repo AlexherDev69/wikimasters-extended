@@ -16,6 +16,7 @@ import {
 } from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
+import type { ChimePlayer } from '../../notification-sound/data/chime';
 import {
   COMPACT_STYLE_SELECTOR,
   TOGGLE_SELECTOR as COMPACT_TOGGLE_SELECTOR,
@@ -44,6 +45,9 @@ const COLLECTION_FILTERS_HTML = readFileSync(
 /** The navigation of the site, with its own name at the top of it. */
 const HEADER_HTML = readFileSync(join(FIXTURES_DIR, 'site-header.html'), 'utf-8');
 
+/** The same navigation, with the badge of the notifications waiting. */
+const UNREAD_HEADER_HTML = readFileSync(join(FIXTURES_DIR, 'site-header-unread.html'), 'utf-8');
+
 /** The page of the collection while the site is still fetching its cards. */
 const LOADING_HTML = readFileSync(join(FIXTURES_DIR, 'loading-spinner.html'), 'utf-8');
 
@@ -64,6 +68,9 @@ const LARGE_CARD_TITLE = 'Foza';
 const MODAL_CARD_TITLE = 'Dvorichté';
 /** A card of the catalogue export the site shows its own logo for. */
 const PLACEHOLDER_CARD_TITLE = 'Adan Canto';
+/** One more than the five notifications the unread header fixture shows. */
+const SIX_WAITING = 6;
+
 /** Named by both offers of the trade fixture, so two chips carry it. */
 const TRADE_CARD_TITLE = 'Saison 1 de Severance';
 
@@ -84,6 +91,7 @@ const ALL_OFF: Settings = {
   pullStats: false,
   compactView: false,
   loadingPong: false,
+  notificationSound: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -136,6 +144,8 @@ interface Harness {
    * being run would never give the test its turn back.
    */
   frames: ((timeMs: number) => void)[];
+  /** The sound of an arriving notification, counted rather than played. */
+  chime: ChimePlayer;
 }
 
 function mount(
@@ -144,6 +154,7 @@ function mount(
 ): Harness {
   const retries: (() => void)[] = [];
   const frames: ((timeMs: number) => void)[] = [];
+  const chime: ChimePlayer = { play: vi.fn() };
   const deps: OverlayDeps = {
     root: document.body,
     settings,
@@ -160,9 +171,10 @@ function mount(
     requestFrame: (callback) => {
       frames.push(callback);
     },
+    chime,
   };
 
-  return { overlay: createOverlay(deps), categorize, retries, frames };
+  return { overlay: createOverlay(deps), categorize, retries, frames, chime };
 }
 
 /** What the content script does on every scan. */
@@ -233,6 +245,18 @@ function showPlaceholderCardAndModal(): void {
     throw new Error('The fixtures hold no card');
   }
   modalCard.replaceWith(placeholderCard);
+}
+
+/** The bell of the site, whose badge the sound of the notifications reads. */
+const BELL_BADGE_SELECTOR = 'button[aria-label="Notifications"] > span';
+
+/** Writes in the badge of the bell, as the site does when the count moves. */
+function setBellCount(count: number): void {
+  const badge = document.body.querySelector(BELL_BADGE_SELECTOR);
+  if (badge === null) {
+    throw new Error('The unread header fixture has lost its badge');
+  }
+  badge.textContent = String(count);
 }
 
 function observeBody(): MutationObserver {
@@ -1008,5 +1032,62 @@ describe('createOverlay', () => {
     overlay.destroy();
 
     expect(hideStatsStyle()).toBeNull();
+  });
+
+  it('should sound when the bell of the site goes up', () => {
+    document.body.innerHTML = UNREAD_HEADER_HTML;
+    const { overlay, chime } = mount({ ...ALL_OFF, notificationSound: true });
+    scan(overlay);
+
+    setBellCount(SIX_WAITING);
+    scan(overlay);
+
+    expect(chime.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('should write nothing on the page when the bell goes up', () => {
+    // The whole feature in one assertion: it reads a number and makes a
+    // sound. A single write here would feed the observer that brought the
+    // scan, and the page would loop for as long as it stayed open.
+    document.body.innerHTML = UNREAD_HEADER_HTML;
+    const { overlay, chime } = mount({ ...ALL_OFF, notificationSound: true });
+    scan(overlay);
+    const observer = observeBody();
+    setBellCount(SIX_WAITING);
+    // The line above is a write of the test, standing in for the site: it is
+    // drained so that what is left is what the scan itself wrote.
+    observer.takeRecords();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    expect(chime.play).toHaveBeenCalledTimes(1);
+    observer.disconnect();
+  });
+
+  it('should stay silent when the sound is switched off', () => {
+    document.body.innerHTML = UNREAD_HEADER_HTML;
+    const { overlay, chime } = mount(ALL_OFF);
+    scan(overlay);
+
+    setBellCount(SIX_WAITING);
+    scan(overlay);
+
+    expect(chime.play).not.toHaveBeenCalled();
+  });
+
+  it('should listen again from the count of the moment when the sound is switched back on', () => {
+    // Switching it off and back on must not sound for everything that arrived
+    // in between: the sound says a notification is arriving, not that some
+    // are waiting.
+    document.body.innerHTML = UNREAD_HEADER_HTML;
+    const { overlay, chime } = mount({ ...ALL_OFF, notificationSound: true });
+    scan(overlay);
+    overlay.applySettings(ALL_OFF);
+
+    setBellCount(SIX_WAITING);
+    overlay.applySettings({ ...ALL_OFF, notificationSound: true });
+
+    expect(chime.play).not.toHaveBeenCalled();
   });
 });
