@@ -12,6 +12,7 @@ Fixtures anonymisées (composant carte seul, aucune donnée de compte) dans `tes
 | `card-detail-modal.html` | Modale de détail complète, avec le lien Wikipédia |
 | `global-collection-page.html` | Bloc d'en-tête du catalogue (totaux par rareté) et trois cartes |
 | `placeholder-cards.html` | Deux cartes sans illustration (logo du site) et une carte illustrée |
+| `site-header.html` | En-tête de la navigation du site (son nom) et titre d'une page |
 
 ## Routes découvertes
 
@@ -22,6 +23,7 @@ Fixtures anonymisées (composant carte seul, aucune donnée de compte) dans `tes
 - `body > div.flex.h-dvh` contient la `nav` latérale et `main.overflow-y-auto`. Le conteneur de scroll est `main`, pas `window`
 - La modale de détail est ajoutée en fin de `body` : `div.fixed.inset-0.z-50 > div.card-frame`
 - Classes sémantiques maison repérées (plus stables que les utilitaires Tailwind) : `glow-<rareté>`, `card-frame`, `animate-card-flip`, `animate-fade-in-up`
+- En-tête de la `nav` : `div.flex.items-center.justify-between > a[href$="/pulls"] > h1` portant `style="font-family:var(--font-heading)"`, avec deux `span` ("Wiki" en accent, "Masters" en couleur de texte), puis le bouton des notifications. Les titres de page portent la MÊME propriété en style en ligne, mais aucun n'est l'enfant direct d'un lien : `a > h1[style*="--font-heading"]` ne désigne donc que le nom du site (mesuré le 2026-09-21 sur cinq exports, une occurrence par page). C'est là que l'extension écrit son mot "Extended"
 - Écran de chargement : tant que le site attend ses données, `main` ne contient que `div.flex-1.flex.items-center.justify-center > div.w-8.h-8.border-2.border-[var(--color-accent)].border-t-transparent.rounded-full.animate-spin`. Seule la classe `animate-spin` est visée, les utilitaires autour changeant à chaque déploiement, et la même classe tourne aussi dans un bouton du site ici ou là : l'absence de carte est donc exigée en plus (relevé le 2026-09-21, export de `/collection`)
 
 ## Composant carte (identique sur toutes les pages connectées)
