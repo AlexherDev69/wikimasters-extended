@@ -1,5 +1,4 @@
 import type { DetailModal } from '../../card-detection/data/detail-modal';
-import { CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import { isCommonsFileName } from '../domain/card-image';
 import { commonsFilePageUrl } from '../domain/commons-url';
@@ -53,18 +52,16 @@ interface CreditParts {
  * found once per sync pass and handed to every feature that writes in it.
  */
 export function findModalCreditTarget(modal: DetailModal): ModalCreditTarget {
-  // Our line goes under the category line of the extension, under its
-  // Letterboxd link otherwise, and under the site link when neither is there.
-  // The order the three features arrive in does not matter: each one anchors
-  // on the last of the nodes that must come before it, so a node arriving
-  // later inserts itself right above the ones that must follow it, and no node
-  // is ever moved afterwards.
-  const categoryLine = modal.root.querySelector(CATEGORY_LINE_SELECTOR);
+  // Our line goes under the Letterboxd link of the extension, and under the
+  // site link when it is not there. The order the two features arrive in does
+  // not matter: each one anchors on the last of the nodes that must come
+  // before it, so a node arriving later inserts itself right above the ones
+  // that must follow it, and no node is ever moved afterwards.
   const letterboxdLink = modal.root.querySelector(LETTERBOXD_LINK_SELECTOR);
 
   return {
     title: modal.title,
-    anchor: categoryLine ?? letterboxdLink ?? modal.wikipediaLink,
+    anchor: letterboxdLink ?? modal.wikipediaLink,
     ourLine: modal.root.querySelector<HTMLElement>(IMAGE_CREDIT_SELECTOR),
   };
 }

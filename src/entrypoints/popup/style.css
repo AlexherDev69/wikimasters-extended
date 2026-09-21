@@ -85,17 +85,6 @@ body {
   color: var(--wme-text-faint);
 }
 
-/* The one switch that writes on the site itself: its summary stays legible
-   even at rest, instead of fading like the others, so the risk it names is
-   never overlooked. */
-.wme-popup-row--warning {
-  border: 1px solid var(--wme-danger);
-}
-
-.wme-popup-row--warning .wme-popup-summary {
-  color: var(--wme-danger);
-}
-
 /*
  * A real checkbox, laid over the track that paints it: the keyboard, the
  * screen reader and the click keep working exactly as they do on a plain one.
@@ -157,11 +146,6 @@ body {
 .wme-popup-switch input:focus-visible + .wme-popup-track {
   outline: 2px solid var(--wme-focus);
   outline-offset: 2px;
-}
-
-.wme-popup-row--warning .wme-popup-switch input:checked + .wme-popup-track {
-  border-color: var(--wme-danger);
-  background-color: color-mix(in srgb, var(--wme-danger) 45%, transparent);
 }
 
 .wme-popup-footer {

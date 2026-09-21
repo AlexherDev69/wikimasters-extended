@@ -86,19 +86,6 @@ body {
   color: var(--wme-text-faint);
 }
 
-/* The one switch that writes on the site itself: its hint stays legible even
-   at rest, instead of fading like the others, so the risk it names is never
-   overlooked. */
-.wme-setting--warning {
-  padding: 8px;
-  border: 1px solid var(--wme-danger);
-  border-radius: 6px;
-}
-
-.wme-setting--warning .wme-setting-hint {
-  color: var(--wme-danger);
-}
-
 /* Outside the page, which is rebuilt on every render: a live region announces
    a change of its text, never its arrival with the text already in it. It
    follows the bottom of the frame so the answer to a switch is visible

@@ -19,13 +19,11 @@ import { createPullTallyStore } from '../features/pull-stats/data/pull-tally-sto
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
 import type { Settings } from '../features/settings/domain/settings';
 import { createOverlay } from '../features/settings/presentation/overlay';
-import '../features/category-badge/presentation/category-badge.css';
 import '../features/compact-view/presentation/compact-view.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/loading-pong/presentation/loading-pong.css';
 import '../features/missing-image/presentation/missing-image.css';
 import '../features/pull-stats/presentation/pull-stats.css';
-import '../features/tag-suggestions/presentation/tag-suggestions.css';
 import '../features/trade-cards/presentation/trade-cards.css';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';

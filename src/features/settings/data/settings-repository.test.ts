@@ -7,7 +7,7 @@ import { createSettingsRepository } from './settings-repository';
 
 const SETTINGS_KEY = 'local:wme:settings:v1';
 
-const BADGES_OFF: Settings = { ...DEFAULT_SETTINGS, categoryBadges: false };
+const IMAGES_OFF: Settings = { ...DEFAULT_SETTINGS, missingImages: false };
 
 function makeRepository(): SettingsRepository {
   return createSettingsRepository();
@@ -26,13 +26,13 @@ describe('createSettingsRepository', () => {
   it('should read back the settings it has written', async () => {
     const repository = makeRepository();
 
-    await repository.write(BADGES_OFF);
+    await repository.write(IMAGES_OFF);
 
-    expect(await repository.read()).toEqual(BADGES_OFF);
+    expect(await repository.read()).toEqual(IMAGES_OFF);
   });
 
   it('should write everything under a single key', async () => {
-    await makeRepository().write(BADGES_OFF);
+    await makeRepository().write(IMAGES_OFF);
 
     expect(Object.keys(await storage.snapshot('local'))).toEqual(['wme:settings:v1']);
   });
@@ -82,16 +82,16 @@ describe('createSettingsRepository', () => {
   it('should read back through the strict read the settings it has written', async () => {
     const repository = makeRepository();
 
-    await repository.write(BADGES_OFF);
+    await repository.write(IMAGES_OFF);
 
-    expect(await repository.readStrict()).toEqual(BADGES_OFF);
+    expect(await repository.readStrict()).toEqual(IMAGES_OFF);
   });
 
   it('should reject when the settings cannot be written', async () => {
     const failure = new Error('storage down');
     const broken = vi.spyOn(storage, 'setItem').mockRejectedValueOnce(failure);
 
-    await expect(makeRepository().write(BADGES_OFF)).rejects.toThrow(failure);
+    await expect(makeRepository().write(IMAGES_OFF)).rejects.toThrow(failure);
 
     broken.mockRestore();
   });
@@ -101,10 +101,10 @@ describe('createSettingsRepository', () => {
     const listener = vi.fn();
     const unwatch = repository.watch(listener);
 
-    await repository.write(BADGES_OFF);
+    await repository.write(IMAGES_OFF);
 
     await vi.waitFor(() => {
-      expect(listener).toHaveBeenCalledWith(BADGES_OFF);
+      expect(listener).toHaveBeenCalledWith(IMAGES_OFF);
     });
     unwatch();
   });
@@ -127,7 +127,7 @@ describe('createSettingsRepository', () => {
     const listener = vi.fn();
 
     repository.watch(listener)();
-    await repository.write(BADGES_OFF);
+    await repository.write(IMAGES_OFF);
 
     expect(listener).not.toHaveBeenCalled();
   });

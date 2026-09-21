@@ -2,23 +2,17 @@
 
 Extension Chrome (Manifest V3) en lecture seule pour [wiki-masters.com](https://www.wiki-masters.com).
 
-Objectif : afficher sur chaque carte une catégorie (via Wikidata), une image pour les cartes que le site laisse sans illustration, un lien Letterboxd pour les films et personnalités du cinéma, des étiquettes suggérées dans la modale de détail, les cartes elles-mêmes à la place des noms tronqués sur la page des échanges, la part de chaque rareté dans les cartes que tes paquets révèlent, une vue compacte des grilles de cartes, et une partie de Pong quand le site met trop longtemps à charger. Elle ne scrolle pas et n'intercepte aucun trafic réseau. Elle est en lecture seule sur le site, à une seule exception près : un réglage désactivé par défaut qui, sur un clic explicite de ta part, écrit une étiquette suggérée dans le champ du site (voir la section "Étiquettes suggérées").
+Objectif : afficher une image sur les cartes que le site laisse sans illustration, un lien Letterboxd pour les films et personnalités du cinéma, les cartes elles-mêmes à la place des noms tronqués sur la page des échanges, la part de chaque rareté dans les cartes que tes paquets révèlent, une vue compacte des grilles de cartes, et une partie de Pong quand le site met trop longtemps à charger. Elle ne scrolle pas, n'intercepte aucun trafic réseau et n'écrit jamais rien sur le site.
 
 ## État actuel
 
-Phases 1 à 3, 4a, 5, 6a et 7a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande leur catégorie à Wikidata depuis le service worker (personne, film et TV, musique, sport, vivant, gastronomie, monument, religion et idées, oeuvre, lieu, transport et technique, évènement, organisation, astronomie, science, autre), avec un sous-type pour les personnes (cinéma, musique, sport, politique, science, littérature, art, médias, autre).
+Phases 1 à 3, 4a, 5, 6a et 7a : l'extension détecte les cartes affichées, y compris celles qui arrivent après le chargement de la page (rendu React, pagination, bouton "Charger la suite", carrousel d'ouverture de paquet), en extrait le titre, la description et la rareté, puis demande à Wikidata, depuis le service worker, ce qu'elles sont et ce qu'il connaît d'elles. Ce classement ne sort plus du service worker : rien de la page n'en lit la catégorie, il ne sert plus qu'à décider ce dont une adresse Letterboxd peut être construite.
 
 Les phases 4c et 4d (index de collection, fenêtre de statistiques et complétion par rareté) ont été retirées le 20 septembre 2026 : l'extension ne peut pas voir une carte quitter ta collection (vente, échange, destruction) sans interagir avec le site, donc ses nombres auraient fini par dériver.
 
+Tout ce qui affichait une catégorie a été retiré le 21 septembre 2026 : la pastille sur les cartes, la ligne "Catégorie" de la modale de détail, et les étiquettes suggérées, qui étaient elles aussi des libellés de catégorie. Le réglage qui remplissait l'étiquette au clic est parti avec elles, et c'était la seule écriture que l'extension faisait sur le site : elle n'y écrit désormais plus rien du tout.
+
 L'extension ne garde aucune liste de tes cartes : rien de ta collection n'est enregistré. Les statistiques de tirage (voir plus bas) ne gardent que six nombres, un par rareté, jamais le titre d'une carte.
-
-### Badge de catégorie sur les cartes
-
-Chaque carte catégorisée reçoit une petite pastille sombre en bas à gauche, à cheval sur la limite entre la photo et le texte : un point de la couleur de la catégorie et son libellé, par exemple "Lieu" ou "Personne · Cinéma" pour une personne dont le sous-type principal est connu. La pastille suit toujours la carte affichée à l'instant : si le site réutilise un emplacement pour une autre carte (pagination), le badge est recalculé à partir du titre affiché. Une carte dont l'article est introuvable, dont la catégorisation a échoué ou dont la catégorie n'est pas encore connue ne reçoit aucun badge.
-
-### Catégorie dans la modale de détail
-
-Quand la modale de détail est ouverte, une ligne "Catégorie : ..." est ajoutée sous le lien "Voir l'article sur Wikipédia" (et sous le lien Letterboxd quand il est présent). Pour une personne ayant plusieurs métiers, les autres sous-types sont listés entre parenthèses, par exemple "Catégorie : Personne · Musique (aussi : Cinéma)".
 
 ### Lien Letterboxd
 
@@ -76,16 +70,6 @@ Techniquement, cette option ne fonctionne pas comme les autres. Les autres fonct
 
 Cacher un nombre dans ton propre navigateur ne donne aucun avantage dans le jeu, ne révèle rien à personne et n'automatise rien : c'est une préférence d'affichage, comme un mode lecture. Rien n'est envoyé nulle part par cette option, qu'elle soit activée ou non.
 
-### Étiquettes suggérées
-
-Le site propose déjà des étiquettes manuelles sur les cartes que tu possèdes, dans la modale de détail. Quand cette zone est présente (une carte que tu ne possèdes pas n'en a pas), l'extension ajoute juste en dessous jusqu'à six propositions : le libellé de la catégorie de la carte, le sujet que ses classes Wikidata désignent quand la catégorie est trop large pour le dire ("Voitures" sous "Technique", et de même Bateaux, Aviation, Logiciels, Informatique, Armes, Outils, Véhicules), le sous-type principal pour une personne, puis ses métiers connus de Wikidata, chacun sur un seul mot ou une courte expression, sans doublon et sans jamais reproposer une étiquette déjà posée sur la carte. Une carte dont Wikidata ne connaît rien d'utile ne reçoit aucune proposition. Tant que les faits de la carte n'ont pas répondu, la zone affiche "recherche…" à la place des propositions : sans ce mot, une zone vide se lit comme une carte sans rien à proposer alors qu'elle est seulement en cours de recherche. Le mot est remplacé par les propositions dès qu'elles arrivent.
-
-Par défaut, un clic sur une proposition sélectionne son texte, pour que tu puisses le copier (Ctrl+C ou Cmd+C) et le coller toi-même dans le champ du site. Rien n'est écrit sur le site par ce clic : c'est une aide à la copie, rien de plus. Seul effet de bord à connaître, il remplace la sélection de texte que tu avais peut-être ailleurs dans la page.
-
-Un second réglage, "Remplir l'étiquette au clic", change ce comportement : coché, un clic sur une proposition écrit directement l'étiquette dans le champ du site et la valide, de la façon exacte dont le site lit ta propre frappe. Ce réglage est désactivé par défaut, et volontairement séparé du précédent : afficher des propositions n'écrit jamais sur le site, quel que soit ce second réglage, et lui seul décide si un clic va plus loin qu'une sélection de texte. Les règles de wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou interagir à votre place", avec un bannissement possible comme sanction : ce réglage revient à interagir à ta place au moment du clic, donc à activer en connaissance de cause, jamais par défaut pour quelqu'un d'autre que toi.
-
-Cette fonctionnalité suit le réglage "Étiquettes suggérées" de la page d'options. Désactivée, les propositions sont retirées immédiatement, et la seconde option n'a alors plus aucun effet.
-
 ### Statistiques de tirage
 
 Sur la page d'ouverture des paquets, sous le bloc "2 / 10 paquets disponibles", l'extension affiche la part de chaque rareté dans les cartes que tes paquets ont révélées : un pourcentage et un compte par rareté, de la Légendaire à la Commune, avec le total des cartes comptées.
@@ -100,7 +84,7 @@ Ce qui est lu sur la page se limite à la rareté que la carte affiche déjà da
 
 Sur ta collection et sur la page de toutes les cartes, un bouton "Vue compacte" est ajouté au bout de la rangée de filtres de rareté, à droite. Il réduit les cartes à environ deux tiers de leur taille : à largeur d'écran égale, il en tient à peu près deux fois plus à l'écran.
 
-La carte compacte garde son image, son badge de rareté, son étoile de favori et son titre, plus la pastille de catégorie et la marque Letterboxd que l'extension ajoute. Elle laisse de côté la description, les étiquettes et la ligne ATK/DEF : tout cela reste à un clic dans la modale de détail, dont la carte, elle, garde exactement sa taille normale.
+La carte compacte garde son image, son badge de rareté, son étoile de favori et son titre, plus la marque Letterboxd que l'extension ajoute. Elle laisse de côté la description, les étiquettes et la ligne ATK/DEF : tout cela reste à un clic dans la modale de détail, dont la carte, elle, garde exactement sa taille normale.
 
 Seule la taille à l'écran change. Le site garde exactement la page qu'il a construite : aucune carte n'est modifiée, déplacée ni supprimée, et l'extension se contente de demander au navigateur de peindre ces cartes plus petites, comme le fait déjà l'option qui masque les statistiques. Rappuyer sur le bouton rend immédiatement leur taille normale à toutes les cartes, et la vue choisie est retenue pour tes prochaines visites, sur cette machine uniquement.
 
@@ -116,9 +100,9 @@ Tout est peint dans un `canvas` qui appartient à l'extension : le site, lui, ne
 
 ### Popup de la barre d'outils
 
-Un clic sur l'icône de l'extension ouvre une petite fenêtre : les dix réglages, chacun avec son interrupteur et la phrase qui dit ce qu'il change. Un clic sur un interrupteur est enregistré aussitôt, un "Enregistré" le confirme en bas, et les onglets du site déjà ouverts suivent sans rechargement.
+Un clic sur l'icône de l'extension ouvre une petite fenêtre : les sept réglages, chacun avec son interrupteur et la phrase qui dit ce qu'il change. Un clic sur un interrupteur est enregistré aussitôt, un "Enregistré" le confirme en bas, et les onglets du site déjà ouverts suivent sans rechargement.
 
-Les dix tiennent à l'écran sans défilement. Celui qui écrit sur le site (remplir l'étiquette au clic) est encadré de rouge, avec sa mise en garde toujours lisible.
+Les sept tiennent à l'écran sans défilement.
 
 Un bouton "Options et données locales" en bas ouvre la page d'options, qui garde ce que cette fenêtre laisse de côté : les explications complètes, ce que l'extension stocke sur cette machine, et de quoi l'effacer.
 
@@ -126,24 +110,21 @@ Un bouton "Options et données locales" en bas ouvre la page d'options, qui gard
 
 La page d'options est accessible par ce bouton, et depuis `chrome://extensions` (bouton "Détails" puis "Options de l'extension").
 
-Section "Fonctionnalités" : dix cases à cocher, huit activées par défaut et deux désactivées par défaut (celle qui masque des statistiques du site et celle qui remplit l'étiquette au clic, voir plus haut).
+Section "Fonctionnalités" : sept cases à cocher, six activées par défaut et une désactivée par défaut (celle qui masque des statistiques du site, voir plus haut).
 
 | Réglage | Ce qu'il active |
 | --- | --- |
-| Badge de catégorie | La pastille de catégorie sur les cartes et la ligne "Catégorie" dans la modale de détail |
 | Lien Letterboxd | Le lien vers Letterboxd dans la modale de détail, et le petit logo sous la photo sur la carte |
 | Images manquantes | L'image de Wikimedia Commons posée sur les cartes que le site laisse sans illustration, et la ligne de crédit dans la modale de détail |
 | Cartes sur la page d'échange | Les cartes dessinées à la place des noms tronqués dans les offres de la page des échanges |
 | Masquer les statistiques des cartes | Les valeurs d'attaque et de défense, sur les cartes et dans la modale de détail |
-| Étiquettes suggérées | Les propositions d'étiquette dans la modale de détail, pour les cartes que tu possèdes |
-| Remplir l'étiquette au clic | Écrit et valide la proposition cliquée dans le champ du site, au lieu de seulement sélectionner son texte |
 | Statistiques de tirage | Le panneau qui montre la part de chaque rareté dans les cartes révélées par tes paquets, sur la page des paquets |
 | Bouton vue compacte | Le bouton qui réduit les cartes de ta collection et de la page de toutes les cartes, pour en voir beaucoup plus à la fois |
 | Pong pendant les chargements | La partie de Pong affichée quand le site n'affiche que son rond qui tourne depuis plus de trois secondes |
 
 Un changement est enregistré immédiatement et un petit message "Enregistré" le confirme. Si l'enregistrement échoue, la page relit les réglages réellement stockés, les affiche et signale l'erreur : ce qui est coché correspond toujours à ce qui est réellement stocké, y compris quand une autre case a été cochée entre-temps.
 
-Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Quand le badge, le lien Letterboxd, les images manquantes, les cartes de la page d'échange et les étiquettes suggérées sont tous désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata. Les cinq réglages restants n'envoient eux-mêmes jamais la moindre requête, qu'ils soient cochés ou non : masquer les statistiques et la vue compacte ne font que peindre la page différemment, remplir l'étiquette au clic écrit directement dans le champ du site, les statistiques de tirage comptent une rareté déjà affichée à l'écran, et le Pong des chargements se joue entièrement dans un élément de l'extension, le tout sans appel réseau.
+Les onglets du site déjà ouverts suivent le changement sans rechargement : une fonctionnalité désactivée voit ses éléments retirés tout de suite, et réactivée elle les repose immédiatement. Quand le lien Letterboxd, les images manquantes et les cartes de la page d'échange sont tous désactivés, l'extension n'envoie plus aucune requête de catégorisation : aucun appel ne part vers Wikipédia ni Wikidata. Les quatre réglages restants n'envoient eux-mêmes jamais la moindre requête, qu'ils soient cochés ou non : masquer les statistiques et la vue compacte ne font que peindre la page différemment, les statistiques de tirage comptent une rareté déjà affichée à l'écran, et le Pong des chargements se joue entièrement dans un élément de l'extension, le tout sans appel réseau.
 
 Section "Données locales" : le nombre de cartes en cache de catégorisation, de classes Wikidata en cache et d'adresses d'images en cache, avec une action qui demande une confirmation sur place.
 
@@ -153,7 +134,7 @@ Une version précédente de l'extension tenait un index de ta collection. Il a �
 
 Section "Confidentialité" : le même texte que la section ci-dessous, rappelé dans la page.
 
-La seule réponse au besoin de filtre qui reste ouverte est la synergie avec les étiquettes natives du site : l'extension te propose les étiquettes dans la modale de détail (voir plus haut), et c'est toi qui les poses, à l'unité ou avec la sélection en lot du site.
+Le besoin de filtrer ta collection par thème reste sans réponse : les étiquettes du site se posent à la main, et l'extension ne propose plus rien à leur sujet.
 
 Voir [docs/PLAN.md](docs/PLAN.md) pour l'analyse de faisabilité et la feuille de route complète.
 
@@ -187,7 +168,7 @@ L'extension se charge dans ton Chrome habituel, celui où tu es connecté au sit
 
 ## Journaux
 
-Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l'extension. En développement, tous les niveaux sont affichés. En production, seuls `warn` et `error` le sont : le message "Cards categorized" n'est donc visible qu'avec `pnpm dev`. Il apparaît une fois par lot de cartes encore jamais vues depuis le chargement de la page, avec leur titre, leur rareté, leur statut, leur catégorie et le sous-type des personnes. Les journaux du service worker se consultent depuis `chrome://extensions`, lien "Service worker" de l'extension.
+Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l'extension. En développement, tous les niveaux sont affichés. En production, seuls `warn` et `error` le sont : le message "Cards categorized" n'est donc visible qu'avec `pnpm dev`. Il apparaît une fois par lot de cartes encore jamais vues depuis le chargement de la page, avec leur titre, leur rareté et leur statut. Les journaux du service worker se consultent depuis `chrome://extensions`, lien "Service worker" de l'extension.
 
 ## Confidentialité
 
@@ -200,16 +181,13 @@ Les journaux apparaissent dans la console de la page (F12) avec le préfixe de l
 - La page d'options et la popup sont des pages de l'extension : elles lisent et effacent uniquement ce qui est stocké localement, et ne font aucun appel réseau.
 - Les images manquantes sont chargées par ton navigateur depuis `commons.wikimedia.org` et les serveurs de vignettes de Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : Wikimedia reçoit une demande de fichier, jamais la page qui l'affiche. Ce sont des requêtes de ton navigateur, comme pour n'importe quelle image d'un article de Wikipédia.
 - La résolution de l'adresse de ces images est, elle, un appel de l'extension : il part vers `fr.wikipedia.org`, sans cookie, exactement comme celui qui résout les titres des cartes. Seuls des noms de fichiers publics de Wikimedia Commons y sont envoyés. Aucun autre hôte n'est contacté.
-- Si tu désactives les quatre fonctionnalités qui en ont besoin dans les options (badge, lien Letterboxd, images manquantes et étiquettes suggérées), plus aucun titre ne part vers Wikipédia ni Wikidata.
+- Si tu désactives les trois fonctionnalités qui en ont besoin dans les options (lien Letterboxd, images manquantes et cartes de la page d'échange), plus aucun titre ne part vers Wikipédia ni Wikidata.
 - L'option qui masque les statistiques des cartes n'envoie jamais rien, qu'elle soit activée ou non : elle agit uniquement par une feuille de style locale, sans le moindre appel réseau.
 - La vue compacte agit de la même façon, par une feuille de style locale : elle n'envoie rien, et la vue choisie (compacte ou non) est le seul élément gardé, dans le stockage local de l'extension, sur ta machine uniquement.
-- L'option qui remplit l'étiquette au clic n'envoie elle non plus aucune requête réseau : le clic écrit directement, sur ta machine, dans le champ que le site affiche déjà pour les étiquettes.
 - Les statistiques de tirage n'envoient rien non plus : les six comptes sont écrits dans le stockage local de l'extension, sur ta machine uniquement, et ne sont lus que par le panneau de la page des paquets. Le vidage du cache de catégorisation ne les efface pas, car ce ne sont pas des données de Wikimedia.
 
 ## Contrainte fondamentale
 
-Cette extension est un overlay en lecture seule sur wiki-masters.com, à une seule exception près : le réglage "Remplir l'étiquette au clic" (voir la section "Étiquettes suggérées"), désactivé par défaut, que tu actives toi-même en connaissance de cause. En dehors de ce cas précis, elle ne clique jamais, ne scrolle pas, ne saisit rien, n'intercepte pas le trafic réseau et n'appelle pas les API du site. Les règles de wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou interagir à votre place", et annoncent le bannissement du compte, sans préavis, comme sanction. Activer ce réglage revient à interagir à ta place au moment du clic, et le site ne peut pas distinguer cela de ta propre frappe au clavier : c'est TON compte wiki-masters.com qui est en jeu, et toi seul peux décider de prendre ce risque.
+Cette extension est un overlay en lecture seule sur wiki-masters.com : elle ne clique jamais, ne scrolle pas, ne saisit rien, n'intercepte pas le trafic réseau et n'appelle pas les API du site. Les règles de wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou interagir à votre place", et annoncent le bannissement du compte, sans préavis, comme sanction. Le seul réglage qui écrivait dans un champ du site, sur un clic explicite de ta part, a été retiré le 21 septembre 2026 avec les étiquettes suggérées : il ne reste rien qui écrive quoi que ce soit sur le site.
 
-Elle ajoute uniquement ses propres éléments (badge, ligne de catégorie, lien Letterboxd et son petit logo sur la carte, image sur les cartes sans illustration et sa ligne de crédit, feuille de style qui masque les statistiques, propositions d'étiquette dans la modale de détail, panneau des statistiques de tirage, bouton de la vue compacte, terrain de Pong des chargements) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé, à la seule exception du champ d'étiquette du site lui-même, et seulement quand tu cliques une proposition avec le remplissage automatique activé. Les deux feuilles de style qui masquent les statistiques et qui réduisent les cartes demandent de distinguer deux plans, car elles touchent au second sans toucher au premier : rien n'est écrit sur un noeud du site, et pourtant deux nombres du site cessent d'être peints, et ses cartes sont peintes plus petites. Ce sont des éléments qui n'appartiennent qu'à l'extension, ajoutés dans l'en-tête de la page plutôt que dans la page elle-même, et qui se contentent de dire au navigateur de peindre ces cartes autrement. Le site, lui, garde exactement le document qu'il a construit, et les retirer (en décochant l'option, ou en rappuyant sur le bouton) rend aussitôt les deux nombres et leur taille aux cartes. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit, à une seule exception près : le petit logo Letterboxd de la carte (voir la section "Lien Letterboxd"), qui empêche son propre clic d'ouvrir en plus la modale de détail. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est par ailleurs intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la popup ou dans la page d'options.
-
-Le remplissage automatique de l'étiquette est la seule écriture que l'extension fait jamais sur un noeud du site, et elle reste étroitement gardée : un clic sur une proposition n'écrit dans le champ du site que si ce clic est réellement le tien (jamais un script qui simulerait un clic) et que le réglage est actif au moment même du clic, pas seulement quand la proposition a été affichée. Dans ce seul cas, l'étiquette est écrite dans le champ puis validée, de la façon exacte dont le site lit une frappe au clavier suivie d'un appui sur Entrée. Une différence à connaître : taper insère à l'endroit du curseur, alors que ce remplissage REMPLACE ce que le champ contenait déjà. Décoché, ou pour tout clic non fiable, ce même bouton se contente de sélectionner son texte, sans rien écrire nulle part.
+Elle ajoute uniquement ses propres éléments (lien Letterboxd et son petit logo sur la carte, image sur les cartes sans illustration et sa ligne de crédit, cartes dessinées sur la page des échanges, feuille de style qui masque les statistiques, panneau des statistiques de tirage, bouton de la vue compacte, terrain de Pong des chargements) et ne modifie jamais un élément du site : aucune classe, aucun attribut ni aucun style n'est posé sur un noeud du site, et rien n'y est déplacé ni supprimé. Les deux feuilles de style qui masquent les statistiques et qui réduisent les cartes demandent de distinguer deux plans, car elles touchent au second sans toucher au premier : rien n'est écrit sur un noeud du site, et pourtant deux nombres du site cessent d'être peints, et ses cartes sont peintes plus petites. Ce sont des éléments qui n'appartiennent qu'à l'extension, ajoutés dans l'en-tête de la page plutôt que dans la page elle-même, et qui se contentent de dire au navigateur de peindre ces cartes autrement. Le site, lui, garde exactement le document qu'il a construit, et les retirer (en décochant l'option, ou en rappuyant sur le bouton) rend aussitôt les deux nombres et leur taille aux cartes. Tout ce qui est posé au-dessus d'une carte laisse passer les clics (`pointer-events: none`), de sorte que les interactions du site restent exactement celles qu'il prévoit, à une seule exception près : le petit logo Letterboxd de la carte (voir la section "Lien Letterboxd"), qui empêche son propre clic d'ouvrir en plus la modale de détail. Les seuls clics écoutés sont ceux que tu fais sur les boutons de l'extension, et aucun clic du site n'est par ailleurs intercepté ni bloqué. Tous les éléments ajoutés sont retirés quand l'extension est rechargée, désactivée, ou quand la fonctionnalité correspondante est décochée dans la popup ou dans la page d'options.

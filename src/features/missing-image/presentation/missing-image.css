@@ -21,8 +21,7 @@
   pointer-events: none;
   /*
    * Inside the image area of the site, which is its own stacking context: the
-   * rarity badge, the favourite button and our category badge all stay above
-   * it.
+   * rarity badge and the favourite button both stay above it.
    */
   z-index: 1;
   /*
@@ -134,14 +133,11 @@
 [data-wme-card-image] .wme-card-image-source {
   position: absolute;
   /*
-   * The bottom right corner of the picture area. The category badge sits
-   * below that line now, straddling the top of the text area, so the two
-   * cannot meet whatever the label; the disc stays small all the same, since
-   * nothing is gained by growing it.
-   *
-   * The top of the picture area is not free: the rarity badge holds its left
-   * corner and the favourite button of the large format its right one, both
-   * drawn above our container as well.
+   * The bottom right corner of the picture area, which is the only free one:
+   * the top holds the rarity badge of the site on its left and the favourite
+   * button of the large format on its right, both drawn above our container
+   * as well. The disc stays small all the same, since nothing is gained by
+   * growing it.
    */
   right: 4px;
   bottom: 4px;
@@ -154,9 +150,9 @@
   /* Shown only once our own load listener marks the container, see below. */
   display: none;
   /*
-   * A disc, sized on the viewport for the same reason as the category badge:
-   * a card cannot become a container without restyling a node of the site, so
-   * the two card formats differ only by the size of their root.
+   * A disc, sized on the viewport rather than on the card: a card cannot
+   * become a container without restyling a node of the site, and the two card
+   * formats differ only by the size of their root.
    */
   box-sizing: border-box;
   width: clamp(12px, 1.1vw, 15px);
@@ -168,8 +164,8 @@
   /* The card is clickable everywhere: our mark must never take that click. */
   pointer-events: none;
   /*
-   * The stack and the weight of the category badge, so the two marks of the
-   * extension read as one thing whatever font the site gives its cards.
+   * A stack of its own rather than the font of the card, so the mark reads
+   * the same whatever font the site gives its cards.
    */
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: clamp(8px, 0.72vw, 10px);

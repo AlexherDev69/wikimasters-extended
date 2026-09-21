@@ -2,13 +2,7 @@ import { FRWIKI_TITLE_SEPARATOR } from '../../../core/config/wikimedia';
 import { isRecord } from '../../../core/types/guards';
 import { isLetterboxdUrl } from '../../letterboxd/domain/resolve-letterboxd-url';
 import { isCardImage } from '../../missing-image/domain/card-image';
-import { MAX_SUGGESTED_TAGS, MAX_TAG_LENGTH } from '../../tag-suggestions/domain/suggest-tags';
-import {
-  isCategorizationStatus,
-  isCategoryId,
-  isPersonSubtypeId,
-  type CardCategory,
-} from '../domain/category';
+import { isCategorizationStatus, type CardCategory } from '../domain/category';
 import type { CardToCategorize, CategorizeCardsOptions } from '../domain/categorize-cards';
 
 export const CATEGORIZE_CARDS_MESSAGE = 'wikimasters-extended:categorize-cards';
@@ -95,39 +89,16 @@ export function isCategorizeCardsRequest(message: unknown): message is Categoriz
   );
 }
 
-/**
- * A tag proposal is a non empty string short enough to fit the `maxlength` of
- * the site's own field: the content script writes it there verbatim once the
- * user clicks it, so it is narrowed here exactly as strictly as at that write.
- */
-function isSuggestedTag(value: unknown): value is string {
-  return typeof value === 'string' && value.trim() !== '' && value.length <= MAX_TAG_LENGTH;
-}
-
 function isCardCategory(value: unknown): value is CardCategory {
   if (!isRecord(value)) {
     return false;
   }
-  const {
-    title,
-    status,
-    qid,
-    categoryId,
-    primarySubtype,
-    personSubtypes,
-    letterboxdUrl,
-    image,
-    suggestedTags,
-  } = value;
+  const { title, status, qid, letterboxdUrl, image } = value;
 
   return (
     typeof title === 'string' &&
     isCategorizationStatus(status) &&
     (qid === null || typeof qid === 'string') &&
-    (categoryId === null || isCategoryId(categoryId)) &&
-    (primarySubtype === null || isPersonSubtypeId(primarySubtype)) &&
-    Array.isArray(personSubtypes) &&
-    personSubtypes.every(isPersonSubtypeId) &&
     // The content script writes this one into an href, so nothing but the
     // Letterboxd origin is accepted, and only on a card that was categorized,
     // which is the documented invariant of the field.
@@ -135,13 +106,7 @@ function isCardCategory(value: unknown): value is CardCategory {
     // The content script builds two addresses from this file name, so it is
     // narrowed here too, and only on a card that was categorized, which is the
     // documented invariant of the field.
-    (image === null || (status === 'categorized' && isCardImage(image))) &&
-    Array.isArray(suggestedTags) &&
-    suggestedTags.length <= MAX_SUGGESTED_TAGS &&
-    suggestedTags.every(isSuggestedTag) &&
-    // Only a categorized card ever gets a proposal: an empty list is the only
-    // shape accepted on any other status, the documented invariant of the field.
-    (status === 'categorized' || suggestedTags.length === 0)
+    (image === null || (status === 'categorized' && isCardImage(image)))
   );
 }
 

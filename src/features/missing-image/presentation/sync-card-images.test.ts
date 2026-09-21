@@ -36,12 +36,8 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
     title,
     status: 'categorized',
     qid: 'Q1',
-    categoryId: 'person',
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl: null,
     image: null,
-    suggestedTags: [],
     ...overrides,
   };
 }
@@ -177,7 +173,7 @@ describe('syncCardImages', () => {
   it('should show no image for a card that was not found', () => {
     sync(
       makeCategories(
-        makeCategory(FIRST_TITLE, { status: 'not_found', categoryId: null, image: null }),
+        makeCategory(FIRST_TITLE, { status: 'not_found', image: null }),
       ),
     );
 

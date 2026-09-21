@@ -6,13 +6,11 @@ import {
   type LetterboxdCard,
 } from '../../letterboxd/domain/resolve-letterboxd-url';
 import type { CommonsFile } from '../../missing-image/domain/card-image';
-import { suggestTags } from '../../tag-suggestions/domain/suggest-tags';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
 import {
   classifyCachedCard,
   collectNeededClassIds,
   requiredClassIds,
-  resolveOccupations,
   type CachedCardClassification,
   type NeededClassIds,
 } from './classify-cached-card';
@@ -100,12 +98,8 @@ function emptyResult(title: string, status: 'not_found' | 'error'): CardCategory
     title,
     status,
     qid: null,
-    categoryId: null,
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl: null,
     image: null,
-    suggestedTags: [],
   };
 }
 
@@ -303,22 +297,6 @@ function isFilm(facts: EntityFacts, categoryId: CategoryId, stage: ClassStage): 
   });
 }
 
-/**
- * Every root the classes that really voted reach, deduplicated. Read from the
- * same resolutions as `isFilm` just above, and for the same reason: a parent
- * of an already elected card must not speak for it.
- */
-function decisiveRootIds(facts: EntityFacts, stage: ClassStage): string[] {
-  const roots = new Set<string>();
-
-  for (const classId of decisiveClassIds(facts, stage.categoryTargets)) {
-    for (const rootId of stage.categoryResolutions.get(classId)?.matchedRootIds ?? []) {
-      roots.add(rootId);
-    }
-  }
-  return [...roots];
-}
-
 /** Occupations carrying a Letterboxd role, with the label of the tie-break. */
 function cinemaRolesOf(facts: EntityFacts, stage: ClassStage): CinemaRoleOccupation[] {
   const roles: CinemaRoleOccupation[] = [];
@@ -380,30 +358,16 @@ function buildResult(
     stage.categoryTargets,
     stage.occupationResolutions,
   );
-  // Occupation labels the class cache already resolved for the tie-break
-  // above, reused here rather than fetched again: no new SPARQL property and
-  // no new request for the tags this card proposes.
-  const occupationLabels = resolveOccupations(facts, stage.occupationResolutions).map(
-    (occupation) => occupation.label,
-  );
-
   return {
     title: card.title,
     status: 'categorized',
     qid: facts.qid,
-    categoryId: classification.categoryId,
-    primarySubtype: classification.primarySubtype,
-    personSubtypes: classification.personSubtypes,
+    // The classification stays here: it says whether a Letterboxd address may
+    // be built at all, and nothing beyond this worker reads a category.
     letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, classification, stage)),
     // The address of the picture is resolved by the stage below, once the whole
     // batch is known: one request for every file rather than one per card.
     image: facts.image === null ? null : { ...facts.image, thumbnailUrl: null },
-    suggestedTags: suggestTags({
-      categoryId: classification.categoryId,
-      primarySubtype: classification.primarySubtype,
-      occupationLabels,
-      matchedRootIds: decisiveRootIds(facts, stage),
-    }),
   };
 }
 

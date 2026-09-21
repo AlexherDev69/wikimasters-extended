@@ -2,20 +2,14 @@ import { isRecord } from '../../../core/types/guards';
 
 /**
  * What the user can switch off, one boolean per part of the overlay. Every
- * switch but two is on by default: an extension that was installed and never
- * configured does exactly what its description says. `hideCardStats` is one
+ * switch but one is on by default: an extension that was installed and never
+ * configured does exactly what its description says. `hideCardStats` is the
  * exception, off by default, because its effect is subtractive rather than
  * additive: it hides something of the site instead of adding a node of ours,
  * so an installation that never touched the options page must keep seeing
- * exactly what the site shows. `tagAutoFill` is the other: it writes a tag
- * into a field of the site on a click, which the rules of wiki-masters.com
- * describe as interacting in the user's place, with a ban announced as the
- * sanction, so nobody ends up doing that without having chosen to. See its
- * own comment and README.md.
+ * exactly what the site shows.
  */
 export interface Settings {
-  /** Badge on the cards, and category line in the detail modal. */
-  categoryBadges: boolean;
   /** Letterboxd link in the detail modal, and the button on the card itself. */
   letterboxdLink: boolean;
   /** Image of Wikimedia Commons on the cards the site leaves without one. */
@@ -27,15 +21,6 @@ export interface Settings {
   tradeCards: boolean;
   /** Hides the ATK/DEF numbers of the cards and of the detail modal. */
   hideCardStats: boolean;
-  /** Proposals in the tag area of the detail modal. Read-only: see tagAutoFill. */
-  tagSuggestions: boolean;
-  /**
-   * A click on a proposal writes it in the tag field of the site and
-   * validates it, which is interacting in the user's place. Off by default,
-   * on its own from `tagSuggestions`: showing proposals never writes on the
-   * site, whatever this one says.
-   */
-  tagAutoFill: boolean;
   /**
    * Counts the cards the packs reveal, and shows the share of each rarity on
    * the page of the packs. Read-only like the rest: it counts what the site
@@ -60,13 +45,10 @@ export interface Settings {
 
 /** Exported so a view can give every switch a place in a display order. */
 export const SETTING_KEYS = [
-  'categoryBadges',
   'letterboxdLink',
   'missingImages',
   'tradeCards',
   'hideCardStats',
-  'tagSuggestions',
-  'tagAutoFill',
   'pullStats',
   'compactView',
   'loadingPong',
@@ -75,39 +57,32 @@ export const SETTING_KEYS = [
 export type SettingKey = (typeof SETTING_KEYS)[number];
 
 export const DEFAULT_SETTINGS: Settings = {
-  categoryBadges: true,
   letterboxdLink: true,
   missingImages: true,
   tradeCards: true,
   hideCardStats: false,
-  tagSuggestions: true,
-  tagAutoFill: false,
   pullStats: true,
   compactView: true,
   loadingPong: true,
 };
 
 /**
- * The settings whose feature needs to know a card's category, and therefore
- * whether Wikidata has to be asked about the cards on screen. `hideCardStats`
- * is deliberately left out: it hides two numbers already on the page and
- * needs nothing from Wikidata, so switching it on alone must never start any
- * traffic, exactly as switching it off must never stop traffic another
- * setting still needs. `tagAutoFill` is left out too: it changes what a click
- * on an already shown proposal does, never whether Wikidata is asked at all,
- * which `tagSuggestions` alone decides. `pullStats` is left out for the same
- * reason as `hideCardStats`: it counts the rarity the card already carries in
- * its own class, and asks nothing of anyone. `compactView` is left out too:
- * it changes the size the cards are painted at, not what is known of them.
- * `loadingPong` is left out for the plainest reason of all: it only runs
- * while the page shows no card at all, so there is nothing to categorize.
+ * The settings whose feature needs what Wikidata knows of a card, and
+ * therefore whether it has to be asked about the cards on screen at all.
+ * `hideCardStats` is deliberately left out: it hides two numbers already on
+ * the page and needs nothing from Wikidata, so switching it on alone must
+ * never start any traffic, exactly as switching it off must never stop
+ * traffic another setting still needs. `pullStats` is left out for the same
+ * reason: it counts the rarity the card already carries in its own class, and
+ * asks nothing of anyone. `compactView` is left out too: it changes the size
+ * the cards are painted at, not what is known of them. `loadingPong` is left
+ * out for the plainest reason of all: it only runs while the page shows no
+ * card at all, so there is nothing to look up.
  */
 const CATEGORIZATION_SETTING_KEYS = [
-  'categoryBadges',
   'letterboxdLink',
   'missingImages',
   'tradeCards',
-  'tagSuggestions',
 ] as const satisfies readonly (keyof Settings)[];
 
 /**
@@ -133,11 +108,10 @@ export function normalizeSettings(value: unknown): Settings {
 }
 
 /**
- * True while at least one categorization-consuming feature is on. With every
- * one of them off the content script asks for no categorization at all, so a
- * user who turns them off entirely sends nothing to Wikimedia. `hideCardStats`
- * and `tagAutoFill` are not among them, on purpose: see
- * CATEGORIZATION_SETTING_KEYS.
+ * True while at least one Wikidata-consuming feature is on. With every one of
+ * them off the content script asks for no categorization at all, so a user
+ * who turns them off entirely sends nothing to Wikimedia. `hideCardStats` is
+ * not among them, on purpose: see CATEGORIZATION_SETTING_KEYS.
  */
 export function hasEnabledFeature(settings: Settings): boolean {
   return CATEGORIZATION_SETTING_KEYS.some((key) => settings[key]);

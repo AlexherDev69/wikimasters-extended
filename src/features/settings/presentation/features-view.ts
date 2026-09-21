@@ -35,7 +35,6 @@ const SETTING_ATTRIBUTE = 'data-wme-setting';
 const STATUS_ATTRIBUTE = 'data-wme-status';
 
 const SETTING_CLASS = 'wme-setting';
-const SETTING_WARNING_CLASS = 'wme-setting--warning';
 const SETTING_HEAD_CLASS = 'wme-setting-head';
 const SETTING_LABEL_CLASS = 'wme-setting-label';
 const SETTING_HINT_CLASS = 'wme-setting-hint';
@@ -60,8 +59,7 @@ function renderSwitch(
   callbacks: FeatureCallbacks,
 ): HTMLElement {
   const text = FEATURE_TEXTS[key];
-  const rowClass = text.warning === true ? `${SETTING_CLASS} ${SETTING_WARNING_CLASS}` : SETTING_CLASS;
-  const row = createBlock(rowClass);
+  const row = createBlock(SETTING_CLASS);
   const head = document.createElement(LABEL_TAG);
   head.className = SETTING_HEAD_CLASS;
 

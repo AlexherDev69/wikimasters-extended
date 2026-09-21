@@ -49,7 +49,6 @@ const APP_NAME_CLASS = 'wme-popup-name';
 const SUBTITLE_CLASS = 'wme-popup-subtitle';
 const LIST_CLASS = 'wme-popup-list';
 const ROW_CLASS = 'wme-popup-row';
-const ROW_WARNING_CLASS = 'wme-popup-row--warning';
 const ROW_TEXT_CLASS = 'wme-popup-text';
 const ROW_LABEL_CLASS = 'wme-popup-label';
 const ROW_SUMMARY_CLASS = 'wme-popup-summary';
@@ -80,7 +79,7 @@ export interface PopupCallbacks {
 function renderRow(key: SettingKey, checked: boolean, callbacks: PopupCallbacks): HTMLElement {
   const text = FEATURE_TEXTS[key];
   const row = document.createElement(LABEL_TAG);
-  row.className = text.warning === true ? `${ROW_CLASS} ${ROW_WARNING_CLASS}` : ROW_CLASS;
+  row.className = ROW_CLASS;
 
   const body = createBlock(ROW_TEXT_CLASS);
   body.appendChild(createText(ROW_LABEL_CLASS, text.label));

@@ -6,7 +6,6 @@ import type { Logger } from '../../../core/logger/logger';
 import { scanCards } from '../../card-detection/data/scan-cards';
 import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
-import { BADGE_SELECTOR, CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
 import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import {
@@ -26,11 +25,6 @@ import { PULL_STATS_SELECTOR } from '../../pull-stats/data/pull-stats-panel';
 import { emptyTally } from '../../pull-stats/domain/pull-tally';
 import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
 
-import {
-  TAG_INPUT_SELECTOR,
-  TAG_PROPOSAL_BUTTON_SELECTOR,
-  TAG_PROPOSALS_SELECTOR,
-} from '../../tag-suggestions/data/tag-selectors';
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
 
@@ -77,13 +71,10 @@ const CARD_IMAGE: CardImage = {
 const FILM_URL = 'https://letterboxd.com/film/lost-river/';
 
 const ALL_OFF: Settings = {
-  categoryBadges: false,
   letterboxdLink: false,
   missingImages: false,
   tradeCards: false,
   hideCardStats: false,
-  tagSuggestions: false,
-  tagAutoFill: false,
   pullStats: false,
   compactView: false,
   loadingPong: false,
@@ -94,27 +85,19 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
     title,
     status: 'categorized',
     qid: 'Q1',
-    categoryId: 'place',
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl: null,
     image: null,
-    suggestedTags: [],
     ...overrides,
   };
 }
 
 /** Every card of the fixtures, so any page shows a categorized card. */
 const RESULTS: CardCategory[] = [
-  makeCategory(GRID_CARD_TITLE, { categoryId: 'science_concept' }),
-  makeCategory(LARGE_CARD_TITLE),
-  makeCategory(MODAL_CARD_TITLE, {
-    categoryId: 'film_tv',
-    letterboxdUrl: FILM_URL,
-    suggestedTags: ['Cinéma et TV'],
-  }),
-  makeCategory(PLACEHOLDER_CARD_TITLE, { categoryId: 'person', image: CARD_IMAGE }),
-  makeCategory(TRADE_CARD_TITLE, { categoryId: 'film_tv', image: CARD_IMAGE }),
+  makeCategory(GRID_CARD_TITLE, { letterboxdUrl: FILM_URL }),
+  makeCategory(LARGE_CARD_TITLE, { letterboxdUrl: FILM_URL }),
+  makeCategory(MODAL_CARD_TITLE, { letterboxdUrl: FILM_URL }),
+  makeCategory(PLACEHOLDER_CARD_TITLE, { letterboxdUrl: FILM_URL, image: CARD_IMAGE }),
+  makeCategory(TRADE_CARD_TITLE, { image: CARD_IMAGE }),
 ];
 
 function makeLogger(): Logger {
@@ -185,12 +168,12 @@ function scan(overlay: Overlay): void {
 async function scanUntilDrawn(overlay: Overlay): Promise<void> {
   scan(overlay);
   await vi.waitFor(() => {
-    expect(document.body.querySelector(BADGE_SELECTOR)).not.toBeNull();
+    expect(document.body.querySelector(CARD_BUTTON_SELECTOR)).not.toBeNull();
   });
 }
 
-function badges(): NodeListOf<Element> {
-  return document.body.querySelectorAll(BADGE_SELECTOR);
+function cardButtons(): NodeListOf<Element> {
+  return document.body.querySelectorAll(CARD_BUTTON_SELECTOR);
 }
 
 function cardImages(): NodeListOf<Element> {
@@ -222,10 +205,6 @@ function pongPanel(): Element | null {
 
 function pullStatsPanel(): Element | null {
   return document.body.querySelector(PULL_STATS_SELECTOR);
-}
-
-function tagProposals(): Element | null {
-  return document.body.querySelector(TAG_PROPOSALS_SELECTOR);
 }
 
 /**
@@ -276,46 +255,8 @@ describe('createOverlay', () => {
 
     await scanUntilDrawn(overlay);
 
-    expect(badges().length).toBeGreaterThan(0);
+    expect(cardButtons().length).toBeGreaterThan(0);
     expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).not.toBeNull();
-  });
-
-  it('should add no badge and no category line when the badges are off at load', async () => {
-    document.body.innerHTML = GRID_HTML + MODAL_HTML;
-    const { overlay } = mount({ ...DEFAULT_SETTINGS, categoryBadges: false });
-
-    scan(overlay);
-    await vi.waitFor(() => {
-      expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
-    });
-
-    expect(badges()).toHaveLength(0);
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).toBeNull();
-  });
-
-  it('should take back the badges and the category line at once when they are turned off', async () => {
-    document.body.innerHTML = GRID_HTML + MODAL_HTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-
-    overlay.applySettings({ ...DEFAULT_SETTINGS, categoryBadges: false });
-
-    expect(badges()).toHaveLength(0);
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).toBeNull();
-    expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
-  });
-
-  it('should bring the badges back at once when they are turned on again', async () => {
-    document.body.innerHTML = GRID_HTML + LARGE_HTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-    const drawn = badges().length;
-    overlay.applySettings({ ...DEFAULT_SETTINGS, categoryBadges: false });
-
-    overlay.applySettings(DEFAULT_SETTINGS);
-
-    expect(badges()).toHaveLength(drawn);
   });
 
   it('should show the image of a card the site left without one once the results arrive', async () => {
@@ -348,7 +289,7 @@ describe('createOverlay', () => {
 
     expect(cardImages()).toHaveLength(0);
     expect(document.body.querySelector(IMAGE_CREDIT_SELECTOR)).toBeNull();
-    expect(badges().length).toBeGreaterThan(0);
+    expect(cardButtons().length).toBeGreaterThan(0);
   });
 
   it('should bring the images back at once when they are turned on again', async () => {
@@ -606,20 +547,6 @@ describe('createOverlay', () => {
     expect(pongPanel()).toBeNull();
   });
 
-  it('should keep the category badge visible while the stats row next to it is hidden', async () => {
-    document.body.innerHTML = GRID_HTML + MODAL_HTML;
-    const { overlay } = mount({ ...DEFAULT_SETTINGS, hideCardStats: true });
-
-    await scanUntilDrawn(overlay);
-
-    const badge = document.body.querySelector(BADGE_SELECTOR);
-    const valueBlock = document.body.querySelector(CARD_ATTACK_VALUE_SELECTOR);
-    expect(badge).not.toBeNull();
-    expect(valueBlock).not.toBeNull();
-    expect(getComputedStyle(badge as Element).visibility).not.toBe('hidden');
-    expect(getComputedStyle(valueBlock as Element).visibility).toBe('hidden');
-  });
-
   it('should keep the Letterboxd button visible while the stats row it sits on is hidden', async () => {
     // The riskiest node of ours: it is absolutely positioned over the empty
     // middle of that very row, and `visibility: hidden` inherits, so a rule
@@ -677,7 +604,6 @@ describe('createOverlay', () => {
     overlay.applySettings({ ...DEFAULT_SETTINGS, letterboxdLink: false });
 
     expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).toBeNull();
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)).not.toBeNull();
   });
 
   it('should take back the Letterboxd buttons at once when the link is turned off', async () => {
@@ -796,12 +722,12 @@ describe('createOverlay', () => {
     });
     // Nothing mutates the page in between, so no other scan can ever come:
     // without the one the retry itself raises, the card stays as it is.
-    expect(badges()).toHaveLength(0);
+    expect(cardButtons()).toHaveLength(0);
 
     retries[0]?.();
 
     await vi.waitFor(() => {
-      expect(badges()).toHaveLength(1);
+      expect(cardButtons()).toHaveLength(1);
     });
     expect(categorize).toHaveBeenCalledTimes(2);
   });
@@ -821,7 +747,7 @@ describe('createOverlay', () => {
     await vi.waitFor(() => {
       expect(categorize).toHaveBeenCalledOnce();
     });
-    // The badges are on, so the batch leaves anyway: what a switched off
+    // The link is on, so the batch leaves anyway: what a switched off
     // feature must cost is its own traffic, here one request to Wikipedia per
     // batch and the entries it would have stored.
     expect(categorize).toHaveBeenNthCalledWith(1, expect.anything(), {
@@ -848,11 +774,11 @@ describe('createOverlay', () => {
     scan(overlay);
     expect(categorize).not.toHaveBeenCalled();
 
-    overlay.applySettings({ ...ALL_OFF, categoryBadges: true });
+    overlay.applySettings({ ...ALL_OFF, letterboxdLink: true });
 
     expect(categorize).toHaveBeenCalledOnce();
     await vi.waitFor(() => {
-      expect(badges().length).toBeGreaterThan(0);
+      expect(cardButtons().length).toBeGreaterThan(0);
     });
   });
 
@@ -905,30 +831,17 @@ describe('createOverlay', () => {
     expect(document.body.innerHTML).toBe(siteHtml);
   });
 
-  it('should write nothing on a second scan while only the badges are off', async () => {
-    document.body.innerHTML = GRID_HTML + MODAL_HTML;
-    const { overlay } = mount({ ...DEFAULT_SETTINGS, categoryBadges: false });
+  it('should write nothing on a second scan while the link is off and a modal is open', async () => {
+    showPlaceholderCardAndModal();
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, letterboxdLink: false });
     scan(overlay);
     await vi.waitFor(() => {
-      expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
+      expect(cardImages().length).toBeGreaterThan(0);
     });
     scan(overlay);
     const observer = observeBody();
 
-    scan(overlay);
-
-    expect(observer.takeRecords()).toHaveLength(0);
-    observer.disconnect();
-  });
-
-  it('should write nothing on a second scan while the link is off and a modal is open', async () => {
-    document.body.innerHTML = GRID_HTML + MODAL_HTML;
-    const { overlay } = mount({ ...DEFAULT_SETTINGS, letterboxdLink: false });
-    await scanUntilDrawn(overlay);
-    scan(overlay);
-    const observer = observeBody();
-
-    // The modal is still looked up on every scan, for the category line.
+    // The modal is still looked up on every scan, for the credit of the image.
     scan(overlay);
 
     expect(observer.takeRecords()).toHaveLength(0);
@@ -985,110 +898,5 @@ describe('createOverlay', () => {
     overlay.destroy();
 
     expect(hideStatsStyle()).toBeNull();
-  });
-
-  it('should show the tag proposals of the card shown in the modal when the setting is on', async () => {
-    document.body.innerHTML = MODAL_HTML;
-    const { overlay } = mount();
-
-    await scanUntilDrawn(overlay);
-
-    expect(tagProposals()).not.toBeNull();
-  });
-
-  it('should stop filling the field from the very next click when the auto-fill is turned off', async () => {
-    // The button already drawn keeps its handler and is NOT rebuilt, since
-    // neither the card nor the proposals changed: what must stop it is the
-    // setting being read again at click time, here through the wiring of the
-    // overlay itself and not through a stub of the unit test.
-    document.body.innerHTML = MODAL_HTML;
-    const { overlay } = mount({ ...DEFAULT_SETTINGS, tagAutoFill: true });
-    await scanUntilDrawn(overlay);
-    const proposal = document.body.querySelector<HTMLButtonElement>(TAG_PROPOSAL_BUTTON_SELECTOR);
-    const input = document.body.querySelector<HTMLInputElement>(TAG_INPUT_SELECTOR);
-    expect(proposal).not.toBeNull();
-    expect(input).not.toBeNull();
-
-    overlay.applySettings({ ...DEFAULT_SETTINGS, tagAutoFill: false });
-    const click = new MouseEvent('click', { bubbles: true });
-    Object.defineProperty(click, 'isTrusted', { value: true });
-    proposal?.dispatchEvent(click);
-
-    // Still on the page, and still writing nothing.
-    expect(document.body.querySelector(TAG_PROPOSAL_BUTTON_SELECTOR)).toBe(proposal);
-    expect(input?.value).toBe('');
-  });
-
-  it('should add no tag proposal when the tag suggestions are off at load', async () => {
-    document.body.innerHTML = MODAL_HTML;
-    const { overlay } = mount({ ...DEFAULT_SETTINGS, tagSuggestions: false });
-
-    scan(overlay);
-    await vi.waitFor(() => {
-      expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
-    });
-
-    expect(tagProposals()).toBeNull();
-  });
-
-  it('should take back the tag proposals at once when they are turned off', async () => {
-    document.body.innerHTML = MODAL_HTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-    expect(tagProposals()).not.toBeNull();
-
-    overlay.applySettings({ ...DEFAULT_SETTINGS, tagSuggestions: false });
-
-    expect(tagProposals()).toBeNull();
-    expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
-  });
-
-  it('should bring the tag proposals back at once when they are turned on again', async () => {
-    document.body.innerHTML = MODAL_HTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-    expect(tagProposals()).not.toBeNull();
-    overlay.applySettings({ ...DEFAULT_SETTINGS, tagSuggestions: false });
-
-    overlay.applySettings(DEFAULT_SETTINGS);
-
-    expect(tagProposals()).not.toBeNull();
-  });
-
-  it('should ask for the categorization when the tag suggestions are the only setting left on', () => {
-    document.body.innerHTML = GRID_HTML + LARGE_HTML;
-    const { overlay, categorize } = mount({ ...ALL_OFF, tagSuggestions: true });
-
-    scan(overlay);
-
-    expect(categorize).toHaveBeenCalledOnce();
-  });
-
-  it('should write nothing on a second scan while only the tag suggestions are left on', async () => {
-    document.body.innerHTML = MODAL_HTML;
-    const { overlay } = mount({ ...ALL_OFF, tagSuggestions: true });
-    scan(overlay);
-    await vi.waitFor(() => {
-      expect(tagProposals()).not.toBeNull();
-    });
-    scan(overlay);
-    const observer = observeBody();
-
-    scan(overlay);
-
-    expect(observer.takeRecords()).toHaveLength(0);
-    observer.disconnect();
-  });
-
-  it('should take back the tag proposals when the context is invalidated', async () => {
-    document.body.innerHTML = MODAL_HTML;
-    const siteHtml = document.body.innerHTML;
-    const { overlay } = mount();
-    await scanUntilDrawn(overlay);
-    expect(tagProposals()).not.toBeNull();
-
-    overlay.destroy();
-
-    expect(document.body.innerHTML).toBe(siteHtml);
   });
 });

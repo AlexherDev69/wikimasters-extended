@@ -14,16 +14,9 @@ export interface FeatureText {
   summary: string;
   /** The whole explanation, for the options page. */
   hint: string;
-  /** Carries a visible warning style: the switch writes on the site itself. */
-  warning?: boolean;
 }
 
 export const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
-  categoryBadges: {
-    label: 'Badge de catégorie',
-    summary: 'La pastille de catégorie sur les cartes.',
-    hint: 'Pastille de catégorie sur les cartes, et ligne "Catégorie" dans la modale de détail.',
-  },
   letterboxdLink: {
     label: 'Lien Letterboxd',
     summary: 'Le lien Letterboxd des films et du cinéma.',
@@ -53,24 +46,6 @@ export const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       "Masque les valeurs d'attaque et de défense sur les cartes et dans la modale de détail. " +
       "Rien n'est envoyé ni modifié sur le site, et décocher cette case les fait réapparaître " +
       'immédiatement.',
-  },
-  tagSuggestions: {
-    label: 'Étiquettes suggérées',
-    summary: "Des propositions d'étiquette dans la modale.",
-    hint:
-      "Propose des étiquettes dans la modale de détail, d'après ce que Wikidata sait de la carte. " +
-      "Lecture seule : rien n'est écrit sur le site tant que le réglage suivant reste désactivé.",
-  },
-  tagAutoFill: {
-    label: "Remplir l'étiquette au clic",
-    summary: 'Écrit sur le site à ta place. Risque de bannissement.',
-    hint:
-      "Un clic sur une étiquette suggérée l'écrit et la valide dans le champ du site, à ta place : " +
-      'le site ne peut pas distinguer cela de ta propre frappe au clavier. Les règles de ' +
-      'wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou ' +
-      'interagir à votre place", sanction annoncée : bannissement de TON compte wiki-masters.com, ' +
-      'sans préavis. Laisse cette case décochée sauf accord explicite des auteurs du site.',
-    warning: true,
   },
   pullStats: {
     label: 'Statistiques de tirage',

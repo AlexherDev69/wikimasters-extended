@@ -658,10 +658,22 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - La page d'options garde ce que la popup laisse de côté : les textes entiers, la confidentialité, et les données locales avec leur effacement. Un bouton en bas de la popup y mène
 - Vérification visuelle : la fenêtre rendue en navigateur à sa largeur réelle, les dix lignes visibles d'un coup, une bascule appuyée jusqu'au "Enregistré"
 
+### Phase 16 : retrait de tout ce qui affichait une catégorie (faite le 2026-09-21)
+
+- Demande de l'utilisateur : "finalement retire bien tout ce qui concerne les catégorie, trop de soucis possible". La portée a été posée avant de toucher au code, et c'est la portée choisie : tout ce qui AFFICHE une catégorie. Le lien Letterboxd, les images manquantes et les cartes de la page d'échange restent entiers, alors qu'ils sont nourris par la même requête
+- Retirés : la fonctionnalité `category-badge` en entier (pastille sur les cartes, ligne "Catégorie" de la modale, feuille de style) et la fonctionnalité `tag-suggestions` en entier (propositions, état d'attente, remplissage au clic, feuille de style). Les étiquettes proposées étaient des libellés de catégorie : les garder aurait laissé l'affichage de la catégorie sous un autre nom
+- Retirés avec elles : les réglages `categoryBadges`, `tagSuggestions` et `tagAutoFill`, et les quatre champs `categoryId`, `primarySubtype`, `personSubtypes` et `suggestedTags` de la réponse du service worker, donc autant de choses de moins à valider à la frontière des deux processus
+- Conservé : le moteur de classification, entier, dans le service worker. L'adresse Letterboxd en dépend (une oeuvre doit être un film, une personne doit avoir un métier de cinéma), alors que l'image ne demande que les propriétés de Wikidata. La classification ne sort donc plus du service worker : elle décide de quoi une adresse peut être construite, et plus rien de la page n'en lit la catégorie
+- L'extension n'écrit désormais plus rien du tout sur le site. Le remplissage de l'étiquette au clic était la seule écriture qu'elle ait jamais faite sur un noeud du site, et la seule exception à la contrainte fondamentale : elle disparaît avec la phase, sans rien devoir arbitrer
+- Les réglages passent de dix à sept, et `hasEnabledFeature` de cinq clés à trois (lien Letterboxd, images manquantes, cartes de la page d'échange). Mise à jour d'une installation existante : les trois clés laissées dans les réglages sont simplement ignorées et disparaissent au premier enregistrement, même mécanisme que `collectionIndex` en phase 8a et `categoryHighlight` en phase 10b. Aucune donnée à supprimer, les caches ne stockent que des faits bruts
+- La ligne de crédit de l'image se pose maintenant sous le lien Letterboxd, ou sous le lien du site quand il n'y en a pas : un ancrage de moins dans la chaîne, puisque la ligne de catégorie qui s'intercalait entre les deux n'existe plus
+- Jeu témoin : les 100 cartes réelles gardent leurs deux garde-fous observables, le statut de chacune et son adresse Letterboxd. Les colonnes de catégorie de la capture partent avec l'assertion qui les lisait, plutôt que de rester dans un fichier que plus rien ne vérifie
+- Reste connu, à traiter séparément : `primarySubtype` est toujours calculé (vote majoritaire et lecture de la description) et n'est plus lu par personne, le badge étant son seul lecteur. Le retirer ferait tomber la moitié de `classify-person.ts`, mais la description reste nécessaire au départage des métiers de cinéma pour Letterboxd
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
-1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
-2. should show "Personne / Science" and no Letterboxd link when the card is "Albert Einstein"
+1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
+2. should show no Letterboxd link when the card is "Albert Einstein"
 3. should link to `/film/pulp-fiction/` when the card is "Pulp Fiction"
 4. should fall back to a title search when a film has neither P6127 nor P4947
 5. should classify "Saint-Malo" as "Lieu" and not "Organisation"
@@ -670,20 +682,20 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 8. should return "Autre" and retry after 7 days when the article does not exist
 9. should make zero network call when all visible cards are in cache
 10. should send one frwiki request and one SPARQL request when 50 unknown cards appear at once
-11. should re-inject badges after a React re-render or a client-side navigation
+11. should re-inject its own nodes after a React re-render or a client-side navigation
 12. should do nothing and log no error when the page contains no card
 13. should classify "McDonald's" as "Organisation" by majority vote when one of its classes maps to "Lieu"
 14. should pick "Musique" as primary subtype for "Phil Collins" using the card description, and still show a Letterboxd link
 15. should extract title, rarity and an empty description from the `card-large-no-description.html` fixture
 16. should read the article title from the Wikipedia link when the detail modal is open
 17. should classify "Hutte" as "Science et concept" when the item has P279 but no P31
-18. should show one badge "Personne · Cinéma" on the "Quentin Tarantino" card and no badge on a card whose article was not found
+18. Retiré avec la phase 16 : portait sur le badge de catégorie de la carte
 19. Retiré avec la phase 10b : portait sur la mise en évidence par catégorie
 20. should write nothing to the DOM when a sync runs on an unchanged page
 21. Retiré avec la phase 8a : portait sur l'enregistrement d'une carte dans l'index local
 22. Retiré avec la phase 8a : portait sur le décompte des cartes non catégorisées dans le popup
-23. should remove every badge at once when "Badge de catégorie" is switched off in the options, and bring them back when switched on again without reloading the tab
-24. should send no categorization request when the four settings are off
+23. Retiré avec la phase 16 : portait sur le réglage du badge de catégorie
+24. should send no categorization request when the three settings that need it are off
 25. should show an image from Commons on a card the site left without one, and leave a card that has a picture untouched
 26. should show no image and no credit line when Wikidata knows no image for the article
 27. should refuse a file name carrying a forbidden character, a lone surrogate or an extension outside the allowed list
