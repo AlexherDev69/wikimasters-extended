@@ -10,6 +10,13 @@ PNG 24 bits, sans canal alpha. L'autre taille acceptée est 640x400.
 | `3-vue-compacte.png` | La page entière en vue compacte, pour montrer ce qui tient à l'écran |
 | `4-cartes-des-echanges.png` | Les cartes dessinées à la place des noms tronqués des offres |
 
+Les deux bannières promotionnelles, facultatives, sont au même endroit :
+`5-promo-440x280.png` sert de vignette dans les grilles du store et conditionne
+l'éligibilité à une mise en avant, `6-promo-1400x560.png` ne s'affiche que si
+l'extension est effectivement mise en avant. Elles sont composées de l'icône et
+de la palette de l'extension, sans capture : un visuel de carte du jeu n'a rien
+à faire sur une image purement promotionnelle.
+
 L'icône 128x128 que le formulaire demande en plus est
 [`public/icon/128.png`](../../public/icon/128.png), le même fichier que celui du
 manifeste.
