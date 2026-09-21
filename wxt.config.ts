@@ -22,9 +22,8 @@ export default defineConfig({
     description:
       'Overlay pour wiki-masters.com, en lecture seule par défaut : catégorisation des cartes via Wikidata.',
     version: '0.1.0',
-    // Declared here because no popup entrypoint declares it any more: without
-    // it the extension would have no icon in the toolbar at all. A click on it
-    // is handled by the service worker, which opens the options page.
+    // The popup entrypoint gives the button its window; only the tooltip is
+    // left to declare here.
     action: { default_title: EXTENSION_NAME },
     permissions: ['storage'],
     // The only outgoing hosts. The site itself is never called by the extension.

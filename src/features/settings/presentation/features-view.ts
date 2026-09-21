@@ -1,5 +1,6 @@
 import { createBlock, createText } from '../../../core/dom/create-elements';
 import { SETTING_KEYS, type SettingKey, type Settings } from '../domain/settings';
+import { FEATURE_TEXTS } from './feature-texts';
 import { createParagraph, createSection } from './options-elements';
 
 /**
@@ -18,86 +19,6 @@ const STATUS_TEXTS: Record<SaveStatus, string> = {
   idle: '',
   saved: 'Enregistré',
   failed: "Le réglage n'a pas pu être enregistré.",
-};
-
-interface FeatureText {
-  label: string;
-  hint: string;
-  /** Carries a visible warning style: the switch writes on the site itself. */
-  warning?: boolean;
-}
-
-const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
-  categoryBadges: {
-    label: 'Badge de catégorie',
-    hint: 'Pastille de catégorie sur les cartes, et ligne "Catégorie" dans la modale de détail.',
-  },
-  letterboxdLink: {
-    label: 'Lien Letterboxd',
-    hint:
-      'Lien vers Letterboxd dans la modale de détail, et petit logo sous la photo sur la carte, ' +
-      'pour les films et les personnalités du cinéma.',
-  },
-  missingImages: {
-    label: 'Images manquantes',
-    hint:
-      'Affiche une image de Wikimedia Commons sur les cartes que le site laisse sans illustration, ' +
-      "quand Wikidata en connaît une. L'image est chargée par ton navigateur depuis Wikimedia.",
-  },
-  tradeCards: {
-    label: "Cartes sur la page d'échange",
-    hint:
-      "Dessine les cartes d'une offre d'échange à la place des noms tronqués de la page, " +
-      'avec leur rareté et leur image quand Wikidata en connaît une, pour ne plus avoir à ' +
-      'ouvrir chaque offre.',
-  },
-  hideCardStats: {
-    label: 'Masquer les statistiques des cartes',
-    hint:
-      "Masque les valeurs d'attaque et de défense sur les cartes et dans la modale de détail. " +
-      "Rien n'est envoyé ni modifié sur le site, et décocher cette case les fait réapparaître " +
-      'immédiatement.',
-  },
-  tagSuggestions: {
-    label: 'Étiquettes suggérées',
-    hint:
-      "Propose des étiquettes dans la modale de détail, d'après ce que Wikidata sait de la carte. " +
-      "Lecture seule : rien n'est écrit sur le site tant que le réglage suivant reste désactivé.",
-  },
-  tagAutoFill: {
-    label: "Remplir l'étiquette au clic",
-    hint:
-      "Un clic sur une étiquette suggérée l'écrit et la valide dans le champ du site, à ta place : " +
-      'le site ne peut pas distinguer cela de ta propre frappe au clavier. Les règles de ' +
-      'wiki-masters.com interdisent "tout outil visant à jouer, ouvrir des paquets, échanger ou ' +
-      'interagir à votre place", sanction annoncée : bannissement de TON compte wiki-masters.com, ' +
-      'sans préavis. Laisse cette case décochée sauf accord explicite des auteurs du site.',
-    warning: true,
-  },
-  pullStats: {
-    label: 'Statistiques de tirage',
-    hint:
-      'Compte les cartes que tes paquets révèlent et affiche la part de chaque rareté, sous le ' +
-      "nombre de paquets disponibles. Le comptage part de zéro et reste sur cette machine : " +
-      "rien n'est envoyé nulle part, et rien n'est lu sur le site à part la rareté déjà " +
-      'affichée sur la carte.',
-  },
-  compactView: {
-    label: 'Bouton vue compacte',
-    hint:
-      "Ajoute un bouton au bout des filtres de rareté, sur ta collection et sur la page de toutes " +
-      'les cartes, qui réduit les cartes pour en afficher beaucoup plus à la fois. Seule leur ' +
-      "taille à l'écran change : le site garde exactement la page qu'il a construite, et la " +
-      'vignette reprend sa taille normale dès que tu rappuies.',
-  },
-  loadingPong: {
-    label: 'Pong pendant les chargements',
-    hint:
-      'Quand le site tourne dans le vide plus de trois secondes, une partie de Pong apparaît à '
-      + "la place du rond qui tourne : la raquette suit ta souris, l'adversaire est battable. Le "
-      + "jeu disparaît dès que la page affiche enfin quelque chose, et rien n'est envoyé ni "
-      + 'écrit sur le site.',
-  },
 };
 
 const LABEL_TAG = 'label';
