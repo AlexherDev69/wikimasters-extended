@@ -1,19 +1,6 @@
 {
  "batchcomplete": true,
  "query": {
-  "normalized": [
-   {
-    "fromencoded": false,
-    "from": "albert Einstein",
-    "to": "Albert Einstein"
-   }
-  ],
-  "redirects": [
-   {
-    "from": "Einstein",
-    "to": "Albert Einstein"
-   }
-  ],
   "pages": [
    {
     "ns": 0,
@@ -25,6 +12,7 @@
     "ns": 0,
     "title": "Albert Einstein",
     "pageprops": {
+     "page_image_free": "Albert_Einstein_Head_cleaned.jpg",
      "wikibase_item": "Q937"
     }
    },
@@ -33,8 +21,22 @@
     "ns": 0,
     "title": "Pulp Fiction",
     "pageprops": {
+     "page_image_free": "Pulp_Fiction_Logo.svg",
      "wikibase_item": "Q104123"
     }
+   }
+  ],
+  "normalized": [
+   {
+    "fromencoded": false,
+    "from": "albert Einstein",
+    "to": "Albert Einstein"
+   }
+  ],
+  "redirects": [
+   {
+    "from": "Einstein",
+    "to": "Albert Einstein"
    }
   ]
  }

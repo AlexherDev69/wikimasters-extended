@@ -5,7 +5,7 @@ import {
   type CinemaRoleOccupation,
   type LetterboxdCard,
 } from '../../letterboxd/domain/resolve-letterboxd-url';
-import type { CommonsFile } from '../../missing-image/domain/card-image';
+import type { CardImage, CommonsFile } from '../../missing-image/domain/card-image';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
 import {
   classifyCachedCard,
@@ -119,19 +119,25 @@ async function fetchMissingFacts(
   missingTitles: readonly string[],
   deps: CategorizeCardsDeps,
 ): Promise<Map<string, CachedCardFacts>> {
-  const qidByTitle = await deps.titleResolver.resolveTitles(missingTitles);
-  const qids = [...new Set([...qidByTitle.values()].filter((qid) => qid !== null))];
+  const resolvedByTitle = await deps.titleResolver.resolveTitles(missingTitles);
+  const qids = [
+    ...new Set(
+      [...resolvedByTitle.values()].map((resolved) => resolved.qid).filter((qid) => qid !== null),
+    ),
+  ];
   const factsByQid = await deps.entityFactsSource.fetchFacts(qids);
 
   const fetched = new Map<string, CachedCardFacts>();
   for (const title of missingTitles) {
-    const qid = qidByTitle.get(title) ?? null;
+    const resolved = resolvedByTitle.get(title);
+    const qid = resolved?.qid ?? null;
+    const leadImage = resolved?.leadImage ?? null;
     const facts = qid === null ? undefined : factsByQid.get(qid);
     fetched.set(
       title,
       facts === undefined
-        ? { status: 'not_found', facts: null, articleImageTried: false }
-        : { status: 'resolved', facts, articleImageTried: false },
+        ? { status: 'not_found', facts: null, leadImage, articleImageTried: false }
+        : { status: 'resolved', facts, leadImage, articleImageTried: false },
     );
   }
   return fetched;
@@ -367,15 +373,31 @@ function buildResult(
     letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, classification, stage)),
     // The address of the picture is resolved by the stage below, once the whole
     // batch is known: one request for every file rather than one per card.
-    image: facts.image === null ? null : { ...facts.image, thumbnailUrl: null },
+    image: pictureOf(entry, facts),
   };
 }
 
 /**
- * Titles whose card was categorized, Wikidata gave it no image at all, and
- * whose fresh facts were not already marked as tried against the article's
- * own image: a title still absent from `factsByTitle` (should not happen for
- * a categorized result) is treated as untried, exactly like a missing flag.
+ * The picture of a card: the one its article leads with, and only failing
+ * that the one Wikidata holds.
+ *
+ * That order is what the site itself draws, and it settles a choice Wikidata
+ * leaves open: an item may hold several pictures of the same subject, and the
+ * query takes one of them without a defined order, so the same card could
+ * show one picture today and another once its cache entry has expired.
+ */
+function pictureOf(entry: CachedCardFacts, facts: EntityFacts): CardImage | null {
+  const file = entry.leadImage ?? facts.image;
+
+  return file === null ? null : { ...file, thumbnailUrl: null };
+}
+
+/**
+ * Titles whose card was categorized, neither the article nor Wikidata gave it
+ * a picture, and whose fresh facts were not already marked as tried against
+ * the article's own image: a title still absent from `factsByTitle` (should
+ * not happen for a categorized result) is treated as untried, exactly like a
+ * missing flag.
  */
 function titlesWithoutImage(
   results: readonly CardCategory[],

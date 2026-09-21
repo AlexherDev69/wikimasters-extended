@@ -9,7 +9,8 @@ import { chunk } from '../../../core/array/chunk';
 import { fetchJson, type FetchJsonOptions } from '../../../core/http/fetch-json';
 import { parseTitleMappings } from '../../../core/mediawiki/title-mappings';
 import { isRecord } from '../../../core/types/guards';
-import type { TitleResolver } from '../domain/ports';
+import { leadImageFile } from '../../missing-image/domain/lead-image';
+import type { ResolvedTitle, TitleResolver } from '../domain/ports';
 import { isQid } from './wikidata-uri';
 
 const JSON_MEDIA_TYPE = 'application/json';
@@ -19,10 +20,23 @@ const MAX_REDIRECT_HOPS = 5;
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected frwiki response shape';
 
+/**
+ * The page property naming the FREE lead picture MediaWiki picked for the
+ * article. The free variant on purpose, as the article image source reads it
+ * too: the other one, `page_image`, also answers with the non free files
+ * frwiki hosts under its own exception, which this extension never draws.
+ * Measured on the golden set on 2026-09-21: the two name the same file for
+ * all 43 articles that lead with a picture.
+ *
+ * It rides in the request that already asks for the Wikidata item of each
+ * title, so the picture the site draws costs not one request more.
+ */
+const LEAD_IMAGE_PROPERTY = 'page_image_free';
+
 const QUERY_PARAMETERS = {
   action: 'query',
   prop: 'pageprops',
-  ppprop: 'wikibase_item',
+  ppprop: `wikibase_item|${LEAD_IMAGE_PROPERTY}`,
   redirects: '1',
   format: 'json',
   formatversion: '2',
@@ -34,27 +48,36 @@ interface ParsedPages {
   /** Title normalization applied by the API, for example "albert" to "Albert". */
   normalized: Map<string, string>;
   redirects: Map<string, string>;
-  /** Final title to QID, null for a missing page or a page without a Wikidata item. */
-  qidByTitle: Map<string, string | null>;
+  /** Final title to what its article answers, for every page of the batch. */
+  pageByTitle: Map<string, ResolvedTitle>;
 }
 
-function parsePages(raw: unknown): Map<string, string | null> {
-  const qidByTitle = new Map<string, string | null>();
+/** Nothing known of that title: no item, no picture. */
+function unresolved(): ResolvedTitle {
+  return { qid: null, leadImage: null };
+}
+
+function parsePages(raw: unknown): Map<string, ResolvedTitle> {
+  const pageByTitle = new Map<string, ResolvedTitle>();
   if (!Array.isArray(raw)) {
-    return qidByTitle;
+    return pageByTitle;
   }
 
   for (const page of raw) {
     if (!isRecord(page) || typeof page['title'] !== 'string') {
       continue;
     }
-    const pageProps = page['pageprops'];
-    const item = isRecord(pageProps) ? pageProps['wikibase_item'] : undefined;
-    // A malformed id is dropped here so it never reaches a query builder.
+    const pageProps = isRecord(page['pageprops']) ? page['pageprops'] : {};
+    const item = pageProps['wikibase_item'];
+    // A malformed id is dropped here so it never reaches a query builder, and
+    // a file name that could not be drawn never reaches a URL.
     const qid = typeof item === 'string' && isQid(item) ? item : null;
-    qidByTitle.set(page['title'], qid);
+    pageByTitle.set(page['title'], {
+      qid,
+      leadImage: leadImageFile(pageProps[LEAD_IMAGE_PROPERTY]),
+    });
   }
-  return qidByTitle;
+  return pageByTitle;
 }
 
 function parseResponse(payload: unknown): ParsedPages {
@@ -66,7 +89,7 @@ function parseResponse(payload: unknown): ParsedPages {
   return {
     normalized: parseTitleMappings(query['normalized']),
     redirects: parseTitleMappings(query['redirects']),
-    qidByTitle: parsePages(query['pages']),
+    pageByTitle: parsePages(query['pages']),
   };
 }
 
@@ -121,21 +144,22 @@ function isSendableTitle(title: string): boolean {
 }
 
 /**
- * Resolves exact frwiki article titles to Wikidata QIDs, by batches of
- * TITLE_BATCH_SIZE. Returned pages are not in request order, so each requested
- * title is mapped through the normalizations and redirects of the response.
+ * Resolves exact frwiki article titles to their Wikidata item and to the
+ * picture their article leads with, by batches of TITLE_BATCH_SIZE. Returned
+ * pages are not in request order, so each requested title is mapped through
+ * the normalizations and redirects of the response.
  */
 export function createTitleResolver(httpOptions: FetchJsonOptions): TitleResolver {
   return {
-    async resolveTitles(titles: readonly string[]): Promise<Map<string, string | null>> {
-      const resolved = new Map<string, string | null>();
+    async resolveTitles(titles: readonly string[]): Promise<Map<string, ResolvedTitle>> {
+      const resolved = new Map<string, ResolvedTitle>();
       const sendableTitles: string[] = [];
 
       for (const title of titles) {
         if (isSendableTitle(title)) {
           sendableTitles.push(title);
         } else {
-          resolved.set(title, null);
+          resolved.set(title, unresolved());
         }
       }
 
@@ -143,7 +167,7 @@ export function createTitleResolver(httpOptions: FetchJsonOptions): TitleResolve
         const pages = await requestBatch(batch, httpOptions);
         for (const requestedTitle of batch) {
           const finalTitle = resolveFinalTitle(requestedTitle, pages);
-          resolved.set(requestedTitle, pages.qidByTitle.get(finalTitle) ?? null);
+          resolved.set(requestedTitle, pages.pageByTitle.get(finalTitle) ?? unresolved());
         }
       }
 

@@ -40,6 +40,7 @@ import type {
   CachedCardFacts,
   ClassResolution,
   Clock,
+  ResolvedTitle,
   ThumbnailUrlCache,
   ThumbnailUrlSource,
   TitleResolver,
@@ -269,8 +270,8 @@ function makeStubDeps(cachedTargets: Map<string, CategoryId | null>): Categorize
 
   return {
     titleResolver: {
-      resolveTitles: (): Promise<Map<string, string | null>> =>
-        Promise.resolve(new Map([[STUB_CARD.title, STUB_QID]])),
+      resolveTitles: (): Promise<Map<string, ResolvedTitle>> =>
+        Promise.resolve(new Map([[STUB_CARD.title, { qid: STUB_QID, leadImage: null }]])),
     },
     entityFactsSource: {
       fetchFacts: (): Promise<Map<string, EntityFacts>> =>
@@ -572,6 +573,29 @@ describe('categorizeCards', () => {
     expect(thumbnailUrl.startsWith(THUMBNAIL_ORIGIN)).toBe(true);
     expect(thumbnailUrl).toContain(encodeURIComponent(STUB_IMAGE?.fileName ?? ''));
     expect(replay.countOf('frwiki-images')).toBe(1);
+  });
+
+  it('should draw the picture the article leads with, rather than the one Wikidata holds', async () => {
+    // The site draws that very file. Wikidata may hold several pictures of
+    // the same subject and the query answers with one of them without a
+    // defined order, so the card could otherwise change picture on its own
+    // once its cache entry has expired.
+    const replay = createReplayFetch();
+    const leadImage: CommonsFile = { fileName: 'Lead picture.jpg', kind: 'picture' };
+
+    const results = await categorizeCards(
+      [STUB_CARD],
+      {
+        ...makeImageDeps(replay.fetchImpl, STUB_IMAGE),
+        titleResolver: {
+          resolveTitles: (): Promise<Map<string, ResolvedTitle>> =>
+            Promise.resolve(new Map([[STUB_CARD.title, { qid: STUB_QID, leadImage }]])),
+        },
+      },
+      WITHOUT_IMAGE_URLS,
+    );
+
+    expect(results[0]?.image).toEqual({ ...leadImage, thumbnailUrl: null });
   });
 
   it('should perform no request for the addresses when no card has a picture', async () => {
@@ -927,11 +951,11 @@ describe('categorizeCards', () => {
     const triedCard: CardToCategorize = { title: 'Poulet', description: null };
     const unwantedImage: CommonsFile = { fileName: 'Poulet.jpg', kind: 'picture' };
     const bothTitlesResolver: TitleResolver = {
-      resolveTitles: (): Promise<Map<string, string | null>> =>
+      resolveTitles: (): Promise<Map<string, ResolvedTitle>> =>
         Promise.resolve(
           new Map([
-            [STUB_CARD.title, STUB_QID],
-            [triedCard.title, STUB_QID],
+            [STUB_CARD.title, { qid: STUB_QID, leadImage: null }],
+            [triedCard.title, { qid: STUB_QID, leadImage: null }],
           ]),
         ),
     };

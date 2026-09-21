@@ -42,11 +42,13 @@ const FACTS: EntityFacts = {
 const RESOLVED_ENTRY: CachedCardFacts = {
   status: 'resolved',
   facts: FACTS,
+  leadImage: null,
   articleImageTried: false,
 };
 const NOT_FOUND_ENTRY: CachedCardFacts = {
   status: 'not_found',
   facts: null,
+  leadImage: null,
   articleImageTried: false,
 };
 
@@ -213,6 +215,7 @@ describe('createCardFactsCache', () => {
       status: 'resolved',
       facts: { ...FACTS, seriesImage: { fileName: 'Series.exe', kind: 'picture' } },
       fetchedAt: START_TIME,
+      leadImage: null,
       articleImageTried: false,
     });
 

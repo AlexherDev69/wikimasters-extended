@@ -60,9 +60,9 @@ describe('createTitleResolver', () => {
 
     expect(resolved.size).toBe(titles.length);
     for (const title of titles) {
-      expect(resolved.get(title)).toMatch(/^Q\d+$/);
+      expect(resolved.get(title)?.qid).toMatch(/^Q\d+$/);
     }
-    expect(resolved.get('Pulp Fiction')).toBe(PULP_FICTION_QID);
+    expect(resolved.get('Pulp Fiction')?.qid).toBe(PULP_FICTION_QID);
   });
 
   it('should follow a redirect and a normalization to the same QID', async () => {
@@ -73,8 +73,8 @@ describe('createTitleResolver', () => {
       UNNORMALIZED_TITLE,
     ]);
 
-    expect(resolved.get(REDIRECTED_TITLE)).toBe(EINSTEIN_QID);
-    expect(resolved.get(UNNORMALIZED_TITLE)).toBe(EINSTEIN_QID);
+    expect(resolved.get(REDIRECTED_TITLE)?.qid).toBe(EINSTEIN_QID);
+    expect(resolved.get(UNNORMALIZED_TITLE)?.qid).toBe(EINSTEIN_QID);
   });
 
   it('should map a title containing the batch separator to null without sending it', async () => {
@@ -86,8 +86,8 @@ describe('createTitleResolver', () => {
       'Pulp Fiction',
     ]);
 
-    expect(resolved.get(corruptingTitle)).toBeNull();
-    expect(resolved.get('Pulp Fiction')).toBe(PULP_FICTION_QID);
+    expect(resolved.get(corruptingTitle)?.qid).toBeNull();
+    expect(resolved.get('Pulp Fiction')?.qid).toBe(PULP_FICTION_QID);
     expect(firstCall(replay.calls).titles).toEqual(['Pulp Fiction']);
   });
 
@@ -98,7 +98,34 @@ describe('createTitleResolver', () => {
       MISSING_TITLE,
     ]);
 
-    expect(resolved.get(MISSING_TITLE)).toBeNull();
+    expect(resolved.get(MISSING_TITLE)?.qid).toBeNull();
+    expect(resolved.get(MISSING_TITLE)?.leadImage).toBeNull();
+  });
+
+  it('should read the picture each article leads with, in that same request', async () => {
+    // The very file the site draws on its own card, and it costs no request:
+    // it rides in the one that already asks for the Wikidata item.
+    const replay = createReplayFetch();
+
+    const resolved = await makeResolver(replay.fetchImpl).resolveTitles([
+      'Albert Einstein',
+      'Pulp Fiction',
+      'Hutte',
+    ]);
+
+    expect(resolved.get('Albert Einstein')?.leadImage).toEqual({
+      fileName: 'Albert Einstein Head cleaned.jpg',
+      kind: 'picture',
+    });
+    // A vector drawing is a logo, a flag or a coat of arms, never a
+    // photograph, so it is shown whole rather than cropped.
+    expect(resolved.get('Pulp Fiction')?.leadImage).toEqual({
+      fileName: 'Pulp Fiction Logo.svg',
+      kind: 'emblem',
+    });
+    // An article that leads with no picture at all: only Wikidata can fill it.
+    expect(resolved.get('Hutte')?.leadImage).toBeNull();
+    expect(replay.countOf('frwiki')).toBe(1);
   });
 
   it('should perform three requests when 120 titles are resolved', async () => {
@@ -139,7 +166,7 @@ describe('createTitleResolver', () => {
     const call = firstCall(replay.calls);
     expect(call.url).toContain('origin=*');
     expect(call.url).toContain('redirects=1');
-    expect(call.url).toContain('ppprop=wikibase_item');
+    expect(call.url).toContain('ppprop=wikibase_item%7Cpage_image_free');
     expect(call.url).toContain('formatversion=2');
     expect(call.headers.get('Api-User-Agent')).toContain('WikiMastersExtended/');
     expect(call.credentials).toBe('omit');

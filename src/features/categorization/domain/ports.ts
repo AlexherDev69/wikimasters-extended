@@ -28,6 +28,12 @@ export interface CachedCardFacts {
   /** Null when `status` is `not_found`. */
   facts: EntityFacts | null;
   /**
+   * The picture the article leads with, which is the one the site itself
+   * draws. Null when the article has none, and then only what Wikidata holds
+   * can fill the card.
+   */
+  leadImage: CommonsFile | null;
+  /**
    * Whether the article's own image (phase 7d) was already looked up for this
    * card. Always false for a `not_found` card, which never reaches that
    * stage, and for a card whose answer MediaWiki's continuation left
@@ -36,9 +42,17 @@ export interface CachedCardFacts {
   articleImageTried: boolean;
 }
 
+/** What one article answers about itself, in the one request its title costs. */
+export interface ResolvedTitle {
+  /** The Wikidata item of the article, or null when it has none. */
+  qid: string | null;
+  /** The picture the article leads with, or null when it has none. */
+  leadImage: CommonsFile | null;
+}
+
 export interface TitleResolver {
-  /** Maps each requested frwiki title to its QID, or null when there is none. */
-  resolveTitles(titles: readonly string[]): Promise<Map<string, string | null>>;
+  /** Maps each requested frwiki title to what its article answers about itself. */
+  resolveTitles(titles: readonly string[]): Promise<Map<string, ResolvedTitle>>;
 }
 
 export interface EntityFactsSource {
