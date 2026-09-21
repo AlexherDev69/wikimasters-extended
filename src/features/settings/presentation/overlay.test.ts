@@ -16,6 +16,8 @@ import {
 } from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
+import { PULL_STATS_SELECTOR } from '../../pull-stats/data/pull-stats-panel';
+import { emptyTally } from '../../pull-stats/domain/pull-tally';
 import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
 
 import {
@@ -35,6 +37,10 @@ const MODAL_HTML = readFileSync(join(FIXTURES_DIR, 'card-detail-modal.html'), 'u
 const PLACEHOLDER_HTML = readFileSync(join(FIXTURES_DIR, 'placeholder-cards.html'), 'utf-8');
 /** Two offers of the exchange page, seven chips naming six distinct cards. */
 const TRADES_HTML = readFileSync(join(FIXTURES_DIR, 'trades-list.html'), 'utf-8');
+/** The page of the packs between two of them, where the pull panel is drawn. */
+const PULL_IDLE_HTML = readFileSync(join(FIXTURES_DIR, 'pull-idle.html'), 'utf-8');
+/** The first card of a pack being revealed, a common one, under its counter. */
+const PULL_REVEAL_HTML = readFileSync(join(FIXTURES_DIR, 'pull-reveal.html'), 'utf-8');
 
 const GRID_CARD_TITLE = "Jeu d'horreur";
 const LARGE_CARD_TITLE = 'Foza';
@@ -60,6 +66,7 @@ const ALL_OFF: Settings = {
   hideCardStats: false,
   tagSuggestions: false,
   tagAutoFill: false,
+  pullStats: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -129,6 +136,8 @@ function mount(
     scheduleRetry: (callback) => {
       retries.push(callback);
     },
+    pullTallyStore: { read: () => Promise.resolve(emptyTally()), write: () => Promise.resolve() },
+    pullTally: emptyTally(),
   };
 
   return { overlay: createOverlay(deps), categorize, retries };
@@ -164,6 +173,10 @@ const TRADE_PREVIEW_IMAGE_SELECTOR = TRADE_PREVIEW_SELECTOR + ' img';
 
 function tradePreviews(): NodeListOf<Element> {
   return document.body.querySelectorAll(TRADE_PREVIEW_SELECTOR);
+}
+
+function pullStatsPanel(): Element | null {
+  return document.body.querySelector(PULL_STATS_SELECTOR);
 }
 
 function tagProposals(): Element | null {
@@ -354,6 +367,74 @@ describe('createOverlay', () => {
     // as the content script scopes its own, could ever see.
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();
+  });
+
+  it('should draw the pull panel at once when the setting is on at load, asking for no categorization', () => {
+    document.body.innerHTML = PULL_IDLE_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, pullStats: true });
+
+    scan(overlay);
+
+    expect(pullStatsPanel()).not.toBeNull();
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should draw no pull panel when the setting is off at load', () => {
+    document.body.innerHTML = PULL_IDLE_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, pullStats: false });
+
+    scan(overlay);
+
+    expect(pullStatsPanel()).toBeNull();
+  });
+
+  it('should write nothing on a second scan while the pull panel is already drawn', () => {
+    document.body.innerHTML = PULL_IDLE_HTML;
+    const { overlay } = mount({ ...ALL_OFF, pullStats: true });
+    scan(overlay);
+    expect(pullStatsPanel()).not.toBeNull();
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
+  it('should take back the pull panel at once when the setting is turned off', () => {
+    document.body.innerHTML = PULL_IDLE_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, pullStats: true });
+    scan(overlay);
+    expect(pullStatsPanel()).not.toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, pullStats: false });
+
+    expect(pullStatsPanel()).toBeNull();
+  });
+
+  it('should count the card a pack reveals and show it on the panel that comes back after it', () => {
+    document.body.innerHTML = PULL_REVEAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, pullStats: true });
+
+    scan(overlay);
+    document.body.innerHTML = PULL_IDLE_HTML;
+    scan(overlay);
+
+    expect(pullStatsPanel()?.textContent).toContain('1 carte');
+  });
+
+  it('should count nothing on the page of the packs while the setting is off', () => {
+    document.body.innerHTML = PULL_REVEAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, pullStats: false });
+
+    scan(overlay);
+    // Switched on once the card has left the screen: a card still shown when
+    // the switch is flipped is counted, which is the card the user is
+    // looking at, and that is exactly what turning the feature on asks for.
+    document.body.innerHTML = PULL_IDLE_HTML;
+    overlay.applySettings({ ...ALL_OFF, pullStats: true });
+
+    expect(pullStatsPanel()?.textContent).toContain('Aucune carte comptée');
   });
 
   it('should keep the category badge visible while the stats row next to it is hidden', async () => {
@@ -690,6 +771,18 @@ describe('createOverlay', () => {
     const siteHtml = document.body.innerHTML;
     const { overlay } = mount();
     await scanUntilDrawn(overlay);
+
+    overlay.destroy();
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should take back the pull panel when the context is invalidated', () => {
+    document.body.innerHTML = PULL_IDLE_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount({ ...ALL_OFF, pullStats: true });
+    scan(overlay);
+    expect(pullStatsPanel()).not.toBeNull();
 
     overlay.destroy();
 

@@ -74,6 +74,14 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       'sans préavis. Laisse cette case décochée sauf accord explicite des auteurs du site.',
     warning: true,
   },
+  pullStats: {
+    label: 'Statistiques de tirage',
+    hint:
+      'Compte les cartes que tes paquets révèlent et affiche la part de chaque rareté, sous le ' +
+      "nombre de paquets disponibles. Le comptage part de zéro et reste sur cette machine : " +
+      "rien n'est envoyé nulle part, et rien n'est lu sur le site à part la rareté déjà " +
+      'affichée sur la carte.',
+  },
 };
 
 const LABEL_TAG = 'label';

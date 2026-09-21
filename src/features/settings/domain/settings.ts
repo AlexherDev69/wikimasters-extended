@@ -36,6 +36,12 @@ export interface Settings {
    * site, whatever this one says.
    */
   tagAutoFill: boolean;
+  /**
+   * Counts the cards the packs reveal, and shows the share of each rarity on
+   * the page of the packs. Read-only like the rest: it counts what the site
+   * shows, it opens nothing.
+   */
+  pullStats: boolean;
 }
 
 /** Exported so a view can give every switch a place in a display order. */
@@ -47,6 +53,7 @@ export const SETTING_KEYS = [
   'hideCardStats',
   'tagSuggestions',
   'tagAutoFill',
+  'pullStats',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -59,6 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hideCardStats: false,
   tagSuggestions: true,
   tagAutoFill: false,
+  pullStats: true,
 };
 
 /**
@@ -69,7 +77,9 @@ export const DEFAULT_SETTINGS: Settings = {
  * traffic, exactly as switching it off must never stop traffic another
  * setting still needs. `tagAutoFill` is left out too: it changes what a click
  * on an already shown proposal does, never whether Wikidata is asked at all,
- * which `tagSuggestions` alone decides.
+ * which `tagSuggestions` alone decides. `pullStats` is left out for the same
+ * reason as `hideCardStats`: it counts the rarity the card already carries in
+ * its own class, and asks nothing of anyone.
  */
 const CATEGORIZATION_SETTING_KEYS = [
   'categoryBadges',

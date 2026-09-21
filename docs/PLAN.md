@@ -605,6 +605,21 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Changement de feuille de style seulement : aucun noeud, aucune clé et aucune ligne de code touchés, donc rien de ce qui garantit une sync sans écriture ne bouge
 - Vérification visuelle refaite : les six raretés côte à côte, un emblème, une photographie, une carte dont aucune image n'est connue et une image en échec, en largeur bureau et en 375 px
 
+### Phase 12 : statistiques de tirage (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture de la page `/pulls` à l'appui : "ici a gauche ou a droite ou en bas ce serai drole d'ajouter le taux de chance de l'user, son pourcentage de pull de chaque type de carte, en %"
+- Ce qui est compté : la rareté que la carte porte déjà dans sa classe `glow-<rareté>`, sur la seule page où un paquet se révèle. Ni le titre, ni la date, ni le paquet : un compte par rareté, et rien qui puisse dire ce qu'il y avait dans un paquet
+- Aucune comparaison possible avec un taux annoncé, parce qu'il n'y en a aucun à comparer : le site tire la rareté des vues mensuelles de l'article (C sous 50 vues, PC 50+, R 250+, SR 1 000+, UR 5 000+, L 20 000+, lu dans son propre "Comment ça marche ?" le 2026-09-21). Le panneau est donc une observation, jamais un verdict sur le jeu
+- Compter une carte une seule fois : le site révèle les cinq cartes une par une et laisse revenir en arrière, donc la même carte est affichée encore et encore. C'est le compteur du site ("Carte 3 / 5") qui distingue une carte d'une autre, lu sur le texte et non sur les classes Tailwind, et c'est sa position qui sert de clé
+- Oublier un paquet seulement sur un signal POSITIF : le bloc "paquets disponibles", c'est-à-dire l'écran entre deux paquets. Jamais sur l'absence de carte, sinon une carte manquante le temps d'un rendu, entre deux de ses propres animations, ferait passer le paquet en cours pour un nouveau et compterait une carte deux fois
+- Le comptage est laissé hors de cette branche, et pas seulement neutralisé par les positions déjà vues : une page qui montrerait les deux compterait sinon la même carte à chaque sync
+- Le panneau est inséré après ce même bloc, donc il ne s'affiche que sur l'écran d'attente, sous "2 / 10 paquets disponibles", ce qui répond au "en bas" de la demande, et jamais par-dessus une carte
+- Règle de la sync sans écriture : le panneau porte les comptes qu'il affiche dans un attribut, et sa place est vérifiée avec eux (le voisin précédent doit être le bloc du site). Comptes identiques et place tenue, il n'écrit rien du tout, ce que l'écran d'attente exige : son compte à rebours change chaque seconde, donc la sync tourne sans arrêt sur cette page
+- Stockage : une clé versionnée `wme:pulls:v1` dans l'aire locale, six nombres. Le vidage du cache de catégorisation ne la touche pas, et c'est voulu : ce n'est pas un cache de Wikimedia mais ce que l'utilisateur a tiré
+- Huitième réglage, activé par défaut : la fonctionnalité ajoute un noeud qui lui appartient et ne retire rien du site. Elle ne demande rien à Wikidata non plus, donc elle ne rejoint pas `CATEGORIZATION_SETTING_KEYS`
+- Fixtures assainies tirées des deux états réels de la page : un paquet en cours de révélation (compteur compris) et l'écran d'attente
+- Vérification visuelle : le panneau rendu avec la vraie feuille de style et les couleurs de rareté du site, en largeur bureau et en 400 px, avec des comptes et avec aucun
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
@@ -638,6 +653,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 29. should show a loading state while the image is on its way, and leave only the site logo when it cannot be loaded
 30. should refuse a thumbnail address whose host merely ends with a Wikimedia host name
 31. should show the picture of the competition on the card of one of its editions, and keep the file the article itself uses when there is one
+32. should count the card a pack reveals once when the user walks back and forth between the five, and count the next pack only after the page has shown the packs left again
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 

@@ -9,6 +9,7 @@ const ALL_OFF: Settings = {
   hideCardStats: false,
   tagSuggestions: false,
   tagAutoFill: false,
+  pullStats: false,
 };
 
 describe('normalizeSettings', () => {
@@ -31,6 +32,7 @@ describe('normalizeSettings', () => {
       hideCardStats: false,
       tagSuggestions: true,
       tagAutoFill: false,
+      pullStats: true,
     });
   });
 

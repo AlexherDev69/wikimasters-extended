@@ -1,0 +1,148 @@
+/*
+ * Styles of the panel this feature adds under the block that counts the packs
+ * left. Every selector starts with one of our own attributes or classes: not
+ * one rule here reaches a node of the site.
+ *
+ * The look is read off the site's own panels: the frame, the ink and the
+ * accent of the page, the heading face of its titles, and the six rarity
+ * colours it publishes as variables. A fallback follows each variable, so a
+ * page that stopped shipping one of them keeps a readable panel instead of
+ * losing its colour.
+ */
+
+.wme-pull-stats {
+  /* Defaults, overridden right below by the rarity each row carries. */
+  --wme-pull-colour: #c9d4e0;
+  --wme-pull-ink: var(--color-foreground, #e6edf3);
+  --wme-pull-accent: var(--color-accent, #fa9931);
+  /* A bar this wide says "some" where a percentage rounds to nothing. */
+  --wme-pull-bar-minimum: 3px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 17rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--wme-pull-ink) 14%, transparent);
+  background-color: color-mix(in srgb, var(--wme-pull-ink) 6%, transparent);
+  color: var(--wme-pull-ink);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.wme-pull-stats-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wme-pull-stats-title {
+  font-family: var(--font-heading, inherit);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wme-pull-stats-total {
+  font-size: 10px;
+  color: color-mix(in srgb, var(--wme-pull-ink) 55%, transparent);
+}
+
+.wme-pull-stats-note {
+  font-size: 10px;
+  /* Left aligned under a centred title: it is a sentence, not a label. */
+  text-align: left;
+  color: color-mix(in srgb, var(--wme-pull-ink) 55%, transparent);
+}
+
+.wme-pull-stats-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/*
+ * The four columns of a row: the rarity, the bar, the share and the count.
+ * The two numbers are given a fixed width so the digits line up from one row
+ * to the next, whatever the numbers are.
+ */
+.wme-pull-row {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr 3.1rem 1.8rem;
+  align-items: center;
+  gap: 6px;
+}
+
+.wme-pull-label {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--wme-pull-colour);
+}
+
+.wme-pull-track {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background-color: color-mix(in srgb, var(--wme-pull-ink) 10%, transparent);
+  overflow: hidden;
+}
+
+.wme-pull-bar {
+  display: block;
+  height: 100%;
+  /*
+   * The width itself is the only value written on the node: it is the datum
+   * the panel shows, and it cannot be held in a class.
+   */
+  min-width: var(--wme-pull-bar-minimum);
+  border-radius: 3px;
+  background-color: var(--wme-pull-colour);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--wme-pull-colour) 45%, transparent);
+}
+
+.wme-pull-percent {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.wme-pull-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: color-mix(in srgb, var(--wme-pull-ink) 55%, transparent);
+}
+
+/*
+ * One rule per rarity rather than an inline style written on the node: the
+ * colours belong to the site, which publishes them as these variables, and a
+ * style attribute of ours would carry a value read from the page back into
+ * the page.
+ */
+[data-wme-pull-rarity='c'] {
+  --wme-pull-colour: var(--color-rarity-c);
+}
+
+[data-wme-pull-rarity='pc'] {
+  --wme-pull-colour: var(--color-rarity-pc);
+}
+
+[data-wme-pull-rarity='r'] {
+  --wme-pull-colour: var(--color-rarity-r);
+}
+
+[data-wme-pull-rarity='sr'] {
+  --wme-pull-colour: var(--color-rarity-sr);
+}
+
+[data-wme-pull-rarity='ur'] {
+  --wme-pull-colour: var(--color-rarity-ur);
+}
+
+[data-wme-pull-rarity='l'] {
+  --wme-pull-colour: var(--color-rarity-l);
+}
