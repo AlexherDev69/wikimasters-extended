@@ -12,6 +12,12 @@ import { isRecord } from '../../../core/types/guards';
 export interface Settings {
   /** Letterboxd link in the detail modal, and the button on the card itself. */
   letterboxdLink: boolean;
+  /**
+   * The button that opens the Wikipedia article of a card, on the card
+   * itself. It asks nothing of anyone: the address is built from the title
+   * the card already shows.
+   */
+  wikipediaLink: boolean;
   /** Image of Wikimedia Commons on the cards the site leaves without one. */
   missingImages: boolean;
   /**
@@ -46,6 +52,7 @@ export interface Settings {
 /** Exported so a view can give every switch a place in a display order. */
 export const SETTING_KEYS = [
   'letterboxdLink',
+  'wikipediaLink',
   'missingImages',
   'tradeCards',
   'hideCardStats',
@@ -58,6 +65,7 @@ export type SettingKey = (typeof SETTING_KEYS)[number];
 
 export const DEFAULT_SETTINGS: Settings = {
   letterboxdLink: true,
+  wikipediaLink: true,
   missingImages: true,
   tradeCards: true,
   hideCardStats: false,
@@ -75,7 +83,10 @@ export const DEFAULT_SETTINGS: Settings = {
  * traffic another setting still needs. `pullStats` is left out for the same
  * reason: it counts the rarity the card already carries in its own class, and
  * asks nothing of anyone. `compactView` is left out too: it changes the size
- * the cards are painted at, not what is known of them. `loadingPong` is left
+ * the cards are painted at, not what is known of them. `wikipediaLink` is
+ * left out for the plainest reason there is: the title of a card IS the
+ * title of its article, so its button is built from what the page already
+ * shows and no one is ever asked anything. `loadingPong` is left
  * out for the plainest reason of all: it only runs while the page shows no
  * card at all, so there is nothing to look up.
  */

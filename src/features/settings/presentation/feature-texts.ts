@@ -24,6 +24,14 @@ export const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       'Lien vers Letterboxd dans la modale de détail, et petit logo sous la photo sur la carte, ' +
       'pour les films et les personnalités du cinéma.',
   },
+  wikipediaLink: {
+    label: 'Bouton Wikipédia',
+    summary: "L'article de la carte, depuis la carte.",
+    hint:
+      "Ajoute sur chaque carte un bouton qui ouvre son article de Wikipédia, à côté du bouton " +
+      "Letterboxd quand la carte en a un. L'adresse est construite à partir du titre que la carte " +
+      "affiche déjà : rien n'est demandé à personne pour l'afficher.",
+  },
   missingImages: {
     label: 'Images manquantes',
     summary: 'Une image Wikimedia sur les cartes sans visuel.',

@@ -1,0 +1,84 @@
+/*
+ * Styles of the one node this feature adds to a card. Every selector starts
+ * with one of our data attributes, so no rule of ours can reach a node of the
+ * site, and no rule of the site is overridden.
+ */
+
+[data-wme-wikipedia-card] {
+  /*
+   * The height of the Letterboxd pill beside it, so the two marks of the
+   * extension sit on one line. Round pixels for the same reason that one
+   * gives: the band they stand in is a `p-3` padding, twelve pixels whatever
+   * the viewport and whatever the card format, so nothing is gained by
+   * scaling with the screen and every edge would land on a fraction of a
+   * pixel if it did.
+   */
+  --wme-wikipedia-size: 12px;
+  /*
+   * How far this button steps aside when the card also shows the Letterboxd
+   * one. That pill is 26px wide: an 8px drawing of ratio 100:40 is 20px, plus
+   * its 2px of padding and its 1px of border on each side. Four pixels of gap
+   * after it, the same air the two marks keep from the edges of the card.
+   */
+  --wme-wikipedia-step: 30px;
+  position: absolute;
+  /*
+   * The bottom right corner, the band the text area leaves free under the
+   * stats row, and the very place the Letterboxd button measured out: the
+   * card root is `rounded-2xl overflow-hidden`, a 16px radius, so the corner
+   * arc eats into that band, and 5px from the right at 3px from the bottom is
+   * clear of it. See letterboxd.css for the whole measurement.
+   */
+  right: 5px;
+  bottom: 3px;
+  width: var(--wme-wikipedia-size);
+  height: var(--wme-wikipedia-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: rgba(9, 12, 17, 0.82);
+  /*
+   * The second node of the extension that takes a click on a card: every
+   * other one stays `pointer-events: none`. See data/wikipedia-button.ts for
+   * why this one click is allowed to reach a listener at all.
+   */
+  pointer-events: auto;
+  cursor: pointer;
+  /* Nothing of ours is ever caught by a selection made on the site's text. */
+  user-select: none;
+}
+
+/*
+ * A card showing both marks: ours steps aside and leaves the corner to the
+ * Letterboxd button, which measured that corner out first. Written twice so
+ * the order the two features wrote their node in never matters: the button of
+ * the article is added on the very first scan, while the Letterboxd one waits
+ * for what Wikidata knows, so either of them can be the first child.
+ */
+[data-wme-letterboxd-card] ~ [data-wme-wikipedia-card],
+[data-wme-wikipedia-card]:has(~ [data-wme-letterboxd-card]) {
+  right: calc(5px + var(--wme-wikipedia-step));
+}
+
+[data-wme-wikipedia-card]:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
+/*
+ * The W of the encyclopaedia, in a serif face: Linux Libertine is the one its
+ * own wordmark is cut in, and the fallbacks are the serif faces a machine is
+ * likely to have. The letter is what says Wikipedia here, so it is drawn as
+ * the wordmark draws it and never as the sans-serif of the site.
+ */
+[data-wme-wikipedia-card] .wme-wikipedia-mark {
+  font-family: 'Linux Libertine', 'Georgia', 'Times New Roman', serif;
+  font-size: 9px;
+  font-weight: 400;
+  /* One line exactly, so the letter sits on the centre of the disc. */
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.92);
+}

@@ -25,6 +25,7 @@ import { PONG_SELECTOR } from '../../loading-pong/data/pong-panel';
 import { PULL_STATS_SELECTOR } from '../../pull-stats/data/pull-stats-panel';
 import { emptyTally } from '../../pull-stats/domain/pull-tally';
 import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
+import { WIKIPEDIA_BUTTON_SELECTOR } from '../../wikipedia-link/data/wikipedia-button-selectors';
 
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
@@ -76,6 +77,7 @@ const FILM_URL = 'https://letterboxd.com/film/lost-river/';
 
 const ALL_OFF: Settings = {
   letterboxdLink: false,
+  wikipediaLink: false,
   missingImages: false,
   tradeCards: false,
   hideCardStats: false,
@@ -178,6 +180,10 @@ async function scanUntilDrawn(overlay: Overlay): Promise<void> {
 
 function cardButtons(): NodeListOf<Element> {
   return document.body.querySelectorAll(CARD_BUTTON_SELECTOR);
+}
+
+function wikipediaButtons(): NodeListOf<Element> {
+  return document.body.querySelectorAll(WIKIPEDIA_BUTTON_SELECTOR);
 }
 
 function cardImages(): NodeListOf<Element> {
@@ -636,6 +642,43 @@ describe('createOverlay', () => {
 
     expect(drawn).toBeGreaterThan(0);
     expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(drawn);
+  });
+
+  it('should draw the button of the article on the first scan, asking for no categorization', () => {
+    // The title of a card IS the title of its article: the button is built
+    // from what the page already shows, so no card ever waits for an answer
+    // to get one, and nothing is asked of Wikidata to draw it.
+    document.body.innerHTML = GRID_HTML + LARGE_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, wikipediaLink: true });
+
+    scan(overlay);
+
+    expect(wikipediaButtons()).toHaveLength(2);
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should take the buttons of the articles back at once when they are turned off', () => {
+    document.body.innerHTML = GRID_HTML + LARGE_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount({ ...ALL_OFF, wikipediaLink: true });
+    scan(overlay);
+    expect(wikipediaButtons().length).toBeGreaterThan(0);
+
+    overlay.applySettings({ ...ALL_OFF, wikipediaLink: false });
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should write nothing on a second scan while the buttons of the articles are there', () => {
+    document.body.innerHTML = GRID_HTML + LARGE_HTML;
+    const { overlay } = mount({ ...ALL_OFF, wikipediaLink: true });
+    scan(overlay);
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
   });
 
   it('should draw the cards a trade offer names, with the picture of the ones it knows', async () => {

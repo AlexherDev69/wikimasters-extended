@@ -43,6 +43,8 @@ import {
 import { scanTradeChips, type ObservedTradeCard } from '../../trade-cards/data/scan-trade-chips';
 import { removeTradePreviews } from '../../trade-cards/data/trade-preview';
 import { syncTradePreviews } from '../../trade-cards/presentation/sync-trade-previews';
+import { removeWikipediaButtons } from '../../wikipedia-link/data/wikipedia-button';
+import { syncWikipediaButtons } from '../../wikipedia-link/presentation/sync-wikipedia-buttons';
 import { hasEnabledFeature, type Settings } from '../domain/settings';
 
 /**
@@ -166,6 +168,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.letterboxdLink) {
       syncCardButtons(cards, categoriesByTitle);
     }
+    // Needs nothing of what Wikidata knows: the address is built from the
+    // title the scan has just read, so this one draws on the very first pass.
+    if (settings.wikipediaLink) {
+      syncWikipediaButtons(cards);
+    }
     if (settings.missingImages) {
       syncCardImages(cards, categoriesByTitle);
     }
@@ -276,6 +283,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeModalLink(root);
       removeCardButtons(root);
     }
+    if (previous.wikipediaLink && !settings.wikipediaLink) {
+      removeWikipediaButtons(root);
+    }
     if (previous.missingImages && !settings.missingImages) {
       removeCardImages(root);
       removeModalCreditLines(root);
@@ -318,6 +328,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       // keep it in line with the cards on screen.
       removeModalLink(root);
       removeCardButtons(root);
+      removeWikipediaButtons(root);
       removeCardImages(root);
       removeModalCreditLines(root);
       removeHideCardStats(root.ownerDocument);
