@@ -17,9 +17,9 @@ d'options, appliqués sans recharger les onglets ouverts.
 | Lien Letterboxd | Un lien dans la modale et un logo sur la carte, pour les films, les studios et les personnalités du cinéma |
 | Images manquantes | Pose une image de Wikimedia Commons sur les cartes que le site laisse sans illustration, avec son crédit dans la modale |
 | Cartes sur la page d'échange | Dessine la carte entière à la place des noms tronqués des offres ("SR · The Backrooms (fil…") |
-| Vue compacte | Réduit les cartes de la collection et du catalogue à deux tiers de leur taille, pour en voir deux fois plus |
-| Statistiques de tirage | La part de chaque rareté dans les cartes que tes paquets révèlent, six nombres et rien d'autre |
-| Masquer les statistiques | Cache les valeurs ATK et DEF, sur les cartes et dans la modale (désactivé par défaut) |
+| Bouton vue compacte | Un bouton qui réduit les cartes de la collection et du catalogue à deux tiers de leur taille, pour en voir deux fois plus |
+| Statistiques de tirage | La part de chaque rareté dans les cartes que tes paquets révèlent, six nombres stockés et rien d'autre |
+| Masquer les statistiques des cartes | Cache les valeurs ATK et DEF, sur les cartes et dans la modale (désactivé par défaut) |
 | Pong pendant les chargements | Une partie de Pong quand le site n'affiche que son rond qui tourne depuis plus de trois secondes |
 | Son de notification | Deux notes quand le compteur de la cloche du site augmente |
 
@@ -32,23 +32,31 @@ sous le nom du site, partout où le site écrit son nom.
 paquets, échanger ou interagir à votre place", sous peine de bannissement sans
 préavis. L'extension est un overlay en lecture seule : aucune classe, aucun
 attribut, aucun style et aucun texte n'est posé sur un élément du site, aucune
-API du site n'est appelée, aucun trafic réseau n'est intercepté. Tout ce qu'elle
-ajoute disparaît quand elle est désactivée.
+API du site n'est appelée, aucun trafic réseau n'est intercepté. Deux options
+(masquer les statistiques, vue compacte) changent bien le rendu du site, mais
+par une feuille de style qui appartient à l'extension et vit dans l'en-tête de
+la page : le document que le site a construit reste intact. Tout ce que
+l'extension ajoute disparaît quand elle est désactivée.
 
 **Les licences de Wikimedia.** Seuls les fichiers hébergés par Wikimedia Commons
 sont affichés, jamais ceux que Wikipédia héberge sous son exception de droit
-d'auteur. Chaque image posée par l'extension est créditée dans la modale de
-détail par un lien vers la page du fichier, où figurent son auteur et sa licence.
-Les données de Wikidata sont sous CC0.
+d'auteur. La modale de détail crédite l'image qu'elle montre par un lien vers la
+page du fichier, où figurent son auteur et sa licence. Les données de Wikidata
+sont sous CC0.
 
-**Ta vie privée.** Seuls des titres d'articles publics sont envoyés à
-`fr.wikipedia.org` et `query.wikidata.org`, sans cookie (`credentials: 'omit'`),
-donc aucun compte n'est identifié. Rien n'est envoyé au site, à Letterboxd ni à
-aucun autre serveur. Aucune télémétrie, aucune analyse d'usage. Réglages et
-caches restent dans `chrome.storage.local`, sur ta machine, et la page d'options
-affiche ce qui y est stocké avec de quoi l'effacer. Aucune liste de tes cartes
-n'est conservée. Désactive les trois fonctionnalités qui consultent Wikidata et
-plus aucune requête ne part.
+**Ta vie privée.** Les seules requêtes de l'extension partent vers
+`fr.wikipedia.org` et `query.wikidata.org` : des titres d'articles publics, plus
+les noms des fichiers Commons dont l'adresse doit être résolue. Elles sont
+envoyées sans cookie (`credentials: 'omit'`), donc aucun compte n'est identifié.
+Les images, elles, sont chargées par ton navigateur depuis les serveurs de
+Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : ils reçoivent une
+demande de fichier, jamais la page qui l'affiche. Rien n'est envoyé au site, à
+Letterboxd ni à aucun autre serveur, et il n'y a ni télémétrie ni analyse
+d'usage. Réglages, caches et comptes de tirage restent dans
+`chrome.storage.local`, sur ta machine, et la page d'options affiche les caches
+avec de quoi les vider. L'extension ne tient aucun index de ta collection.
+Désactive les trois fonctionnalités qui consultent Wikidata et plus aucune
+requête ne part.
 
 **Les marques citées.** Le projet n'est affilié ni à wiki-masters.com, ni à
 Wikipédia, Wikimedia, Wikidata ou Letterboxd. Leurs noms et leurs logos ne
@@ -73,12 +81,13 @@ Pour signaler une faille : [SECURITY.md](SECURITY.md).
 
 L'architecture suit une clean architecture simplifiée : `src/core` pour ce qui
 ne connaît pas le site, `src/features/<feature>/{domain,data,presentation}` pour
-le reste, et `src/entrypoints` pour le seul câblage. Les permissions du manifeste
-se limitent à `storage` et aux deux hôtes Wikimedia.
+le reste, et `src/entrypoints` pour le seul câblage. Le manifeste ne demande que
+`storage`, les deux hôtes Wikimedia et son script de contenu sur
+wiki-masters.com.
 
 ## Installation
 
-Node.js 22 ou supérieur, pnpm 10 ou supérieur.
+Node.js 22.12 ou supérieur, pnpm 10 ou supérieur.
 
 ```bash
 pnpm install && pnpm build
@@ -89,6 +98,11 @@ l'extension non empaquetée", et sélectionner `.output/chrome-mv3/`. En
 développement, `pnpm dev` et le dossier `.output/chrome-mv3-dev/` ; aucun
 navigateur n'est ouvert automatiquement, car la vérification Turnstile du site
 refuse les profils automatisés.
+
+Les journaux apparaissent dans la console de la page (F12), préfixés par le nom
+de l'extension : tous les niveaux en développement, `warn` et `error` seulement
+en production. Ceux du service worker se lisent depuis `chrome://extensions`,
+lien "Service worker".
 
 ## Scripts
 
