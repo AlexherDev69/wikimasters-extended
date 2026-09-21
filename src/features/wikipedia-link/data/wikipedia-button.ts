@@ -38,6 +38,26 @@ const LINK_TARGET = '_blank';
 /** No opener and no referrer, as the site does on its own outgoing links. */
 const LINK_REL = 'noopener noreferrer';
 
+/**
+ * How the button reads for assistive technology and for the keyboard.
+ *
+ * `named` is the button of a card OF THE SITE: it carries the label of its
+ * destination and takes a focus stop, like any other link of the page.
+ *
+ * `silent` is the button of a card the extension draws ITSELF, on the page of
+ * the trades, inside a button of the site. That button takes its name from
+ * the text it holds, so a labelled link of ours would be read out in the
+ * middle of it, and its focus stop would be added to the ones the site laid
+ * out. The mark is therefore hidden from assistive technology and kept out of
+ * the tab order: the mouse reaches it, the control of the site keeps exactly
+ * the name and the stops the site gave it, and a reader who never uses a
+ * mouse loses nothing, the same article being one click away in the detail
+ * the control opens.
+ */
+type ButtonVoice = 'named' | 'silent';
+
+const NOT_IN_TAB_ORDER = -1;
+
 const HREF_ATTRIBUTE = 'href';
 const ARIA_LABEL_ATTRIBUTE = 'aria-label';
 const ARIA_HIDDEN_ATTRIBUTE = 'aria-hidden';
@@ -59,7 +79,21 @@ function buildMark(document: Document): HTMLElement {
   return mark;
 }
 
-function buildButton(document: Document, title: string, url: string): HTMLAnchorElement {
+function speak(button: HTMLAnchorElement, title: string, voice: ButtonVoice): void {
+  if (voice === 'named') {
+    button.setAttribute(ARIA_LABEL_ATTRIBUTE, ariaLabel(title));
+    return;
+  }
+  button.setAttribute(ARIA_HIDDEN_ATTRIBUTE, 'true');
+  button.tabIndex = NOT_IN_TAB_ORDER;
+}
+
+function buildButton(
+  document: Document,
+  title: string,
+  url: string,
+  voice: ButtonVoice,
+): HTMLAnchorElement {
   const button = document.createElement(BUTTON_TAG);
 
   button.className = BUTTON_CLASS;
@@ -67,7 +101,7 @@ function buildButton(document: Document, title: string, url: string): HTMLAnchor
   button.href = url;
   button.target = LINK_TARGET;
   button.rel = LINK_REL;
-  button.setAttribute(ARIA_LABEL_ATTRIBUTE, ariaLabel(title));
+  speak(button, title, voice);
 
   button.appendChild(buildMark(document));
 
@@ -134,7 +168,21 @@ export function applyWikipediaButton(cardRoot: HTMLElement, title: string): void
   // Another card in a node the site reused: the button is built again rather
   // than patched, exactly as the Letterboxd one is.
   existing?.remove();
-  textArea.appendChild(buildButton(cardRoot.ownerDocument, title, safeUrl));
+  textArea.appendChild(buildButton(cardRoot.ownerDocument, title, safeUrl, 'named'));
+}
+
+/**
+ * The same button for a card the extension draws itself, silent for a screen
+ * reader and out of the tab order, or null when no address of the article
+ * space of frwiki can be built from `title`.
+ *
+ * The address is built here rather than taken from the caller: it is a
+ * function of the title alone, and this is the last step before an `href`.
+ */
+export function silentWikipediaButton(document: Document, title: string): HTMLAnchorElement | null {
+  const url = frwikiArticleUrl(title);
+
+  return isFrwikiArticleUrl(url) ? buildButton(document, title, url, 'silent') : null;
 }
 
 /**

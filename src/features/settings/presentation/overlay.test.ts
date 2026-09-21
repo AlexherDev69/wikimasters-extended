@@ -697,6 +697,28 @@ describe('createOverlay', () => {
     expect(asked).toHaveLength(6);
   });
 
+  it('should draw the button of the article on the cards it draws for a trade offer', () => {
+    document.body.innerHTML = TRADES_HTML;
+    const { overlay } = mount({ ...ALL_OFF, tradeCards: true, wikipediaLink: true });
+
+    scan(overlay);
+
+    expect(tradePreviews().length).toBeGreaterThan(0);
+    expect(wikipediaButtons()).toHaveLength(tradePreviews().length);
+  });
+
+  it('should take those buttons back with the cards when the trade setting goes off', () => {
+    document.body.innerHTML = TRADES_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount({ ...ALL_OFF, tradeCards: true, wikipediaLink: true });
+    scan(overlay);
+    expect(wikipediaButtons().length).toBeGreaterThan(0);
+
+    overlay.applySettings({ ...ALL_OFF, tradeCards: false, wikipediaLink: true });
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
   it('should draw no trade card and ask for nothing while every setting is off', () => {
     document.body.innerHTML = TRADES_HTML;
     const { overlay, categorize } = mount(ALL_OFF);

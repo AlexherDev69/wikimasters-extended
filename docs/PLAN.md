@@ -692,6 +692,14 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - `find-text-area.ts` remonte de `letterboxd/data/` vers `card-detection/data/` : deux fonctionnalités écrivent maintenant dans ce coin de la carte, et la nouvelle n'a pas à dépendre de l'ancienne
 - Vue compacte : la feuille de style épargne les deux marques par leur nom au lieu d'une seule, et les remonte toutes les deux ensemble au-dessus de la zone de texte. Elles gardent leur taille et leur écart, la bande pour laquelle elles ont été taillées étant une marge de 12 px quelle que soit la carte
 
+### Phase 19 : les deux marques sur les cartes dessinées de la page d'échange (faite le 2026-09-21)
+
+- Demande de l'utilisateur, captures à l'appui : "sur la carte image 1 ce serait bien d'avoir les boutons letterboxd et wiki". La carte dessinée montrait l'image, la rareté et le titre, mais pas les deux marques que la vraie carte porte
+- Obstacle mesuré avant d'écrire quoi que ce soit : l'offre entière est un `button` du site (vérifié sur la fixture, la chaîne des ancêtres d'une pastille). Une ancre dans un bouton est du HTML invalide, et le bouton tire son nom accessible du texte qu'il contient. Essai en navigateur : un clic sur l'ancre navigue bien, et `stopPropagation` empêche le handler du bouton de s'exécuter
+- Tranché : les marques sont des ancres, pour le clic du milieu et le menu contextuel, mais `aria-hidden` et `tabindex="-1"`. Le bouton du site garde exactement le nom et les arrêts de tabulation que le site lui a donnés, et un lecteur qui n'utilise pas la souris ne perd rien, le même article étant à un clic dans le détail que ce bouton ouvre
+- Forme : les deux fonctionnalités exportent chacune une variante `silent` de leur bouton, à côté de la variante `named` des cartes du site. Un type `ButtonVoice` plutôt qu'un booléen, et le noeud garde son attribut, donc sa feuille de style, son placement et son décalage viennent sans une ligne de CSS de plus
+- Les deux marques entrent dans la clé de la carte dessinée : une adresse Letterboxd qui arrive une passe plus tard, ou un interrupteur que l'on décoche, redessinent la carte plutôt que de la rapiécer. Zéro écriture quand rien n'a changé, prouvé au MutationObserver
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"

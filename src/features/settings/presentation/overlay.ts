@@ -180,7 +180,10 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // the chip that names it, and never inside the detail modal: it is synced
     // before the modal is even looked for.
     if (settings.tradeCards) {
-      syncTradePreviews(root, trades, categoriesByTitle);
+      syncTradePreviews(root, trades, categoriesByTitle, {
+        wikipedia: settings.wikipediaLink,
+        letterboxd: settings.letterboxdLink,
+      });
     }
     // Global to the page rather than per card, and needs nothing that came
     // from a scan: it can run before the cards are even looked at.
