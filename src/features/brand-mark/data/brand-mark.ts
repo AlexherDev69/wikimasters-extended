@@ -13,7 +13,6 @@ import { BRAND_MARK_ATTRIBUTE, BRAND_MARK_SELECTOR, SITE_NAME_SELECTOR } from '.
  */
 
 const MARK_TAG = 'span';
-const MARK_CLASS = 'wme-brand-mark';
 
 const MARK_TEXT = 'Extended';
 
@@ -28,7 +27,8 @@ const HIDDEN_ATTRIBUTE = 'aria-hidden';
 function buildMark(document: Document): HTMLElement {
   const mark = document.createElement(MARK_TAG);
 
-  mark.className = MARK_CLASS;
+  // The attribute is the whole identity of the node: the style sheet reads it,
+  // and so does the pass that looks for the word already written.
   mark.setAttribute(BRAND_MARK_ATTRIBUTE, '');
   mark.setAttribute(HIDDEN_ATTRIBUTE, 'true');
   mark.textContent = MARK_TEXT;
@@ -47,20 +47,22 @@ function buildMark(document: Document): HTMLElement {
  * scan that the rebuild itself raises.
  */
 export function applyBrandMark(root: ParentNode): void {
-  const siteName = root.querySelector(SITE_NAME_SELECTOR);
-  // The selector asks for the heading of a link, so the parent is that link.
-  const link = siteName?.parentElement ?? null;
+  // Every name the site draws, and not just the first one: one page holds one
+  // today, measured on five real exports, but a navigation of its own for the
+  // narrow screens would hold a second, and it costs nothing to write under
+  // both.
+  for (const siteName of root.querySelectorAll(SITE_NAME_SELECTOR)) {
+    // The selector asks for the heading of a link, so the parent is that link.
+    const link = siteName.parentElement;
 
-  if (siteName === null || link === null) {
-    return;
+    // Ours is looked for inside that link only, and not anywhere on the page:
+    // the one left in a navigation React has just thrown away would otherwise
+    // pass for the one we are about to need.
+    if (link === null || link.querySelector(BRAND_MARK_SELECTOR) !== null) {
+      continue;
+    }
+    siteName.insertAdjacentElement('afterend', buildMark(link.ownerDocument));
   }
-  // Ours is looked for inside that link only, and not anywhere on the page:
-  // the one left in a navigation React has just thrown away would otherwise
-  // pass for the one we are about to need.
-  if (link.querySelector(BRAND_MARK_SELECTOR) !== null) {
-    return;
-  }
-  siteName.insertAdjacentElement('afterend', buildMark(link.ownerDocument));
 }
 
 /**

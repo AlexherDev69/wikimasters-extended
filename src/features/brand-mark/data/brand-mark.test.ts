@@ -81,6 +81,16 @@ describe('applyBrandMark', () => {
     expect(document.body.querySelectorAll('h1')).toHaveLength(2);
   });
 
+  it('should write the word under every name the site draws', () => {
+    // One page holds one today. A navigation of its own for the narrow
+    // screens would hold a second, and both must carry the word.
+    document.body.innerHTML = HEADER_HTML + HEADER_HTML;
+
+    applyBrandMark(document.body);
+
+    expect(ourMarks()).toHaveLength(2);
+  });
+
   it('should write nothing on a page the site shows no name of its own on', () => {
     document.body.innerHTML = '<div><h1 style="font-family: var(--font-heading);">Marché</h1></div>';
     const observer = observeBody();
