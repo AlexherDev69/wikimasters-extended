@@ -59,25 +59,19 @@ export function isCategorizationStatus(value: unknown): value is CategorizationS
   );
 }
 
-/** One result per distinct card title, as returned to the content script. */
+/**
+ * One result per distinct card title, as returned to the content script.
+ *
+ * The classification itself never leaves the service worker: it decides what
+ * a Letterboxd address may be built from, and nothing of the page has read a
+ * category since the badge was removed.
+ */
 export interface CardCategory {
   title: string;
   status: CategorizationStatus;
   qid: string | null;
-  /** Null unless `status` is `categorized`. */
-  categoryId: CategoryId | null;
-  /** Non-null only when `categoryId` is `person`. */
-  primarySubtype: PersonSubtypeId | null;
-  personSubtypes: PersonSubtypeId[];
   /** Null unless `status` is `categorized` and the card has a Letterboxd page. */
   letterboxdUrl: string | null;
   /** Null unless `status` is `categorized` and Wikidata holds an image. */
   image: CardImage | null;
-  /**
-   * Tags to propose in the tag area of the detail modal, empty unless
-   * `status` is `categorized`. Built from what the categorization already
-   * knows of the card: no new SPARQL property and no new request for this
-   * alone. See tag-suggestions/domain/suggest-tags.ts.
-   */
-  suggestedTags: string[];
 }

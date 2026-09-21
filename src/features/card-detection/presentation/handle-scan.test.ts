@@ -57,12 +57,8 @@ function makeCategory(title: string): CardCategory {
     title,
     status: 'categorized',
     qid: 'Q1',
-    categoryId: 'film_tv',
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl: null,
     image: null,
-    suggestedTags: [],
   };
 }
 
@@ -150,12 +146,8 @@ describe('handleScan', () => {
           title: 'Alpha',
           status: 'categorized',
           qid: 'Q42',
-          categoryId: 'person',
-          primarySubtype: 'cinema',
-          personSubtypes: ['cinema'],
           letterboxdUrl: 'https://letterboxd.com/actor/alpha/',
           image: null,
-          suggestedTags: [],
         },
       ]);
 
@@ -172,8 +164,6 @@ describe('handleScan', () => {
             title: 'Alpha',
             rarity: 'r',
             status: 'categorized',
-            categoryId: 'person',
-            primarySubtype: 'cinema',
           },
         ],
       }),
@@ -192,7 +182,7 @@ describe('handleScan', () => {
     expect(logger.info).toHaveBeenCalledWith(
       'Cards categorized',
       expect.objectContaining({
-        cards: [{ title: 'Alpha', rarity: 'c', status: 'error', categoryId: null, primarySubtype: null }],
+        cards: [{ title: 'Alpha', rarity: 'c', status: 'error' }],
       }),
     );
   });
@@ -246,23 +236,15 @@ describe('handleScan', () => {
           title: 'Beta',
           status: 'not_found',
           qid: null,
-          categoryId: null,
-          primarySubtype: null,
-          personSubtypes: [],
           letterboxdUrl: null,
           image: null,
-          suggestedTags: [],
         },
         {
           title: 'Gamma',
           status: 'error',
           qid: null,
-          categoryId: null,
-          primarySubtype: null,
-          personSubtypes: [],
           letterboxdUrl: null,
           image: null,
-          suggestedTags: [],
         },
       ]);
 

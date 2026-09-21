@@ -20,12 +20,8 @@ function makeCategory(title: string, letterboxdUrl: string | null): CardCategory
     title,
     status: 'categorized',
     qid: 'Q1',
-    categoryId: 'film_tv',
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl,
     image: null,
-    suggestedTags: [],
   };
 }
 

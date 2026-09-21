@@ -1,5 +1,4 @@
 import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
-import { BADGE_SELECTOR } from '../../category-badge/data/badge-selectors';
 import {
   COMPACT_CARD_SELECTOR,
   COMPACT_PICTURE_SELECTOR,
@@ -72,12 +71,6 @@ ${COMPACT_TEXT_SELECTOR} > *:not(h3):not(${CARD_BUTTON_SELECTOR}) {
 ${COMPACT_TEXT_SELECTOR} > h3 {
   font-size: 10px;
   line-height: 1.15;
-}
-
-/* Our category badge straddles the line between picture and text, which has
-   just moved. Same rule as its own style sheet, at the new line. */
-${COMPACT_CARD_SELECTOR} ${BADGE_SELECTOR} {
-  bottom: calc(32% - 8px);
 }
 
 /* Our Letterboxd mark sits in the band the ATK/DEF row leaves free at the

@@ -23,12 +23,8 @@ function makeCategory(title: string, overrides: Partial<CardCategory> = {}): Car
     title,
     status: 'categorized',
     qid: 'Q1',
-    categoryId: 'film_tv',
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl: null,
     image: null,
-    suggestedTags: [],
     ...overrides,
   };
 }

@@ -31,11 +31,10 @@ const MARK_CLASS = 'wme-card-image-source';
  * of the picture. It says at a glance that the picture was added by the
  * extension rather than served by the site.
  *
- * A single letter rather than the word: the word was wide enough to share its
- * row with the category badge, which is drawn above ours and covered its
- * start on a narrow card. The source is spelled out in full, with its author
- * and its licence, in the credit line of the detail modal, which is the only
- * place that has the room for it.
+ * A single letter rather than the word: the word was wide enough to reach the
+ * marks the site draws over that corner on a narrow card. The source is
+ * spelled out in full, with its author and its licence, in the credit line of
+ * the detail modal, which is the only place that has the room for it.
  *
  * Drawn as a FILLED disc and never as a letter in a thin ring: a ringed C is
  * the copyright glyph, and these files are under a free licence, so that

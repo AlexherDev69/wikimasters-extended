@@ -9,10 +9,6 @@ import {
   rememberCategories,
   type CategoryMemory,
 } from '../../categorization/presentation/remember-categories';
-import { removeCardBadges } from '../../category-badge/data/card-badge';
-import { removeModalCategoryLines } from '../../category-badge/data/modal-category-line';
-import { syncCardBadges } from '../../category-badge/presentation/sync-card-badges';
-import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
 import { removeCompactStyle } from '../../compact-view/data/compact-style';
 import { removeCompactToggles } from '../../compact-view/data/compact-toggle';
 import type { CompactPreferenceStore } from '../../compact-view/domain/compact-preference-store';
@@ -43,11 +39,9 @@ import {
   createPullStatsState,
   syncPullStats,
 } from '../../pull-stats/presentation/sync-pull-stats';
-import { removeTagProposals } from '../../tag-suggestions/presentation/apply-tag-proposals';
 import { scanTradeChips, type ObservedTradeCard } from '../../trade-cards/data/scan-trade-chips';
 import { removeTradePreviews } from '../../trade-cards/data/trade-preview';
 import { syncTradePreviews } from '../../trade-cards/presentation/sync-trade-previews';
-import { syncTagSuggestions } from '../../tag-suggestions/presentation/sync-tag-suggestions';
 import { hasEnabledFeature, type Settings } from '../domain/settings';
 
 /**
@@ -163,9 +157,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   function sync(cards: readonly ObservedCard[], trades: readonly ObservedTradeCard[]): void {
     const { categoriesByTitle } = memory;
 
-    if (settings.categoryBadges) {
-      syncCardBadges(cards, categoriesByTitle);
-    }
     if (settings.letterboxdLink) {
       syncCardButtons(cards, categoriesByTitle);
     }
@@ -208,33 +199,18 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.loadingPong) {
       syncLoadingPong(root, isPageLoading(root, cards.length), loadingPong, loadingPongDeps);
     }
-    if (
-      !settings.categoryBadges &&
-      !settings.letterboxdLink &&
-      !settings.missingImages &&
-      !settings.tagSuggestions
-    ) {
+    if (!settings.letterboxdLink && !settings.missingImages) {
       return;
     }
     // The observer of the cards also fires when the modal opens, so no
     // observer, no polling and no timer of its own is needed here. The modal
-    // is looked up once and shared: the four features write in the same one.
+    // is looked up once and shared: the two features write in the same one.
     const modal = findDetailModal(root);
     if (settings.letterboxdLink) {
       syncModalLink(modal, categoriesByTitle);
     }
-    if (settings.categoryBadges) {
-      syncModalCategory(modal, categoriesByTitle);
-    }
     if (settings.missingImages) {
       syncModalCredit(modal, categoriesByTitle);
-    }
-    if (settings.tagSuggestions) {
-      syncTagSuggestions(modal, categoriesByTitle, {
-        // Read again on every click, never captured here: switching the
-        // setting off stops it from the very next click, not the next sync.
-        isAutoFillEnabled: (): boolean => settings.tagAutoFill,
-      });
     }
   }
 
@@ -290,10 +266,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
 
   /** Takes back the nodes of the parts that `previous` had and `settings` has not. */
   function removeDisabledNodes(previous: Settings): void {
-    if (previous.categoryBadges && !settings.categoryBadges) {
-      removeCardBadges(root);
-      removeModalCategoryLines(root);
-    }
     if (previous.letterboxdLink && !settings.letterboxdLink) {
       removeModalLink(root);
       removeCardButtons(root);
@@ -304,9 +276,6 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     }
     if (previous.hideCardStats && !settings.hideCardStats) {
       removeHideCardStats(root.ownerDocument);
-    }
-    if (previous.tagSuggestions && !settings.tagSuggestions) {
-      removeTagProposals(root);
     }
     if (previous.tradeCards && !settings.tradeCards) {
       removeTradePreviews(root);
@@ -341,14 +310,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       // Reloading the extension leaves the page open: everything the overlay
       // added goes away with it, rather than staying behind with nobody to
       // keep it in line with the cards on screen.
-      removeCardBadges(root);
-      removeModalCategoryLines(root);
       removeModalLink(root);
       removeCardButtons(root);
       removeCardImages(root);
       removeModalCreditLines(root);
       removeHideCardStats(root.ownerDocument);
-      removeTagProposals(root);
       removeTradePreviews(root);
       removePullStatsPanels(root);
       removeCompactToggles(root);

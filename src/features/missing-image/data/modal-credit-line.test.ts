@@ -4,9 +4,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CARD_ROOT_SELECTOR, WIKIPEDIA_LINK_SELECTOR } from '../../card-detection/data/card-selectors';
 import { findDetailModal, type DetailModal } from '../../card-detection/data/detail-modal';
-import { CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
-import { applyModalCategoryLine, findModalCategoryTarget } from '../../category-badge/data/modal-category-line';
-import type { ModalCategoryDescriptor } from '../../category-badge/domain/describe-modal-category';
 import { applyModalLink, findModalLinkTarget } from '../../letterboxd/data/modal-link';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import { IMAGE_CREDIT_SELECTOR } from './image-selectors';
@@ -34,12 +31,6 @@ const FILE_PAGE_URL =
 const CREDIT_TEXT = 'Image : Wikimedia Commons (auteur et licence)';
 
 const FILM_URL = 'https://letterboxd.com/film/pulp-fiction/';
-
-const PLACE: ModalCategoryDescriptor = {
-  categoryId: 'place',
-  accentColor: '#6ce0ac',
-  text: 'Catégorie : Lieu',
-};
 
 /**
  * The detail modal showing a card the site has no picture for: the card of the
@@ -73,11 +64,6 @@ function requireTarget(): ModalCreditTarget {
 /** The Letterboxd feature adds its link the same way the content script does. */
 function addLetterboxdLink(): void {
   applyModalLink(findModalLinkTarget(requireModal()), FILM_URL);
-}
-
-/** The category feature adds its line the same way. */
-function addCategoryLine(): void {
-  applyModalCategoryLine(findModalCategoryTarget(requireModal()), PLACE);
 }
 
 function ourLine(): HTMLElement | null {
@@ -119,14 +105,6 @@ describe('findModalCreditTarget', () => {
     addLetterboxdLink();
 
     expect(requireTarget().anchor).toBe(document.body.querySelector(LETTERBOXD_LINK_SELECTOR));
-  });
-
-  it('should aim under the category line when there is one', () => {
-    openModal();
-    addLetterboxdLink();
-    addCategoryLine();
-
-    expect(requireTarget().anchor).toBe(document.body.querySelector(CATEGORY_LINE_SELECTOR));
   });
 
   it('should return the line of a previous sync when there is one', () => {
@@ -174,19 +152,7 @@ describe('applyModalCreditLine', () => {
     expect(ourLink()?.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
-  it('should sit under the category line when the three features arrived in order', () => {
-    openModal();
-    addLetterboxdLink();
-    addCategoryLine();
-
-    applyModalCreditLine(requireTarget(), FILE_NAME);
-
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)?.nextElementSibling).toBe(
-      ourLine(),
-    );
-  });
-
-  it('should sit under the Letterboxd link when the category line never comes', () => {
+  it('should sit under the Letterboxd link when there is one', () => {
     openModal();
     addLetterboxdLink();
 
@@ -197,20 +163,16 @@ describe('applyModalCreditLine', () => {
     );
   });
 
-  it('should end up under the category line when the credit arrived first', () => {
+  it('should end up under the Letterboxd link when the credit arrived first', () => {
     openModal();
     applyModalCreditLine(requireTarget(), FILE_NAME);
 
-    addCategoryLine();
     addLetterboxdLink();
 
     // Each feature anchors on the last node that must come before it, so the
-    // three always end up in the same order whatever the order they arrive in.
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)?.nextElementSibling).toBe(
-      ourLine(),
-    );
+    // two always end up in the same order whatever the order they arrive in.
     expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)?.nextElementSibling).toBe(
-      document.body.querySelector(CATEGORY_LINE_SELECTOR),
+      ourLine(),
     );
   });
 

@@ -1,10 +1,5 @@
 import type { Logger } from '../../../core/logger/logger';
-import type {
-  CardCategory,
-  CategorizationStatus,
-  CategoryId,
-  PersonSubtypeId,
-} from '../../categorization/domain/category';
+import type { CardCategory, CategorizationStatus } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
 import type { DetectedCard } from '../domain/detected-card';
 import { selectUnseenCards } from '../domain/select-unseen-cards';
@@ -40,8 +35,6 @@ interface CardLogEntry {
   title: string;
   rarity: string;
   status: CategorizationStatus;
-  categoryId: CategoryId | null;
-  primarySubtype: PersonSubtypeId | null;
 }
 
 function toLogEntries(
@@ -54,8 +47,6 @@ function toLogEntries(
       title: card.title,
       rarity: card.rarity,
       status: result?.status ?? 'error',
-      categoryId: result?.categoryId ?? null,
-      primarySubtype: result?.primarySubtype ?? null,
     };
   });
 }

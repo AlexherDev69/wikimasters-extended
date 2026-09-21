@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { CARD_ROOT_SELECTOR } from '../../card-detection/data/card-selectors';
 import { findDetailModal } from '../../card-detection/data/detail-modal';
 import type { CardCategory } from '../../categorization/domain/category';
-import { CATEGORY_LINE_SELECTOR } from '../../category-badge/data/badge-selectors';
-import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
+import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
+import { syncModalLink } from '../../letterboxd/presentation/sync-modal-link';
 import { IMAGE_CREDIT_SELECTOR } from '../data/image-selectors';
 import type { CardImage } from '../domain/card-image';
 import { syncModalCredit } from './sync-modal-credit';
@@ -29,17 +29,15 @@ const PORTRAIT: CardImage = {
 
 const CREDIT_TEXT = 'Image : Wikimedia Commons (auteur et licence)';
 
+const FILM_URL = 'https://letterboxd.com/film/pulp-fiction/';
+
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
   return {
     title,
     status: 'categorized',
     qid: 'Q1',
-    categoryId: 'person',
-    primarySubtype: null,
-    personSubtypes: [],
     letterboxdUrl: null,
     image: null,
-    suggestedTags: [],
     ...overrides,
   };
 }
@@ -72,9 +70,9 @@ function syncCredit(categoriesByTitle: ReadonlyMap<string, CardCategory>): void 
   syncModalCredit(findDetailModal(document.body), categoriesByTitle);
 }
 
-/** The category feature syncs from the very same modal. */
-function syncCategory(categoriesByTitle: ReadonlyMap<string, CardCategory>): void {
-  syncModalCategory(findDetailModal(document.body), categoriesByTitle);
+/** The Letterboxd feature syncs from the very same modal. */
+function syncLink(categoriesByTitle: ReadonlyMap<string, CardCategory>): void {
+  syncModalLink(findDetailModal(document.body), categoriesByTitle);
 }
 
 function ourLine(): HTMLElement | null {
@@ -178,14 +176,16 @@ describe('syncModalCredit', () => {
     observer.disconnect();
   });
 
-  it('should sit under the category line when the credit synced before it', () => {
+  it('should sit under the Letterboxd link when the credit synced before it', () => {
     openModalWithPlaceholder();
-    const categories = makeCategories(makeCategory(PLACEHOLDER_TITLE, { image: PORTRAIT }));
+    const categories = makeCategories(
+      makeCategory(PLACEHOLDER_TITLE, { image: PORTRAIT, letterboxdUrl: FILM_URL }),
+    );
 
     syncCredit(categories);
-    syncCategory(categories);
+    syncLink(categories);
 
-    expect(document.body.querySelector(CATEGORY_LINE_SELECTOR)?.nextElementSibling).toBe(
+    expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)?.nextElementSibling).toBe(
       ourLine(),
     );
   });

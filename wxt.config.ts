@@ -20,7 +20,7 @@ export default defineConfig({
   manifest: {
     name: EXTENSION_NAME,
     description:
-      'Overlay pour wiki-masters.com, en lecture seule par défaut : catégorisation des cartes via Wikidata.',
+      "Overlay en lecture seule pour wiki-masters.com : images manquantes, lien Letterboxd et cartes des offres d'échange.",
     version: '0.1.0',
     // The popup entrypoint gives the button its window; only the tooltip is
     // left to declare here.

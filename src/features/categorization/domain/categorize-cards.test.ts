@@ -13,7 +13,7 @@ import {
   type FetchLike,
 } from '../../../core/http/fetch-json';
 import type { Logger } from '../../../core/logger/logger';
-import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
+import { isNullableString, isRecord } from '../../../core/types/guards';
 import {
   createThumbnailUrlCache,
   THUMBNAIL_URL_KEY_PREFIX,
@@ -45,47 +45,30 @@ import type {
   TitleResolver,
 } from './ports';
 
-/** Expected output of the 100 real cards, produced independently from the rules. */
-interface GoldenEntry {
-  title: string;
-  description: string | null;
-  categoryId: string;
-  primarySubtype: string | null;
-  personSubtypes: string[];
-}
-
-function parseGoldenEntry(raw: unknown): GoldenEntry {
-  if (
-    !isRecord(raw) ||
-    typeof raw['title'] !== 'string' ||
-    typeof raw['categoryId'] !== 'string' ||
-    !isStringArray(raw['personSubtypes'])
-  ) {
-    throw new Error('Unexpected golden expectation shape');
+/** One of the 100 real cards of the golden set, as the site shows it. */
+function parseGoldenCard(raw: unknown): CardToCategorize {
+  if (!isRecord(raw) || typeof raw['title'] !== 'string') {
+    throw new Error('Unexpected golden card shape');
   }
   const description = raw['description'];
-  const primarySubtype = raw['primarySubtype'];
 
   return {
     title: raw['title'],
     description: typeof description === 'string' ? description : null,
-    categoryId: raw['categoryId'],
-    primarySubtype: typeof primarySubtype === 'string' ? primarySubtype : null,
-    personSubtypes: raw['personSubtypes'],
   };
 }
 
-function readGoldenExpectations(): GoldenEntry[] {
-  const raw = readFixture('golden-expectations.json');
+function readGoldenCards(): CardToCategorize[] {
+  const raw = readFixture('golden-cards.json');
   if (!Array.isArray(raw)) {
-    throw new Error('Unexpected golden expectation shape');
+    throw new Error('Unexpected golden card shape');
   }
-  return raw.map(parseGoldenEntry);
+  return raw.map(parseGoldenCard);
 }
 
-const GOLDEN_EXPECTATIONS = readGoldenExpectations();
+const GOLDEN_CARDS = readGoldenCards();
 
-/** Expected Letterboxd link of the same cards, produced the same way. */
+/** Expected Letterboxd link of those cards, produced independently from the rules. */
 interface GoldenLetterboxdEntry {
   title: string;
   letterboxdUrl: string | null;
@@ -111,11 +94,6 @@ function readGoldenLetterboxd(): GoldenLetterboxdEntry[] {
 }
 
 const GOLDEN_LETTERBOXD = readGoldenLetterboxd();
-
-const GOLDEN_CARDS: CardToCategorize[] = GOLDEN_EXPECTATIONS.map((entry) => ({
-  title: entry.title,
-  description: entry.description,
-}));
 
 const SYSTEM_CLOCK: Clock = { now: (): number => Date.now() };
 
@@ -400,29 +378,13 @@ describe('categorizeCards', () => {
     fakeBrowser.reset();
   });
 
-  it('should return the expected category of every card of the golden set', async () => {
+  it('should categorize every card of the golden set', async () => {
     const replay = createReplayFetch();
 
     const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
-    const resultByTitle = byTitle(results);
 
-    expect(results).toHaveLength(GOLDEN_EXPECTATIONS.length);
-    for (const expected of GOLDEN_EXPECTATIONS) {
-      const actual = resultByTitle.get(expected.title);
-      expect({
-        title: expected.title,
-        status: actual?.status,
-        categoryId: actual?.categoryId,
-        primarySubtype: actual?.primarySubtype,
-        personSubtypes: actual?.personSubtypes,
-      }).toEqual({
-        title: expected.title,
-        status: 'categorized',
-        categoryId: expected.categoryId,
-        primarySubtype: expected.primarySubtype,
-        personSubtypes: expected.personSubtypes,
-      });
-    }
+    expect(results).toHaveLength(GOLDEN_CARDS.length);
+    expect(results.filter((result) => result.status !== 'categorized')).toEqual([]);
   });
 
   it('should return the expected Letterboxd link of every card of the golden set', async () => {
@@ -431,7 +393,7 @@ describe('categorizeCards', () => {
     const results = await categorizeCards(GOLDEN_CARDS, makeDeps(replay.fetchImpl), WITH_IMAGE_URLS);
     const resultByTitle = byTitle(results);
 
-    expect(GOLDEN_LETTERBOXD).toHaveLength(GOLDEN_EXPECTATIONS.length);
+    expect(GOLDEN_LETTERBOXD).toHaveLength(GOLDEN_CARDS.length);
     for (const expected of GOLDEN_LETTERBOXD) {
       expect({
         title: expected.title,
@@ -491,16 +453,12 @@ describe('categorizeCards', () => {
       title: MISSING_TITLE,
       status: 'not_found',
       qid: null,
-      categoryId: null,
-      primarySubtype: null,
-      personSubtypes: [],
       letterboxdUrl: null,
       image: null,
-      suggestedTags: [],
     });
   });
 
-  it('should return other when the entity has neither class nor parent', async () => {
+  it('should categorize an entity that has neither class nor parent', async () => {
     const card = GOLDEN_CARDS[0];
     if (card === undefined) {
       throw new Error('The golden set is empty');
@@ -513,20 +471,7 @@ describe('categorizeCards', () => {
       WITH_IMAGE_URLS,
     );
 
-    expect(results[0]).toMatchObject({
-      status: 'categorized',
-      categoryId: 'other',
-      primarySubtype: null,
-      personSubtypes: [],
-    });
-  });
-
-  it('should carry the French category label among the suggested tags of a categorized card', async () => {
-    const deps = makeStubDeps(STUB_CLASSES_RESOLVED);
-
-    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
-
-    expect(results[0]?.suggestedTags).toEqual(['Vivant']);
+    expect(results[0]?.status).toBe('categorized');
   });
 
   it('should categorize the card when a parent is unresolved but its classes elect a category', async () => {
@@ -534,7 +479,7 @@ describe('categorizeCards', () => {
 
     const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
 
-    expect(results[0]).toMatchObject({ status: 'categorized', categoryId: 'living' });
+    expect(results[0]?.status).toBe('categorized');
   });
 
   it('should report an error when a parent is unresolved and the classes elect nobody', async () => {
@@ -555,8 +500,7 @@ describe('categorizeCards', () => {
 
   it('should still categorize a cached card when the request of the other cards fails', async () => {
     const cachedCard = GOLDEN_CARDS[0];
-    const expected = GOLDEN_EXPECTATIONS[0];
-    if (cachedCard === undefined || expected === undefined) {
+    if (cachedCard === undefined) {
       throw new Error('The golden set is empty');
     }
 
@@ -572,10 +516,7 @@ describe('categorizeCards', () => {
     );
     const resultByTitle = byTitle(results);
 
-    expect(resultByTitle.get(cachedCard.title)).toMatchObject({
-      status: 'categorized',
-      categoryId: expected.categoryId,
-    });
+    expect(resultByTitle.get(cachedCard.title)?.status).toBe('categorized');
     expect(resultByTitle.get(MISSING_TITLE)?.status).toBe('error');
     expect(logger.warn).toHaveBeenCalledWith(
       'Card facts request failed',
@@ -700,7 +641,6 @@ describe('categorizeCards', () => {
     // Categorized, with its picture, and simply without a resolved address:
     // the content script then builds the slower one itself.
     expect(results[0]?.status).toBe('categorized');
-    expect(results[0]?.categoryId).toBe('living');
     expect(results[0]?.image?.fileName).toBe(STUB_IMAGE?.fileName);
     expect(results[0]?.image?.thumbnailUrl).toBeNull();
     expect(logger.warn).toHaveBeenCalledWith(

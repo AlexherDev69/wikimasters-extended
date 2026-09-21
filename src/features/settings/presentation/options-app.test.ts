@@ -30,7 +30,7 @@ const EMPTY_STATS: StorageStats = {
 /** What the counts say once the old index data has been removed. */
 const CLEANED_STATS: StorageStats = { ...STATS, hasLegacyIndexData: false };
 
-const BADGES_CHECKBOX = 'input[data-wme-setting="categoryBadges"]';
+const IMAGES_CHECKBOX = 'input[data-wme-setting="missingImages"]';
 const LETTERBOXD_CHECKBOX = 'input[data-wme-setting="letterboxdLink"]';
 const CACHE_BUTTON = 'button[data-wme-action="categorization-cache"]';
 const CACHE_CONFIRM = 'button[data-wme-confirm="categorization-cache"]';
@@ -72,7 +72,7 @@ async function mount(ports: OptionsPorts = makePorts()): Promise<HTMLElement> {
   const container = makeContainer();
   mountOptions(container, ports);
   await vi.waitFor(() => {
-    expect(container.querySelector(BADGES_CHECKBOX)).not.toBeNull();
+    expect(container.querySelector(IMAGES_CHECKBOX)).not.toBeNull();
   });
   return container;
 }
@@ -94,11 +94,11 @@ describe('mountOptions', () => {
   });
 
   it('should show a switch off when the settings say so', async () => {
-    const settings: Settings = { ...DEFAULT_SETTINGS, categoryBadges: false };
+    const settings: Settings = { ...DEFAULT_SETTINGS, missingImages: false };
 
     const container = await mount(makePorts({ readSettings: () => Promise.resolve(settings) }));
 
-    expect(checkbox(container, BADGES_CHECKBOX)?.checked).toBe(false);
+    expect(checkbox(container, IMAGES_CHECKBOX)?.checked).toBe(false);
   });
 
   it('should show no switch at all when the settings cannot be read', async () => {
@@ -117,7 +117,7 @@ describe('mountOptions', () => {
     });
     // A switch drawn at its default would be written over the saved ones by
     // the very next toggle, so none is drawn and nothing is counted either.
-    expect(container.querySelector(BADGES_CHECKBOX)).toBeNull();
+    expect(container.querySelector(IMAGES_CHECKBOX)).toBeNull();
     expect(container.querySelector(CACHE_BUTTON)).toBeNull();
     expect(readStats).not.toHaveBeenCalled();
   });
@@ -126,19 +126,19 @@ describe('mountOptions', () => {
     const writeSettings = vi.fn(() => Promise.resolve());
     const container = await mount(makePorts({ writeSettings }));
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
 
-    expect(writeSettings).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, categoryBadges: false });
+    expect(writeSettings).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, missingImages: false });
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toBe('Enregistré');
     });
-    expect(checkbox(container, BADGES_CHECKBOX)?.checked).toBe(false);
+    expect(checkbox(container, IMAGES_CHECKBOX)?.checked).toBe(false);
   });
 
   it('should announce the save in a live region', async () => {
     const container = await mount();
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
 
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.getAttribute('role')).toBe('status');
@@ -150,7 +150,7 @@ describe('mountOptions', () => {
     const region = container.querySelector('.wme-status');
     expect(region?.textContent).toBe('');
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(region?.textContent).toBe('Enregistré');
     });
@@ -166,11 +166,11 @@ describe('mountOptions', () => {
     const container = await mount();
     const region = container.querySelector('.wme-status');
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(region?.textContent).toBe('Enregistré');
     });
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
 
     // Emptied while the write is in flight, so the next answer is a change of
     // text and gets announced even when it says the same thing.
@@ -183,7 +183,7 @@ describe('mountOptions', () => {
     );
     const region = container.querySelector('.wme-status');
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
 
     await vi.waitFor(() => {
       expect(region?.textContent).toContain("n'a pas pu être enregistré");
@@ -196,14 +196,14 @@ describe('mountOptions', () => {
       makePorts({ writeSettings: () => Promise.reject(new Error('storage down')) }),
     );
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
 
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toContain(
         "n'a pas pu être enregistré",
       );
     });
-    expect(checkbox(container, BADGES_CHECKBOX)?.checked).toBe(true);
+    expect(checkbox(container, IMAGES_CHECKBOX)?.checked).toBe(true);
   });
 
   it('should show what the storage holds when a save fails after another went through', async () => {
@@ -226,7 +226,7 @@ describe('mountOptions', () => {
       makePorts({ writeSettings, readSettings: () => Promise.resolve(stored) }),
     );
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     checkbox(container, LETTERBOXD_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toBe('Enregistré');
@@ -240,11 +240,11 @@ describe('mountOptions', () => {
     });
     // The second write held both switches and went through: going back to the
     // state from before the first one would undo it on screen only.
-    expect(checkbox(container, BADGES_CHECKBOX)?.checked).toBe(false);
+    expect(checkbox(container, IMAGES_CHECKBOX)?.checked).toBe(false);
     expect(checkbox(container, LETTERBOXD_CHECKBOX)?.checked).toBe(false);
     expect(stored).toEqual({
       ...DEFAULT_SETTINGS,
-      categoryBadges: false,
+      missingImages: false,
       letterboxdLink: false,
     });
   });
@@ -270,7 +270,7 @@ describe('mountOptions', () => {
     };
     const container = await mount(makePorts({ readSettings, writeSettings }));
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(reads).toBe(2);
     });
@@ -310,7 +310,7 @@ describe('mountOptions', () => {
     };
     const container = await mount(makePorts({ writeSettings, readSettings }));
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     checkbox(container, LETTERBOXD_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toBe('Enregistré');
@@ -318,7 +318,7 @@ describe('mountOptions', () => {
     rejectFirstWrite();
 
     await vi.waitFor(() => {
-      expect(checkbox(container, BADGES_CHECKBOX)?.checked).toBe(true);
+      expect(checkbox(container, IMAGES_CHECKBOX)?.checked).toBe(true);
     });
     // Nothing is known of the storage, so only the switch whose write failed
     // goes back: the other one was written and answered for.
@@ -328,12 +328,12 @@ describe('mountOptions', () => {
   it('should keep the focus on the switch that was used', async () => {
     const container = await mount();
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
 
     await vi.waitFor(() => {
       expect(container.querySelector('.wme-status')?.textContent).toBe('Enregistré');
     });
-    expect(document.activeElement).toBe(checkbox(container, BADGES_CHECKBOX));
+    expect(document.activeElement).toBe(checkbox(container, IMAGES_CHECKBOX));
   });
 
   it('should leave the focus where the user moved it while a save was in flight', async () => {
@@ -344,7 +344,7 @@ describe('mountOptions', () => {
       });
     const container = await mount(makePorts({ writeSettings }));
 
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     container.querySelector<HTMLElement>(CACHE_BUTTON)?.focus();
     releaseWrite();
 
@@ -353,13 +353,13 @@ describe('mountOptions', () => {
     });
     // The render destroys every control, so the focus falls back to the page.
     // What matters is that it is not pulled onto the switch of that save.
-    expect(document.activeElement).not.toBe(checkbox(container, BADGES_CHECKBOX));
+    expect(document.activeElement).not.toBe(checkbox(container, IMAGES_CHECKBOX));
   });
 
   it('should take the answer of the last save back when a clear is asked for', async () => {
     const container = await mount();
     const region = container.querySelector('.wme-status');
-    checkbox(container, BADGES_CHECKBOX)?.click();
+    checkbox(container, IMAGES_CHECKBOX)?.click();
     await vi.waitFor(() => {
       expect(region?.textContent).toBe('Enregistré');
     });
@@ -677,7 +677,7 @@ describe('mountOptions', () => {
   it('should leave the focus alone on the first load', async () => {
     const container = await mount();
 
-    expect(container.querySelector(BADGES_CHECKBOX)).not.toBeNull();
+    expect(container.querySelector(IMAGES_CHECKBOX)).not.toBeNull();
     expect(document.activeElement).toBe(document.body);
   });
 
