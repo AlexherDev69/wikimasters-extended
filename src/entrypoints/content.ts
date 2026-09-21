@@ -14,11 +14,13 @@ import {
   isCategorizeCardsResponse,
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
+import { createCompactPreferenceStore } from '../features/compact-view/data/compact-preference-store';
 import { createPullTallyStore } from '../features/pull-stats/data/pull-tally-store';
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
 import type { Settings } from '../features/settings/domain/settings';
 import { createOverlay } from '../features/settings/presentation/overlay';
 import '../features/category-badge/presentation/category-badge.css';
+import '../features/compact-view/presentation/compact-view.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/missing-image/presentation/missing-image.css';
 import '../features/pull-stats/presentation/pull-stats.css';
@@ -57,6 +59,7 @@ export default defineContentScript({
     const root = document.body;
     const settingsRepository = createSettingsRepository();
     const pullTallyStore = createPullTallyStore();
+    const compactStore = createCompactPreferenceStore();
     /**
      * The retry of a failed categorization is armed on the context, so it is
      * cleared with it: a timer of its own would fire long after the teardown.
@@ -84,9 +87,10 @@ export default defineContentScript({
     // cards travel with them, and in the same wait: a panel that first draws
     // an empty tally would read as a collection lost, and it is one read of
     // the same storage.
-    const [settings, pullTally] = await Promise.all([
+    const [settings, pullTally, isCompact] = await Promise.all([
       settingsRepository.read(),
       pullTallyStore.read(),
+      compactStore.read(),
     ]);
 
     // The extension may have been reloaded during that read. A listener added
@@ -105,6 +109,11 @@ export default defineContentScript({
       scheduleRetry,
       pullTallyStore,
       pullTally,
+      compactStore,
+      isCompact,
+      // Read at every sync and never captured: the site navigates from one
+      // page to the next without ever reloading this script.
+      readPath: () => window.location.pathname,
     });
     applySettings = (changed): void => {
       overlay.applySettings(changed);

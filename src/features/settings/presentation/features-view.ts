@@ -82,6 +82,14 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       "rien n'est envoyé nulle part, et rien n'est lu sur le site à part la rareté déjà " +
       'affichée sur la carte.',
   },
+  compactView: {
+    label: 'Bouton vue compacte',
+    hint:
+      "Ajoute un bouton au bout des filtres de rareté, sur ta collection et sur la page de toutes " +
+      'les cartes, qui réduit les cartes pour en afficher beaucoup plus à la fois. Seule leur ' +
+      "taille à l'écran change : le site garde exactement la page qu'il a construite, et la " +
+      'vignette reprend sa taille normale dès que tu rappuies.',
+  },
 };
 
 const LABEL_TAG = 'label';

@@ -13,6 +13,13 @@ import { removeCardBadges } from '../../category-badge/data/card-badge';
 import { removeModalCategoryLines } from '../../category-badge/data/modal-category-line';
 import { syncCardBadges } from '../../category-badge/presentation/sync-card-badges';
 import { syncModalCategory } from '../../category-badge/presentation/sync-modal-category';
+import { removeCompactStyle } from '../../compact-view/data/compact-style';
+import { removeCompactToggles } from '../../compact-view/data/compact-toggle';
+import type { CompactPreferenceStore } from '../../compact-view/domain/compact-preference-store';
+import {
+  createCompactViewState,
+  syncCompactView,
+} from '../../compact-view/presentation/sync-compact-view';
 import { applyHideCardStats, removeHideCardStats } from '../../hide-card-stats/data/hide-stats-style';
 import { removeCardButtons } from '../../letterboxd/data/card-button';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
@@ -69,6 +76,12 @@ export interface OverlayDeps {
   pullTallyStore: PullTallyStore;
   /** What that store held when the page loaded, read before the first scan. */
   pullTally: PullTally;
+  /** Where the compact view of the card grids is remembered. */
+  compactStore: CompactPreferenceStore;
+  /** Whether that view was on when the page loaded, read before the first scan. */
+  isCompact: boolean;
+  /** The path of the page right now: the site navigates without reloading. */
+  readPath: () => string;
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
@@ -90,6 +103,12 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * count the same card at every mutation of the reveal.
    */
   const pullStats = createPullStatsState(deps.pullTally);
+  /**
+   * Whether the cards are drawn small right now. It outlives every scan for
+   * the same reason: the button that flips it is on the page, and the site
+   * never reloads between two presses.
+   */
+  const compactView = createCompactViewState(deps.isCompact);
 
   /**
    * The retry of a batch that failed, and the scan without which it never
@@ -143,6 +162,20 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // what needs the detail modal.
     if (settings.pullStats) {
       syncPullStats(root, cards, pullStats, { store: deps.pullTallyStore, logger });
+    }
+    // Global to the page as well, and needs nothing of a card either: it only
+    // decides the size the site's own cards are painted at.
+    if (settings.compactView) {
+      syncCompactView(root, compactView, {
+        store: deps.compactStore,
+        logger,
+        readPath: deps.readPath,
+        // The press writes nothing on the page, so nothing would make it
+        // mutate: the scan that shows the new size has to be asked for.
+        requestSync: () => {
+          processScan(scanCards(root));
+        },
+      });
     }
     if (
       !settings.categoryBadges &&
@@ -250,6 +283,10 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (previous.pullStats && !settings.pullStats) {
       removePullStatsPanels(root);
     }
+    if (previous.compactView && !settings.compactView) {
+      removeCompactToggles(root);
+      removeCompactStyle(root.ownerDocument);
+    }
   }
 
   return {
@@ -280,6 +317,8 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeTagProposals(root);
       removeTradePreviews(root);
       removePullStatsPanels(root);
+      removeCompactToggles(root);
+      removeCompactStyle(root.ownerDocument);
     },
   };
 }

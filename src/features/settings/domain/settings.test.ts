@@ -10,6 +10,7 @@ const ALL_OFF: Settings = {
   tagSuggestions: false,
   tagAutoFill: false,
   pullStats: false,
+  compactView: false,
 };
 
 describe('normalizeSettings', () => {
@@ -33,6 +34,7 @@ describe('normalizeSettings', () => {
       tagSuggestions: true,
       tagAutoFill: false,
       pullStats: true,
+      compactView: true,
     });
   });
 

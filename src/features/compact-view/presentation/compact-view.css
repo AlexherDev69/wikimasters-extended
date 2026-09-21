@@ -1,0 +1,74 @@
+/*
+ * Styles of the button this feature adds to the row of rarity filters. Every
+ * selector starts with one of our own attributes or classes: no rule here
+ * reaches a node of the site.
+ *
+ * The shape is the one the site gives the buttons of that row, read off its
+ * own markup: a pill, 12 px of text, semi-bold, with the surface and the ink
+ * the page publishes as variables. A fallback follows each variable, so a
+ * page that stopped shipping one keeps a readable button.
+ */
+
+[data-wme-compact-toggle] {
+  --wme-compact-ink: var(--color-foreground, #f2f4f3);
+  --wme-compact-accent: var(--color-accent, #34d399);
+
+  /* The row is a `flex flex-wrap`, so this pushes the button to its end. */
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--wme-compact-ink) 14%, transparent);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--wme-compact-ink) 6%, transparent);
+  color: color-mix(in srgb, var(--wme-compact-ink) 70%, transparent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+[data-wme-compact-toggle]:hover {
+  color: var(--wme-compact-ink);
+  border-color: color-mix(in srgb, var(--wme-compact-ink) 28%, transparent);
+}
+
+[data-wme-compact-toggle]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wme-compact-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* On: the accent of the page, exactly as the site marks a filter in use. */
+[data-wme-compact-toggle][aria-pressed='true'] {
+  color: var(--wme-compact-accent);
+  border-color: color-mix(in srgb, var(--wme-compact-accent) 45%, transparent);
+  background-color: color-mix(in srgb, var(--wme-compact-accent) 12%, transparent);
+}
+
+/*
+ * The four cells say what the button does without a word: a grid of small
+ * squares, which is the shape every site gives a denser view.
+ */
+[data-wme-compact-toggle] .wme-compact-mark {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5px;
+  width: 10px;
+  height: 10px;
+}
+
+[data-wme-compact-toggle] .wme-compact-cell {
+  display: block;
+  border-radius: 1px;
+  background-color: currentcolor;
+}
+
+[data-wme-compact-toggle] .wme-compact-label {
+  display: block;
+}
