@@ -38,7 +38,7 @@ Les règles de wiki-masters.com interdisent tout outil qui joue, ouvre des paque
 
 CONFIDENTIALITÉ
 
-• Ses seules requêtes partent vers fr.wikipedia.org et query.wikidata.org : des titres d'articles publics, et les noms des fichiers Wikimedia Commons dont l'adresse doit être résolue.
+• Ses seules requêtes partent vers fr.wikipedia.org (les titres publics des articles, puis les noms des fichiers Wikimedia Commons dont l'adresse doit être résolue) et query.wikidata.org (l'identifiant Wikidata de la carte, jamais son titre).
 • Elles sont envoyées sans cookie, donc aucun compte n'est identifié.
 • Rien n'est envoyé au site WikiMasters, à Letterboxd ni à aucun autre serveur.
 • Aucune télémétrie, aucune analyse d'usage, aucune donnée personnelle collectée.
@@ -61,8 +61,9 @@ Projet indépendant, sans aucun lien avec wiki-masters.com, Wikipédia, Wikimedi
 - **`fr.wikipedia.org`** : résout les titres des cartes en articles, récupère
   l'image de tête et l'adresse des fichiers Wikimedia Commons affichés sur les
   cartes sans illustration.
-- **`query.wikidata.org`** : demande ce qu'est la carte (film, personne,
-  studio) pour construire le lien Letterboxd et trouver une image.
+- **`query.wikidata.org`** : reçoit l'identifiant Wikidata de la carte, obtenu
+  à l'étape précédente, et répond ce qu'elle est (film, personne, studio,
+  métiers), de quoi décider du lien Letterboxd et de l'image.
 - **Code exécuté à distance** : aucun. Tout le code est dans le paquet.
 - **Collecte de données** : aucune catégorie à cocher.
 - **Politique de confidentialité**, si une adresse est exigée : la section "Ce

@@ -62,9 +62,10 @@ d'auteur. La modale de détail crédite l'image qu'elle montre par un lien vers 
 page du fichier, où figurent son auteur et sa licence. Les données de Wikidata
 sont sous CC0.
 
-**Ta vie privée.** Les seules requêtes de l'extension partent vers
-`fr.wikipedia.org` et `query.wikidata.org` : des titres d'articles publics, plus
-les noms des fichiers Commons dont l'adresse doit être résolue. Elles sont
+**Ta vie privée.** Les seules requêtes de l'extension partent vers deux hôtes.
+`fr.wikipedia.org` reçoit les titres publics des articles, puis les noms des
+fichiers Commons dont l'adresse doit être résolue ; `query.wikidata.org` ne
+reçoit que l'identifiant Wikidata de la carte, jamais son titre. Elles sont
 envoyées sans cookie (`credentials: 'omit'`), donc aucun compte n'est identifié.
 Les images, elles, sont chargées par ton navigateur depuis les serveurs de
 Wikimedia, sans référent (`referrerpolicy="no-referrer"`) : ils reçoivent une
