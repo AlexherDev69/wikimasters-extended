@@ -700,6 +700,16 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Forme : les deux fonctionnalités exportent chacune une variante `silent` de leur bouton, à côté de la variante `named` des cartes du site. Un type `ButtonVoice` plutôt qu'un booléen, et le noeud garde son attribut, donc sa feuille de style, son placement et son décalage viennent sans une ligne de CSS de plus
 - Les deux marques entrent dans la clé de la carte dessinée : une adresse Letterboxd qui arrive une passe plus tard, ou un interrupteur que l'on décoche, redessinent la carte plutôt que de la rapiécer. Zéro écriture quand rien n'a changé, prouvé au MutationObserver
 
+### Phase 20 : l'image de tête de l'article avant celle de Wikidata (faite le 2026-09-21)
+
+- Constat de l'utilisateur, deux captures à l'appui : l'image de la carte que l'extension dessine n'est pas celle de la vraie carte du site
+- Cause mesurée le 2026-09-21, pas supposée : le site prend l'image de tête de l'article (`prop=pageimages`), vérifié sur "Jeu d'horreur" dont le fichier du fixture est exactement celui que frwiki donne ; l'extension prenait l'image de l'élément Wikidata, et "Danny Strong" (Q784009) porte DEUX P18, une photo de 2004 et une de 2013, que `SAMPLE` départage sans ordre défini
+- Correctif : le titre demande déjà son élément Wikidata à frwiki pour chaque carte ; la même requête demande maintenant aussi `page_image_free`, donc l'image de tête ne coûte pas un appel de plus. Mesuré sur 50 titres du jeu témoin : une seule requête, aucun avertissement, 43 articles sur 50 mènent une image, et `page_image_free` nomme le même fichier que `pageimage` dans les 43 cas, donc aucun fichier non libre n'entre par cette porte
+- Priorité : l'image de tête d'abord, ce que Wikidata porte ensuite, et seulement après les règles du fichier nommé d'après l'article (phases 7d et 7f), qui ne servent donc plus qu'aux articles sans image de tête. Une carte qui a une image de tête ne déclenche plus la requête de la phase 7d, donc l'appel réseau baisse plutôt que de monter
+- Le genre de l'image : une propriété de Wikidata dit ce qu'elle montre par la propriété même qui la porte, une image de tête ne dit rien. Le type de fichier tranche : un dessin vectoriel est un logo, un drapeau ou un blason, montré entier sur fond uni, tout le reste est une photographie, cadrée en plein. Sur le jeu témoin, 6 des 43 sont vectorielles, dont le logo de "Pulp Fiction"
+- Le nom est réécrit avec des espaces : MediaWiki l'écrit avec des tirets bas dans une propriété de page et avec des espaces partout ailleurs, et une carte ne doit pas être retenue sous deux noms
+- Schéma de cache en version 9, et les deux enregistrements `frwiki-titles` rejoués par les tests ont été refaits avec la nouvelle requête : ce sont de vrais enregistrements, pas des fixtures retouchées
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"

@@ -42,8 +42,8 @@ function makeFacts(overrides: Partial<EntityFacts> = {}): EntityFacts {
 
 function makeEntry(facts: EntityFacts | null): CachedCardFacts {
   return facts === null
-    ? { status: 'not_found', facts: null, articleImageTried: false }
-    : { status: 'resolved', facts, articleImageTried: false };
+    ? { status: 'not_found', facts: null, leadImage: null, articleImageTried: false }
+    : { status: 'resolved', facts, leadImage: null, articleImageTried: false };
 }
 
 function makeOccupations(

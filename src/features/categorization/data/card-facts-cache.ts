@@ -1,6 +1,6 @@
 import { storage, type StorageItemKey } from '#imports';
 import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
-import { isCommonsFile } from '../../missing-image/domain/card-image';
+import { isCommonsFile, type CommonsFile } from '../../missing-image/domain/card-image';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
 import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '../domain/ports';
 
@@ -38,10 +38,13 @@ export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
  * the IMDb id left the stored external ids with the Letterboxd rung that was
  * its only reader. Version 8 changes it again: a card now also remembers the
  * picture of the whole it is one edition of (phase 7g), a fact no earlier
- * entry ever asked Wikidata for. Entries of an earlier version are fetched
- * again, once, on the next display of their card.
+ * entry ever asked Wikidata for. Version 9 changes it once more: a card now
+ * remembers the picture its article leads with, which is the one the site
+ * itself draws and which now comes before anything Wikidata holds. Entries of
+ * an earlier version are fetched again, once, on the next display of their
+ * card.
  */
-export const CARD_FACTS_SCHEMA_VERSION = 8;
+export const CARD_FACTS_SCHEMA_VERSION = 9;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
@@ -52,6 +55,7 @@ interface StoredCardFacts {
   status: CardFactsStatus;
   facts: EntityFacts | null;
   fetchedAt: number;
+  leadImage: CommonsFile | null;
   articleImageTried: boolean;
 }
 
@@ -87,6 +91,7 @@ function isStoredCardFacts(value: unknown): value is StoredCardFacts {
     isCardFactsStatus(value['status']) &&
     typeof value['fetchedAt'] === 'number' &&
     typeof value['articleImageTried'] === 'boolean' &&
+    (value['leadImage'] === null || isCommonsFile(value['leadImage'])) &&
     (value['facts'] === null || isEntityFacts(value['facts']))
   );
 }
@@ -114,6 +119,7 @@ export function createCardFactsCache(clock: Clock): CardFactsCache {
           fresh.set(title, {
             status: stored.status,
             facts: stored.facts,
+            leadImage: stored.leadImage,
             articleImageTried: stored.articleImageTried,
           });
         }
@@ -136,6 +142,7 @@ export function createCardFactsCache(clock: Clock): CardFactsCache {
             status: entry.status,
             facts: entry.facts,
             fetchedAt,
+            leadImage: entry.leadImage,
             articleImageTried: entry.articleImageTried,
           } satisfies StoredCardFacts,
         })),
