@@ -17,8 +17,12 @@ const ARTICLE_PATH = '/wiki/';
 const ARTICLE_URL_PREFIX = `${FRWIKI_ORIGIN}${ARTICLE_PATH}`;
 
 /**
- * The longest titles observed on cards stay far below this bound, which is
- * also the limit MediaWiki itself puts on a page title, in bytes.
+ * A guard against a title no article could bear, not a faithful copy of the
+ * rule MediaWiki applies: MediaWiki counts the 255 bytes of the UTF-8 form of
+ * a title, where this counts characters. The two agree on what matters here,
+ * since a card title of 300 characters is already far past anything the site
+ * shows, and an address built from one would simply answer that the article
+ * does not exist.
  */
 const MAX_TITLE_LENGTH = 300;
 
