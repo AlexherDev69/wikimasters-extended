@@ -32,8 +32,9 @@ const PRIVACY_ITEMS: readonly string[] = [
     "l'adresse exacte de ces images à fr.wikipedia.org, sans cookie, et ne contacte toujours que " +
     'Wikipédia et Wikidata.',
   "L'extension ne garde aucune liste de tes cartes : rien de ta collection n'est enregistré. " +
-    'Tout le reste (caches, réglages) reste dans le stockage local de ton navigateur, sur cette ' +
-    'machine uniquement.',
+    'Les statistiques de tirage ne gardent que six nombres, un par rareté, jamais le titre ' +
+    "d'une carte. Tout le reste (caches, réglages) reste dans le stockage local de ton " +
+    'navigateur, sur cette machine uniquement.',
   'Cette page ne fait aucun appel réseau : elle lit et efface uniquement ce qui est stocké sur ' +
     'ta machine.',
 ];

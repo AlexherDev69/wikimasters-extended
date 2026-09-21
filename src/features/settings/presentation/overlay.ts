@@ -22,6 +22,13 @@ import { removeCardImages } from '../../missing-image/data/card-image';
 import { removeModalCreditLines } from '../../missing-image/data/modal-credit-line';
 import { syncCardImages } from '../../missing-image/presentation/sync-card-images';
 import { syncModalCredit } from '../../missing-image/presentation/sync-modal-credit';
+import { removePullStatsPanels } from '../../pull-stats/data/pull-stats-panel';
+import type { PullTally } from '../../pull-stats/domain/pull-tally';
+import type { PullTallyStore } from '../../pull-stats/domain/pull-tally-store';
+import {
+  createPullStatsState,
+  syncPullStats,
+} from '../../pull-stats/presentation/sync-pull-stats';
 import { removeTagProposals } from '../../tag-suggestions/presentation/apply-tag-proposals';
 import { scanTradeChips, type ObservedTradeCard } from '../../trade-cards/data/scan-trade-chips';
 import { removeTradePreviews } from '../../trade-cards/data/trade-preview';
@@ -58,6 +65,10 @@ export interface OverlayDeps {
   /** Asks the service worker for the categories of a batch of cards. */
   categorize: RequestCategories;
   scheduleRetry: ScheduleRetry;
+  /** Where the cards counted on the page of the packs are kept. */
+  pullTallyStore: PullTallyStore;
+  /** What that store held when the page loaded, read before the first scan. */
+  pullTally: PullTally;
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
@@ -72,6 +83,13 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   };
   /** Titles of the last scan, the cards the page shows right now. */
   let visibleTitles: ReadonlySet<string> = new Set<string>();
+  /**
+   * What has been counted of the packs, and what a pack being opened has
+   * already given. It outlives every scan on purpose: the site opens a pack
+   * without ever reloading the page, so a counter rebuilt at each scan would
+   * count the same card at every mutation of the reveal.
+   */
+  const pullStats = createPullStatsState(deps.pullTally);
 
   /**
    * The retry of a batch that failed, and the scan without which it never
@@ -119,6 +137,12 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // from a scan: it can run before the cards are even looked at.
     if (settings.hideCardStats) {
       applyHideCardStats(root.ownerDocument);
+    }
+    // Reads the rarity the cards already carry, and knows nothing of their
+    // category: it is synced before the early return below, which only guards
+    // what needs the detail modal.
+    if (settings.pullStats) {
+      syncPullStats(root, cards, pullStats, { store: deps.pullTallyStore, logger });
     }
     if (
       !settings.categoryBadges &&
@@ -223,6 +247,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (previous.tradeCards && !settings.tradeCards) {
       removeTradePreviews(root);
     }
+    if (previous.pullStats && !settings.pullStats) {
+      removePullStatsPanels(root);
+    }
   }
 
   return {
@@ -252,6 +279,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeHideCardStats(root.ownerDocument);
       removeTagProposals(root);
       removeTradePreviews(root);
+      removePullStatsPanels(root);
     },
   };
 }

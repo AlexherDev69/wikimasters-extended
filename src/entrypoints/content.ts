@@ -14,12 +14,14 @@ import {
   isCategorizeCardsResponse,
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
+import { createPullTallyStore } from '../features/pull-stats/data/pull-tally-store';
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
 import type { Settings } from '../features/settings/domain/settings';
 import { createOverlay } from '../features/settings/presentation/overlay';
 import '../features/category-badge/presentation/category-badge.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/missing-image/presentation/missing-image.css';
+import '../features/pull-stats/presentation/pull-stats.css';
 import '../features/tag-suggestions/presentation/tag-suggestions.css';
 import '../features/trade-cards/presentation/trade-cards.css';
 
@@ -54,6 +56,7 @@ export default defineContentScript({
     const logger = createLogger('content-script');
     const root = document.body;
     const settingsRepository = createSettingsRepository();
+    const pullTallyStore = createPullTallyStore();
     /**
      * The retry of a failed categorization is armed on the context, so it is
      * cleared with it: a timer of its own would fire long after the teardown.
@@ -77,8 +80,14 @@ export default defineContentScript({
     });
 
     // The settings are read BEFORE the first scan: a feature switched off must
-    // never show up for the instant it takes to read them back.
-    const settings = await settingsRepository.read();
+    // never show up for the instant it takes to read them back. The counted
+    // cards travel with them, and in the same wait: a panel that first draws
+    // an empty tally would read as a collection lost, and it is one read of
+    // the same storage.
+    const [settings, pullTally] = await Promise.all([
+      settingsRepository.read(),
+      pullTallyStore.read(),
+    ]);
 
     // The extension may have been reloaded during that read. A listener added
     // to an already aborted signal is never called, so nothing would take the
@@ -94,6 +103,8 @@ export default defineContentScript({
       logger,
       categorize: requestCategories,
       scheduleRetry,
+      pullTallyStore,
+      pullTally,
     });
     applySettings = (changed): void => {
       overlay.applySettings(changed);
