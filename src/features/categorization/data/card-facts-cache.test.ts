@@ -3,7 +3,7 @@ import { storage } from '#imports';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import type { EntityFacts } from '../domain/entity-facts';
 import type { CachedCardFacts, Clock } from '../domain/ports';
-import { createCardFactsCache } from './card-facts-cache';
+import { CARD_FACTS_SCHEMA_VERSION, createCardFactsCache } from './card-facts-cache';
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
@@ -12,7 +12,13 @@ const START_TIME = new Date('2026-01-01T00:00:00.000Z').getTime();
 
 /** Version 1 held the same facts without the image of the card. */
 const PREVIOUS_SCHEMA_VERSION = 1;
-const CURRENT_SCHEMA_VERSION = 8;
+/**
+ * Read from the module and never copied here: a hand written copy silently
+ * stops matching at the next bump, and every entry these tests store then
+ * fails on its version number rather than on the structural check each of
+ * them is about.
+ */
+const CURRENT_SCHEMA_VERSION = CARD_FACTS_SCHEMA_VERSION;
 
 const FACTS: EntityFacts = {
   qid: 'Q937',

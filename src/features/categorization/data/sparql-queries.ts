@@ -40,17 +40,34 @@ interface ImageGroup {
   properties: readonly ImageProperty[];
   /** Prefixes the raw variables: the two tables share their property ids. */
   variablePrefix: string;
-  /** Path from `?item` to the subject read, empty for the item itself. */
-  path: string;
+  /**
+   * The links walked from `?item` to the subject the properties are read on.
+   * Empty for the item itself, which is read directly. The path is built from
+   * the ids below and never written by hand: a missing separator would make
+   * `?item wdt:P179wdt:P18` out of it, a triple that parses and means nothing.
+   */
+  linkPropertyIds: readonly string[];
 }
 
-const OWN_IMAGES: ImageGroup = { properties: IMAGE_PROPERTIES, variablePrefix: '', path: '' };
+const OWN_IMAGES: ImageGroup = {
+  properties: IMAGE_PROPERTIES,
+  variablePrefix: '',
+  linkPropertyIds: [],
+};
 
 const SERIES_IMAGES: ImageGroup = {
   properties: SERIES_IMAGE_PROPERTIES,
   variablePrefix: 'series_',
-  path: `(${SERIES_LINK_PROPERTY_IDS.map((propertyId) => `wdt:${propertyId}`).join('|')})/`,
+  linkPropertyIds: SERIES_LINK_PROPERTY_IDS,
 };
+
+/** Alternation of the links of the group, followed by the sequence separator. */
+function subjectPath(group: ImageGroup): string {
+  if (group.linkPropertyIds.length === 0) {
+    return '';
+  }
+  return `(${group.linkPropertyIds.map((propertyId) => `wdt:${propertyId}`).join('|')})/`;
+}
 
 /** Raw variable of an image property, distinct from the projected one. */
 function imageVariable(property: ImageProperty, group: ImageGroup): string {
@@ -66,10 +83,12 @@ function imageProjections(group: ImageGroup): string {
 
 /** One OPTIONAL per image property of the group, built from the same table. */
 function imagePatterns(group: ImageGroup): string {
+  const path = subjectPath(group);
+
   return group.properties
     .map(
       (property) =>
-        `OPTIONAL { ?item ${group.path}wdt:${property.propertyId} ?${imageVariable(property, group)}. }`,
+        `OPTIONAL { ?item ${path}wdt:${property.propertyId} ?${imageVariable(property, group)}. }`,
     )
     .join(' ');
 }

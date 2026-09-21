@@ -58,6 +58,18 @@ describe('buildEntityFactsQuery', () => {
     }
   });
 
+  it('should project a distinct variable for every image property of both tables', () => {
+    // The raw variables are told apart by a prefix, the projected ones are
+    // not: two entries sharing a `variable` would write the same column twice,
+    // and the reader would take the picture of the series for the picture of
+    // the card itself.
+    const variables = [...IMAGE_PROPERTIES, ...SERIES_IMAGE_PROPERTIES].map(
+      (property) => property.variable,
+    );
+
+    expect(new Set(variables).size).toBe(variables.length);
+  });
+
   it('should reject an identifier that is not a QID', () => {
     expect(() => buildEntityFactsQuery(['Q1 } DELETE {'])).toThrow('Invalid Wikidata QID');
     expect(() => buildEntityFactsQuery(['P31'])).toThrow('Invalid Wikidata QID');

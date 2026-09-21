@@ -788,13 +788,15 @@ describe('categorizeCards', () => {
   it('should give the card the picture of its series when Wikidata and the article gave none', async () => {
     // "Trophée des champions 2005": the season item holds no picture and
     // its article uses none, while the competition it is one edition of holds
-    // a photograph of the trophy (measured 2026-09-21).
+    // a photograph of the trophy (measured 2026-09-21). The article answers a
+    // definite null, the answer the common case really carries, and not an
+    // empty map, which stands for a title a truncated batch never examined.
     const replay = createReplayFetch();
     const seriesImage: CommonsFile = { fileName: 'Trophée des champions.jpeg', kind: 'picture' };
     const deps = withSeriesImageFacts(
       {
         ...makeImageDeps(replay.fetchImpl, null),
-        articleImageSource: fakeArticleImageSource(new Map()),
+        articleImageSource: fakeArticleImageSource(new Map([[STUB_CARD.title, null]])),
       },
       seriesImage,
     );
@@ -804,6 +806,21 @@ describe('categorizeCards', () => {
     expect(results[0]?.status).toBe('categorized');
     expect(results[0]?.image?.fileName).toBe(seriesImage.fileName);
     expect(results[0]?.image?.kind).toBe(seriesImage.kind);
+  });
+
+  it('should leave the card without an image when its classes stayed unresolved', async () => {
+    // The card is downgraded to `error`, and the image of any status but
+    // `categorized` has to stay null: the guard of the message refuses a
+    // picture on every other one.
+    const deps = withSeriesImageFacts(makeStubDeps(new Map([[STUB_INSTANCE_CLASS_ID, null]])), {
+      fileName: 'Grown-ish logo.png',
+      kind: 'emblem',
+    });
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.status).toBe('error');
+    expect(results[0]?.image).toBeNull();
   });
 
   it('should prefer the file the article itself uses over the picture of the series', async () => {

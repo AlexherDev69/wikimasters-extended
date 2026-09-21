@@ -156,10 +156,11 @@ describe('createEntityFactsSource', () => {
     ).fetchFacts([EINSTEIN_QID]);
 
     expect(withoutImage.get(EINSTEIN_QID)?.image).toBeNull();
+    expect(withoutImage.get(EINSTEIN_QID)?.seriesImage).toBeNull();
     expect(withUnusableImage.get(EINSTEIN_QID)?.image).toBeNull();
   });
 
-  it('should read the picture of the whole the item is one edition of apart from its own', async () => {
+  it('should keep the picture of the series apart from its own when the row carries both', async () => {
     // Both measured on the live service 2026-09-21: the trophy of the
     // competition answers for the card of its 2005 edition.
     const source = makeSource(
@@ -181,17 +182,17 @@ describe('createEntityFactsSource', () => {
     });
   });
 
-  it('should read the logo of a series as an emblem, and none when the item is part of nothing', async () => {
-    const withLogo = await makeSource(
+  it('should read the picture of the series as an emblem when it is a logo', async () => {
+    const source = makeSource(
       bindingFetch({ seriesImageLogo: `${FILE_PATH_URI_PREFIX}Grown-ish%20logo.png` }),
-    ).fetchFacts([EINSTEIN_QID]);
-    const withoutSeries = await makeSource(bindingFetch({})).fetchFacts([EINSTEIN_QID]);
+    );
 
-    expect(withLogo.get(EINSTEIN_QID)?.seriesImage).toEqual({
+    const facts = await source.fetchFacts([EINSTEIN_QID]);
+
+    expect(facts.get(EINSTEIN_QID)?.seriesImage).toEqual({
       fileName: 'Grown-ish logo.png',
       kind: 'emblem',
     });
-    expect(withoutSeries.get(EINSTEIN_QID)?.seriesImage).toBeNull();
   });
 
   it('should read the image of a flag as an emblem', async () => {

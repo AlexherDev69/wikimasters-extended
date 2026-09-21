@@ -41,7 +41,7 @@ export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
  * entry ever asked Wikidata for. Entries of an earlier version are fetched
  * again, once, on the next display of their card.
  */
-const SCHEMA_VERSION = 8;
+export const CARD_FACTS_SCHEMA_VERSION = 8;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
@@ -83,7 +83,7 @@ function isEntityFacts(value: unknown): value is EntityFacts {
 function isStoredCardFacts(value: unknown): value is StoredCardFacts {
   return (
     isRecord(value) &&
-    value['schemaVersion'] === SCHEMA_VERSION &&
+    value['schemaVersion'] === CARD_FACTS_SCHEMA_VERSION &&
     isCardFactsStatus(value['status']) &&
     typeof value['fetchedAt'] === 'number' &&
     typeof value['articleImageTried'] === 'boolean' &&
@@ -132,7 +132,7 @@ export function createCardFactsCache(clock: Clock): CardFactsCache {
         [...entries].map(([title, entry]) => ({
           key: cardKey(title),
           value: {
-            schemaVersion: SCHEMA_VERSION,
+            schemaVersion: CARD_FACTS_SCHEMA_VERSION,
             status: entry.status,
             facts: entry.facts,
             fetchedAt,
