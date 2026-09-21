@@ -16,6 +16,10 @@ import {
 } from '../../hide-card-stats/data/hide-stats-selectors';
 import { CARD_IMAGE_SELECTOR, IMAGE_CREDIT_SELECTOR } from '../../missing-image/data/image-selectors';
 import type { CardImage } from '../../missing-image/domain/card-image';
+import {
+  COMPACT_STYLE_SELECTOR,
+  TOGGLE_SELECTOR as COMPACT_TOGGLE_SELECTOR,
+} from '../../compact-view/data/compact-selectors';
 import { PULL_STATS_SELECTOR } from '../../pull-stats/data/pull-stats-panel';
 import { emptyTally } from '../../pull-stats/domain/pull-tally';
 import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
@@ -29,6 +33,15 @@ import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');
+
+/** The path of the collection, where the compact view offers its button. */
+const COMPACT_PATH = '/collection';
+
+/** The rarity filters of the collection: where the compact button is added. */
+const COLLECTION_FILTERS_HTML = readFileSync(
+  join(FIXTURES_DIR, 'collection-filters.html'),
+  'utf-8',
+);
 
 const GRID_HTML = readFileSync(join(FIXTURES_DIR, 'card-grid-with-description.html'), 'utf-8');
 const LARGE_HTML = readFileSync(join(FIXTURES_DIR, 'card-large-with-description.html'), 'utf-8');
@@ -67,6 +80,7 @@ const ALL_OFF: Settings = {
   tagSuggestions: false,
   tagAutoFill: false,
   pullStats: false,
+  compactView: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -138,6 +152,9 @@ function mount(
     },
     pullTallyStore: { read: () => Promise.resolve(emptyTally()), write: () => Promise.resolve() },
     pullTally: emptyTally(),
+    compactStore: { read: () => Promise.resolve(false), write: () => Promise.resolve() },
+    isCompact: false,
+    readPath: () => COMPACT_PATH,
   };
 
   return { overlay: createOverlay(deps), categorize, retries };
@@ -173,6 +190,14 @@ const TRADE_PREVIEW_IMAGE_SELECTOR = TRADE_PREVIEW_SELECTOR + ' img';
 
 function tradePreviews(): NodeListOf<Element> {
   return document.body.querySelectorAll(TRADE_PREVIEW_SELECTOR);
+}
+
+function compactToggle(): Element | null {
+  return document.body.querySelector(COMPACT_TOGGLE_SELECTOR);
+}
+
+function compactStyle(): Element | null {
+  return document.head.querySelector(COMPACT_STYLE_SELECTOR);
 }
 
 function pullStatsPanel(): Element | null {
@@ -435,6 +460,65 @@ describe('createOverlay', () => {
     overlay.applySettings({ ...ALL_OFF, pullStats: true });
 
     expect(pullStatsPanel()?.textContent).toContain('Aucune carte comptée');
+  });
+
+  it('should offer the compact view at once when the setting is on, asking for no categorization', () => {
+    document.body.innerHTML = COLLECTION_FILTERS_HTML + GRID_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, compactView: true });
+
+    scan(overlay);
+
+    expect(compactToggle()).not.toBeNull();
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should offer no compact view when the setting is off at load', () => {
+    document.body.innerHTML = COLLECTION_FILTERS_HTML + GRID_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, compactView: false });
+
+    scan(overlay);
+
+    expect(compactToggle()).toBeNull();
+    expect(compactStyle()).toBeNull();
+  });
+
+  it('should draw the cards small as soon as the compact button is pressed', () => {
+    document.body.innerHTML = COLLECTION_FILTERS_HTML + GRID_HTML;
+    const { overlay } = mount({ ...ALL_OFF, compactView: true });
+    scan(overlay);
+    expect(compactStyle()).toBeNull();
+
+    (compactToggle() as HTMLElement).click();
+
+    // The press writes no node of the page, so the scan that shows the new
+    // size is the one the feature asks the overlay for.
+    expect(compactStyle()).not.toBeNull();
+  });
+
+  it('should write nothing on a second scan while the compact view is on', () => {
+    document.body.innerHTML = COLLECTION_FILTERS_HTML + GRID_HTML;
+    const { overlay } = mount({ ...ALL_OFF, compactView: true });
+    scan(overlay);
+    (compactToggle() as HTMLElement).click();
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
+  it('should take back the compact button and its style at once when the setting is turned off', () => {
+    document.body.innerHTML = COLLECTION_FILTERS_HTML + GRID_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, compactView: true });
+    scan(overlay);
+    (compactToggle() as HTMLElement).click();
+    expect(compactStyle()).not.toBeNull();
+
+    overlay.applySettings({ ...DEFAULT_SETTINGS, compactView: false });
+
+    expect(compactToggle()).toBeNull();
+    expect(compactStyle()).toBeNull();
   });
 
   it('should keep the category badge visible while the stats row next to it is hidden', async () => {
@@ -775,6 +859,20 @@ describe('createOverlay', () => {
     overlay.destroy();
 
     expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should take back the compact button and its style when the context is invalidated', () => {
+    document.body.innerHTML = COLLECTION_FILTERS_HTML + GRID_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount({ ...ALL_OFF, compactView: true });
+    scan(overlay);
+    (compactToggle() as HTMLElement).click();
+    expect(compactStyle()).not.toBeNull();
+
+    overlay.destroy();
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+    expect(compactStyle()).toBeNull();
   });
 
   it('should take back the pull panel when the context is invalidated', () => {

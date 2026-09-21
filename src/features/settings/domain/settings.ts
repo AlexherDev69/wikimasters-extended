@@ -42,6 +42,13 @@ export interface Settings {
    * shows, it opens nothing.
    */
   pullStats: boolean;
+  /**
+   * The button that draws the grids of `/collection` and `/global-collection`
+   * at about two thirds of their size, to fit more cards on screen. The view
+   * itself is remembered apart from this switch, which only decides whether
+   * the button is offered at all.
+   */
+  compactView: boolean;
 }
 
 /** Exported so a view can give every switch a place in a display order. */
@@ -54,6 +61,7 @@ export const SETTING_KEYS = [
   'tagSuggestions',
   'tagAutoFill',
   'pullStats',
+  'compactView',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -67,6 +75,7 @@ export const DEFAULT_SETTINGS: Settings = {
   tagSuggestions: true,
   tagAutoFill: false,
   pullStats: true,
+  compactView: true,
 };
 
 /**
@@ -79,7 +88,8 @@ export const DEFAULT_SETTINGS: Settings = {
  * on an already shown proposal does, never whether Wikidata is asked at all,
  * which `tagSuggestions` alone decides. `pullStats` is left out for the same
  * reason as `hideCardStats`: it counts the rarity the card already carries in
- * its own class, and asks nothing of anyone.
+ * its own class, and asks nothing of anyone. `compactView` is left out too:
+ * it changes the size the cards are painted at, not what is known of them.
  */
 const CATEGORIZATION_SETTING_KEYS = [
   'categoryBadges',

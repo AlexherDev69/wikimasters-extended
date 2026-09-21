@@ -620,6 +620,20 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Fixtures assainies tirées des deux états réels de la page : un paquet en cours de révélation (compteur compris) et l'écran d'attente
 - Vérification visuelle : le panneau rendu avec la vraie feuille de style et les couleurs de rareté du site, en largeur bureau et en 400 px, avec des comptes et avec aucun
 
+### Phase 13 : vue compacte des grilles de cartes (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture de `/collection` à l'appui : "sur la page collection j'aimerai bien avoir un bouton a droite pour passer en vue compact, ainsi on voit le max de carte a l'écran", puis "même chose pour la page toute les cartes"
+- Deuxième feuille de style de l'extension qui vise des noeuds du SITE, après celle de la phase 10a, et elle marche exactement pareil : construite en mémoire, posée dans `document.head` tant que la vue est active, retirée entière dès qu'elle ne l'est plus. Aucune classe, aucun attribut et aucun style n'est écrit sur un noeud du site, rien n'est déplacé ni supprimé, et la cascade décide seule de ce qui est peint
+- Ce que la carte compacte garde : l'image, le badge de rareté du site, l'étoile de favori, le titre, et nos propres noeuds (pastille de catégorie, marque Letterboxd). Ce qu'elle laisse de côté : la description, les étiquettes et la ligne ATK/DEF, tout cela restant à un clic dans la modale de détail, que cette feuille ne touche jamais
+- Le partage image/texte passe de 45 % à 68 % : avec un seul titre sous l'image, la place que les trois blocs rendent revient à l'image. Nos deux noeuds suivent ce déplacement (la pastille chevauche la nouvelle ligne, la marque Letterboxd passe dans le coin bas droit de l'image, la bande où elle vivait ayant disparu avec la ligne ATK/DEF)
+- La carte de la modale de détail est exclue par construction : `:not(div.fixed.inset-0.z-50 *)` sur CHAQUE règle de la feuille, ce qu'un test vérifie règle par règle. La modale s'ouvre justement sur ces pages, et une carte qu'on regarde exprès est le seul endroit où rien ne doit rétrécir. À noter : happy-dom n'honore pas un `:not()` contenant un sélecteur de descendance (il fait correspondre la carte de la modale, là où Chrome ne le fait pas), donc cette exclusion est vérifiée en navigateur et pas en test unitaire
+- Le bouton est ajouté au bout de la rangée de filtres de rareté du site, rangée atteinte par un de ses boutons (`button[style*="--color-rarity-"]`) et jamais par ses classes Tailwind. Les pastilles d'une offre d'échange portent la même forme : le `button` les écarte, une pastille étant un `span`
+- Première fois que l'extension lit la route (`window.location.pathname`), et c'est assumé : la rangée de filtres existe aussi sur `/marketplace`, dont les cartes vivent dans une tuile à elles, avec un prix dessous, contre laquelle cette vue n'a jamais été mesurée. Lu à chaque sync et jamais capturé, le site naviguant sans jamais recharger
+- Sync sans écriture : l'état est porté par `aria-pressed` et peint par la feuille de style, donc appuyer sur le bouton ne change aucun texte et aucun noeud. L'observateur du content script ne surveille pas les attributs : la bascule lui coûte zéro mutation, et c'est aussi pour cela que la pression demande explicitement un scan, sans quoi rien ne ferait muter la page
+- La vue est retenue sous une clé versionnée `wme:compact:v1` : elle est basculée depuis la page, au milieu des cartes, donc elle doit encore être là demain. Elle est retirée de la page dès que le site navigue ailleurs
+- Neuvième réglage, activé par défaut : il décide seulement si le bouton est proposé, jamais si la vue est active
+- Vérification visuelle : la grille rendue avec la vraie feuille de style du site et ses images de rareté, en 1 200 px et en 380 px, vue normale et vue compacte, plus la modale de détail ouverte par-dessus une grille compacte pour vérifier que sa carte garde sa taille
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
@@ -654,6 +668,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 30. should refuse a thumbnail address whose host merely ends with a Wikimedia host name
 31. should show the picture of the competition on the card of one of its editions, and keep the file the article itself uses when there is one
 32. should count the card a pack reveals once when the user walks back and forth between the five, and count the next pack only after the page has shown the packs left again
+33. should draw the cards of the collection smaller when the compact button is pressed, keep the card of the detail modal at its size, and bring every card back when it is pressed again
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 
