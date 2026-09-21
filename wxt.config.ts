@@ -23,7 +23,7 @@ export default defineConfig({
       // Chrome cuts a description at 132 characters, so this one names the
       // three features that are visible on a card and stops there.
       "Overlay en lecture seule pour wiki-masters.com : images manquantes, bouton Wikipédia et lien Letterboxd, cartes des échanges.",
-    version: '0.1.0',
+    version: '0.1.1',
     // The popup entrypoint gives the button its window; only the tooltip is
     // left to declare here.
     action: { default_title: EXTENSION_NAME },
