@@ -36,6 +36,13 @@ export interface LoadingPongState {
   hasWaited: boolean;
   /** True while a look back at the page is already armed. */
   isCheckArmed: boolean;
+  /**
+   * Bumped every time the wait starts over. A check armed for an older wait
+   * cannot be called back, so it is told apart by this instead: the site
+   * navigates without reloading, and a page that loads in time leaves the
+   * check of its own wait still pending over the next one.
+   */
+  waitGeneration: number;
   /** The game on screen, null when there is none. */
   session: PongSession | null;
 }
@@ -57,7 +64,13 @@ export interface LoadingPongDeps {
 }
 
 export function createLoadingPongState(): LoadingPongState {
-  return { hasWaited: false, isCheckArmed: false, session: null };
+  return { hasWaited: false, isCheckArmed: false, waitGeneration: 0, session: null };
+}
+
+/** Starts the wait over, so a check armed for the previous one says nothing. */
+function forgetWait(state: LoadingPongState): void {
+  state.hasWaited = false;
+  state.waitGeneration += 1;
 }
 
 /**
@@ -85,9 +98,10 @@ function runGame(root: HTMLElement, view: PongView, deps: LoadingPongDeps): Pong
   let lastTimeMs: number | null = null;
   let isRunning = true;
 
-  view.canvas.addEventListener(POINTER_EVENT, (event: PointerEvent) => {
+  const onPointerMove = (event: PointerEvent): void => {
     targetY = readTargetY(view, event.clientY);
-  });
+  };
+  view.canvas.addEventListener(POINTER_EVENT, onPointerMove);
 
   function frame(timeMs: number): void {
     if (!isRunning) {
@@ -110,6 +124,7 @@ function runGame(root: HTMLElement, view: PongView, deps: LoadingPongDeps): Pong
     view,
     stop: (): void => {
       isRunning = false;
+      view.canvas.removeEventListener(POINTER_EVENT, onPointerMove);
       view.panel.remove();
     },
   };
@@ -124,7 +139,7 @@ function runGame(root: HTMLElement, view: PongView, deps: LoadingPongDeps): Pong
 export function stopLoadingPong(root: ParentNode, state: LoadingPongState): void {
   state.session?.stop();
   state.session = null;
-  state.hasWaited = false;
+  forgetWait(state);
   removePongPanels(root);
 }
 
@@ -146,7 +161,7 @@ export function syncLoadingPong(
       stopLoadingPong(root, state);
       return;
     }
-    state.hasWaited = false;
+    forgetWait(state);
     return;
   }
 
@@ -172,9 +187,16 @@ function armCheck(state: LoadingPongState, deps: LoadingPongDeps): void {
     return;
   }
   state.isCheckArmed = true;
+  const armedFor = state.waitGeneration;
+
   deps.scheduleCheck(() => {
     state.isCheckArmed = false;
-    state.hasWaited = true;
+    // A check armed for a wait that has since been forgotten proves nothing
+    // about the one running now: it only asks for a look at the page, and
+    // that look arms a fresh check of its own.
+    if (state.waitGeneration === armedFor) {
+      state.hasWaited = true;
+    }
     // The page may well have finished in the meantime, which the scan this
     // asks for is exactly what tells.
     deps.requestSync();

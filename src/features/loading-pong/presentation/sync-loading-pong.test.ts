@@ -187,6 +187,37 @@ describe('syncLoadingPong', () => {
     expect(panel()).toBeNull();
   });
 
+  it('should make the next page wait its own patience when the first one loaded in time', () => {
+    const harness = makeHarness();
+    // A page that was loading, then loaded in time: its check is still armed
+    // over the page the site navigates to next, which reloads nothing.
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+    syncLoadingPong(document.body, LOADED, harness.state, harness.deps);
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+
+    harness.checks[0]?.callback();
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+
+    // The stale check says nothing about this wait: no game yet, and a fresh
+    // check armed for it.
+    expect(panel()).toBeNull();
+    expect(harness.checks).toHaveLength(2);
+  });
+
+  it('should show the game when the second page waits its own patience out', () => {
+    const harness = makeHarness();
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+    syncLoadingPong(document.body, LOADED, harness.state, harness.deps);
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+    harness.checks[0]?.callback();
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+
+    harness.checks[1]?.callback();
+    syncLoadingPong(document.body, LOADING, harness.state, harness.deps);
+
+    expect(panel()).not.toBeNull();
+  });
+
   it('should write nothing on the page when it stops loading without a game', () => {
     const harness = makeHarness();
     const observer = new MutationObserver(() => undefined);
@@ -237,6 +268,23 @@ describe('stopLoadingPong', () => {
 
     stopLoadingPong(document.body, harness.state);
 
+    expect(panel()).toBeNull();
+  });
+
+  it('should stop listening to the pointer when the game is taken back', () => {
+    const harness = makeHarness();
+    waitOutThePatience(harness);
+    const canvas = document.body.querySelector('canvas') as HTMLCanvasElement;
+    let received = 0;
+    canvas.addEventListener('pointermove', () => {
+      received += 1;
+    });
+
+    stopLoadingPong(document.body, harness.state);
+    canvas.dispatchEvent(new Event('pointermove'));
+
+    // Our own listener counts: the one of the game must be gone with it.
+    expect(received).toBe(1);
     expect(panel()).toBeNull();
   });
 
