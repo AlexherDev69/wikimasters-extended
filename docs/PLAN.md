@@ -710,6 +710,17 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Le nom est réécrit avec des espaces : MediaWiki l'écrit avec des tirets bas dans une propriété de page et avec des espaces partout ailleurs, et une carte ne doit pas être retenue sous deux noms
 - Schéma de cache en version 9, et les deux enregistrements `frwiki-titles` rejoués par les tests ont été refaits avec la nouvelle requête : ce sont de vrais enregistrements, pas des fixtures retouchées
 
+### Phase 21 : un son quand une notification arrive (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture du panneau des notifications à l'appui : "possible d'ajouter un son quand on reçoit une notif ?"
+- Vérifié avant d'écrire : le site affiche déjà le compte dans un `span` rouge à l'intérieur de `button[aria-label="Notifications"]`, et le retire quand il n'y a plus rien (mesuré sur les huit exports de pages du 2026-09-21, dont un seul porte une notification non lue, avec 5 dedans). Écouter, c'est lire : rien n'est posé sur le site, aucun `fetch` du site n'est intercepté, aucune API du site n'est appelée
+- La seule fonctionnalité qui n'ajoute aucun noeud : elle n'a donc rien à retirer quand on la décoche ni quand l'extension est rechargée. Le contrat "zéro écriture quand rien n'a changé" est tenu par construction, et prouvé quand même au MutationObserver dans le test de l'overlay
+- Ne sonne que pour un compte qui monte : pas à la première lecture de la cloche (sinon une page ouverte sur cinq notifications sonnerait cinq arrivées), pas quand le compte descend, et une seule fois quand le site passe de 1 à 4 d'un coup. Un compte nul et une page sans cloche sont deux choses différentes, d'où le `number | null` : le site navigue sans recharger, et certaines de ses pages se rendent avant leur navigation
+- Le son est fabriqué, pas téléchargé : deux sinusoïdes (A5 puis E6) dans un `AudioContext` ouvert une seule fois par page, 300 ms en tout, gain crête 0,12. Aucun fichier dans le paquet de l'extension, aucune adresse demandée, et aucune notification du navigateur ni du système
+- La règle des navigateurs sur le son avant un geste de l'utilisateur est acceptée telle quelle : `resume()` est demandé à chaque tintement et le son est simplement omis tant que le contexte n'est pas `running`. Aucun écouteur de clic sur le document n'a été posé pour la contourner, parce que le README promet que les seuls clics écoutés sont ceux des boutons de l'extension
+- Le contexte audio est rendu à la page quand l'extension est rechargée : c'est la seule chose que cette fonctionnalité ait à reprendre, et un navigateur n'en distribue qu'un nombre limité par page
+- Décocher puis recocher l'interrupteur oublie le compte : recocher écoute à partir de la cloche telle qu'elle est à ce moment, donc rien ne sonne pour ce qui est arrivé entre les deux
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"

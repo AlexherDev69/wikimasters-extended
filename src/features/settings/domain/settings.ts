@@ -47,6 +47,12 @@ export interface Settings {
    * away as soon as the page has.
    */
   loadingPong: boolean;
+  /**
+   * A short sound when the bell of the site goes up. It listens to the badge
+   * the site already shows and adds nothing to the page: no node, no listener
+   * on anything of the site, and no notification of the browser.
+   */
+  notificationSound: boolean;
 }
 
 /** Exported so a view can give every switch a place in a display order. */
@@ -59,6 +65,7 @@ export const SETTING_KEYS = [
   'pullStats',
   'compactView',
   'loadingPong',
+  'notificationSound',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -72,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pullStats: true,
   compactView: true,
   loadingPong: true,
+  notificationSound: true,
 };
 
 /**
@@ -88,7 +96,9 @@ export const DEFAULT_SETTINGS: Settings = {
  * title of its article, so its button is built from what the page already
  * shows and no one is ever asked anything. `loadingPong` is left
  * out for the plainest reason of all: it only runs while the page shows no
- * card at all, so there is nothing to look up.
+ * card at all, so there is nothing to look up. `notificationSound` is left
+ * out too: it reads a number in the navigation of the site, which names no
+ * card at all.
  */
 const CATEGORIZATION_SETTING_KEYS = [
   'letterboxdLink',

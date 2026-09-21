@@ -30,6 +30,12 @@ import {
   type LoadingPongDeps,
 } from '../../loading-pong/presentation/sync-loading-pong';
 import { removeCardImages } from '../../missing-image/data/card-image';
+import type { ChimePlayer } from '../../notification-sound/data/chime';
+import {
+  createNotificationSoundState,
+  forgetUnreadCount,
+  syncNotificationSound,
+} from '../../notification-sound/presentation/sync-notification-sound';
 import { removeModalCreditLines } from '../../missing-image/data/modal-credit-line';
 import { syncCardImages } from '../../missing-image/presentation/sync-card-images';
 import { syncModalCredit } from '../../missing-image/presentation/sync-modal-credit';
@@ -88,6 +94,8 @@ export interface OverlayDeps {
   readPath: () => string;
   /** Asks for the next animation frame, for the game of the loading screen. */
   requestFrame: (callback: (timeMs: number) => void) => void;
+  /** Plays the sound of an arriving notification, on the page that owns it. */
+  chime: ChimePlayer;
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
@@ -120,6 +128,12 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * It outlives every scan as well: the wait is measured across them.
    */
   const loadingPong = createLoadingPongState();
+  /**
+   * What the bell showed last. It outlives every scan for the plainest reason
+   * of all: a count rebuilt at each scan would never have a previous one to
+   * rise above, so nothing would ever sound.
+   */
+  const notificationSound = createNotificationSoundState();
 
   /**
    * The retry of a batch that failed, and the scan without which it never
@@ -215,6 +229,13 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.loadingPong) {
       syncLoadingPong(root, isPageLoading(root, cards.length), loadingPong, loadingPongDeps);
     }
+    // The only part that reads the navigation of the site rather than its
+    // cards, and the only one that writes nothing at all: what it produces is
+    // a sound. The observer of the cards is what brings it here, since the
+    // badge of the bell appears, changes and goes away inside the page.
+    if (settings.notificationSound) {
+      syncNotificationSound(root, notificationSound, deps.chime);
+    }
     if (!settings.letterboxdLink && !settings.missingImages) {
       return;
     }
@@ -309,6 +330,13 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (previous.loadingPong && !settings.loadingPong) {
       stopLoadingPong(root, loadingPong);
     }
+    // Takes back no node, because this one never added any: what it forgets
+    // is the count it heard last, so switching the sound back on listens from
+    // the bell as it is at that moment and does not sound for everything that
+    // arrived while it was off.
+    if (previous.notificationSound && !settings.notificationSound) {
+      forgetUnreadCount(notificationSound);
+    }
   }
 
   return {
@@ -341,6 +369,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCompactStyle(root.ownerDocument);
       stopLoadingPong(root, loadingPong);
       removeBrandMarks(root);
+      // The sound of the notifications adds no node, so it has nothing to
+      // take back but the audio it was given.
+      deps.chime.close();
     },
   };
 }

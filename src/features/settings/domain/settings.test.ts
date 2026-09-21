@@ -10,6 +10,7 @@ const ALL_OFF: Settings = {
   pullStats: false,
   compactView: false,
   loadingPong: false,
+  notificationSound: false,
 };
 
 describe('normalizeSettings', () => {
@@ -33,6 +34,7 @@ describe('normalizeSettings', () => {
       pullStats: true,
       compactView: true,
       loadingPong: true,
+      notificationSound: true,
     });
   });
 
@@ -94,7 +96,7 @@ describe('normalizeSettings', () => {
     expect(DEFAULT_SETTINGS.letterboxdLink).toBe(true);
   });
 
-  it('should read every saved switch back when all seven were written', () => {
+  it('should read every saved switch back when all of them were written', () => {
     expect(normalizeSettings(ALL_OFF)).toEqual(ALL_OFF);
   });
 

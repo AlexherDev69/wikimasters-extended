@@ -15,6 +15,7 @@ import {
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
 import { createCompactPreferenceStore } from '../features/compact-view/data/compact-preference-store';
+import { createChimePlayer } from '../features/notification-sound/data/chime';
 import { createPullTallyStore } from '../features/pull-stats/data/pull-tally-store';
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
 import type { Settings } from '../features/settings/domain/settings';
@@ -120,6 +121,9 @@ export default defineContentScript({
       requestFrame: (callback) => {
         ctx.requestAnimationFrame(callback);
       },
+      // Built once for this page: a browser stops handing out audio contexts
+      // after a few dozen, so one per sound would go quiet for good.
+      chime: createChimePlayer(window),
     });
     applySettings = (changed): void => {
       overlay.applySettings(changed);
