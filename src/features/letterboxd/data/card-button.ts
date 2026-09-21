@@ -67,6 +67,26 @@ const LINK_TARGET = '_blank';
 /** No opener and no referrer, as the site does on its own outgoing links. */
 const LINK_REL = 'noopener noreferrer';
 
+/**
+ * How the button reads for assistive technology and for the keyboard.
+ *
+ * `named` is the button of a card OF THE SITE: it carries the label of its
+ * destination and takes a focus stop, like any other link of the page.
+ *
+ * `silent` is the button of a card the extension draws ITSELF, on the page of
+ * the trades, inside a button of the site. That button takes its name from
+ * the text it holds, so a labelled link of ours would be read out in the
+ * middle of it, and its focus stop would be added to the ones the site laid
+ * out. The mark is therefore hidden from assistive technology and kept out of
+ * the tab order: the mouse reaches it, the control of the site keeps exactly
+ * the name and the stops the site gave it, and a reader who never uses a
+ * mouse loses nothing, the same article being one click away in the detail
+ * the control opens.
+ */
+type ButtonVoice = 'named' | 'silent';
+
+const NOT_IN_TAB_ORDER = -1;
+
 const HREF_ATTRIBUTE = 'href';
 const ARIA_LABEL_ATTRIBUTE = 'aria-label';
 
@@ -105,14 +125,28 @@ function buildMark(document: Document): SVGElement {
   return mark;
 }
 
-function buildButton(document: Document, title: string, url: string): HTMLAnchorElement {
+function speak(button: HTMLAnchorElement, title: string, voice: ButtonVoice): void {
+  if (voice === 'named') {
+    button.setAttribute(ARIA_LABEL_ATTRIBUTE, ariaLabel(title));
+    return;
+  }
+  button.setAttribute(ARIA_HIDDEN_ATTRIBUTE, TRUE);
+  button.tabIndex = NOT_IN_TAB_ORDER;
+}
+
+function buildButton(
+  document: Document,
+  title: string,
+  url: string,
+  voice: ButtonVoice,
+): HTMLAnchorElement {
   const button = document.createElement(BUTTON_TAG);
   button.className = BUTTON_CLASS;
   button.setAttribute(CARD_BUTTON_ATTRIBUTE, '');
   button.href = url;
   button.target = LINK_TARGET;
   button.rel = LINK_REL;
-  button.setAttribute(ARIA_LABEL_ATTRIBUTE, ariaLabel(title));
+  speak(button, title, voice);
 
   button.appendChild(buildMark(document));
 
@@ -124,10 +158,7 @@ function buildButton(document: Document, title: string, url: string): HTMLAnchor
     }
     /*
      * The single deliberate exception to "the site owns its own events".
-     * Every other node the extension adds stays `pointer-events: none`, and
-     * the one other place that listens for a click of its own, the tag
-     * proposal of the detail modal, lets it bubble: nothing of the site opens
-     * on a click there, so there is nothing to stop. This
+     * Every other node the extension adds stays `pointer-events: none`. This
      * button sits INSIDE a card, and the whole card opens the detail modal on
      * a click anywhere on it: without stopping this one, a click aimed at
      * Letterboxd would also open the modal behind it, which the user never
@@ -221,8 +252,23 @@ export function applyCardButton(cardRoot: HTMLElement, title: string, url: strin
   // Another card in a node the site reused, or an address that changed: the
   // button is built again rather than patched, as the image container is.
   existing?.remove();
-  textArea.appendChild(buildButton(cardRoot.ownerDocument, title, safeUrl));
+  textArea.appendChild(buildButton(cardRoot.ownerDocument, title, safeUrl, 'named'));
   rootsWithButton.add(cardRoot);
+}
+
+/**
+ * The same button for a card the extension draws itself, silent for a screen
+ * reader and out of the tab order, or null when `url` is not an address of
+ * Letterboxd. Checked here, whatever the caller believes it holds: a value
+ * that crossed a message boundary is untrusted, and this is the last step
+ * before an `href`.
+ */
+export function silentCardButton(
+  document: Document,
+  title: string,
+  url: string | null,
+): HTMLAnchorElement | null {
+  return isLetterboxdUrl(url) ? buildButton(document, title, url, 'silent') : null;
 }
 
 /**

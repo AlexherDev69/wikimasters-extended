@@ -58,7 +58,13 @@
   /*
    * The whole offer is one button of the site, which opens the detail of the
    * trade. A click on our preview must do exactly what a click on the chip it
-   * replaced did, so nothing of ours ever takes a click.
+   * replaced did, so the card itself never takes a click.
+   *
+   * Its two marks are the exception, and they take one for the reason they
+   * take one on a card of the site: each sets `pointer-events: auto` in its
+   * own style sheet and stops its own click, so the article and the Letterboxd
+   * page open without the detail of the offer opening behind them. Everything
+   * else here stays out of the way.
    */
   pointer-events: none;
 }

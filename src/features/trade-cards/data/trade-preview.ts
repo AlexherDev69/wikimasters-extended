@@ -1,6 +1,8 @@
 import type { DetectedCard } from '../../card-detection/domain/detected-card';
+import { silentCardButton } from '../../letterboxd/data/card-button';
 import { isCommonsFileName, type CardImage } from '../../missing-image/domain/card-image';
 import { thumbnailAddress } from '../../missing-image/domain/thumbnail-address';
+import { silentWikipediaButton } from '../../wikipedia-link/data/wikipedia-button';
 import type { ObservedTradeCard } from './scan-trade-chips';
 import {
   TRADE_FAILED_ATTRIBUTE,
@@ -40,20 +42,64 @@ const ERROR_EVENT = 'error';
 
 const KEY_SEPARATOR = '|';
 
+/** What the key writes for the button of the article, when the card carries it. */
+const ARTICLE_MARK = 'w';
+
+/**
+ * The two marks the extension draws on a card of a trade offer, decided by
+ * the sync: each has a switch of its own, and the Letterboxd one has an
+ * address only for the cards Wikidata gives one.
+ */
+export interface TradeCardMarks {
+  /** The button of the article, which every card can carry. */
+  article: boolean;
+  /** The address of the card on Letterboxd, or null. */
+  letterboxdUrl: string | null;
+}
+
 /**
  * Everything the preview shows, in one string. A sync compares it against the
  * key the preview already carries and writes nothing when they match, which
  * the observer of the content script makes a requirement: every write of ours
  * schedules another scan, and a sync that always wrote would never stop.
  */
-function previewKey(card: DetectedCard, image: CardImage | null): string {
-  return [card.rarity, card.title, image?.fileName ?? '', image?.kind ?? ''].join(KEY_SEPARATOR);
+function previewKey(card: DetectedCard, image: CardImage | null, marks: TradeCardMarks): string {
+  return [
+    card.rarity,
+    card.title,
+    image?.fileName ?? '',
+    image?.kind ?? '',
+    marks.article ? ARTICLE_MARK : '',
+    marks.letterboxdUrl ?? '',
+  ].join(KEY_SEPARATOR);
+}
+
+/**
+ * The marks of the extension, in the bottom right corner of the picture: the
+ * very buttons the cards of the site carry, in the very place they carry
+ * them, so a card met in a trade offer opens the same two pages as the same
+ * card met in the collection.
+ *
+ * Silent ones: this card of ours stands inside a button of the site, which
+ * takes its name from the text it holds and lays out its own focus stops.
+ * See letterboxd/data/card-button.ts for what that costs and what it saves.
+ */
+function appendMarks(art: HTMLElement, title: string, marks: TradeCardMarks): void {
+  const document = art.ownerDocument;
+  const article = marks.article ? silentWikipediaButton(document, title) : null;
+
+  for (const mark of [article, silentCardButton(document, title, marks.letterboxdUrl)]) {
+    if (mark !== null) {
+      art.appendChild(mark);
+    }
+  }
 }
 
 function buildPreview(
   document: Document,
   card: DetectedCard,
   image: CardImage | null,
+  marks: TradeCardMarks,
   key: string,
 ): HTMLElement {
   const preview = document.createElement(PREVIEW_TAG);
@@ -77,6 +123,8 @@ function buildPreview(
   rarity.className = RARITY_CLASS;
   rarity.textContent = card.rarity.toUpperCase();
   art.appendChild(rarity);
+
+  appendMarks(art, card.title, marks);
 
   const title = document.createElement(PART_TAG);
   title.className = TITLE_CLASS;
@@ -133,7 +181,11 @@ function previewBefore(chip: HTMLElement): Element | null {
  * of its own nodes are current, or null when the chip has left the document
  * between the scan and this call.
  */
-export function applyTradePreview(observed: ObservedTradeCard, image: CardImage | null): Element | null {
+export function applyTradePreview(
+  observed: ObservedTradeCard,
+  image: CardImage | null,
+  marks: TradeCardMarks,
+): Element | null {
   const { chip, card } = observed;
   const parent = chip.parentElement;
   if (parent === null) {
@@ -142,15 +194,15 @@ export function applyTradePreview(observed: ObservedTradeCard, image: CardImage 
   // Last check before the DOM, whatever the caller believes it holds: the file
   // name reaches a URL, so an unusable one draws the flat ground instead.
   const safeImage = image !== null && isCommonsFileName(image.fileName) ? image : null;
-  const key = previewKey(card, safeImage);
+  const key = previewKey(card, safeImage, marks);
   const existing = previewBefore(chip);
 
   if (existing !== null && existing.getAttribute(TRADE_PREVIEW_KEY_ATTRIBUTE) === key) {
     return existing;
   }
-  // Built again rather than patched, so the picture, its failure mark and the
-  // title can never disagree about which card is being shown.
-  const preview = buildPreview(chip.ownerDocument, card, safeImage, key);
+  // Built again rather than patched, so the picture, its failure mark, the
+  // title and the two marks can never disagree about which card is shown.
+  const preview = buildPreview(chip.ownerDocument, card, safeImage, marks, key);
   if (existing === null) {
     parent.insertBefore(preview, chip);
   } else {
