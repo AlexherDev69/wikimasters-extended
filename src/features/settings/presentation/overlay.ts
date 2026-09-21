@@ -1,4 +1,5 @@
 import type { Logger } from '../../../core/logger/logger';
+import { applyBrandMark, removeBrandMarks } from '../../brand-mark/data/brand-mark';
 import { findDetailModal } from '../../card-detection/data/detail-modal';
 import { scanCards, type ObservedCard } from '../../card-detection/data/scan-cards';
 import { handleScan, type ScheduleRetry } from '../../card-detection/presentation/handle-scan';
@@ -156,6 +157,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    */
   function sync(cards: readonly ObservedCard[], trades: readonly ObservedTradeCard[]): void {
     const { categoriesByTitle } = memory;
+
+    // The signature of the extension, under the name of the site. It has no
+    // switch of its own: it says that this browser shows more than the site
+    // sends, which is true of the extension itself and not of one feature.
+    applyBrandMark(root);
 
     if (settings.letterboxdLink) {
       syncCardButtons(cards, categoriesByTitle);
@@ -320,6 +326,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCompactToggles(root);
       removeCompactStyle(root.ownerDocument);
       stopLoadingPong(root, loadingPong);
+      removeBrandMarks(root);
     },
   };
 }

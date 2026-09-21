@@ -1,0 +1,43 @@
+/*
+ * Style of the one node this feature adds. The selector starts with our own
+ * data attribute, so no rule of ours can reach a node of the site, and no
+ * rule of the site is overridden.
+ */
+
+[data-wme-brand-mark] {
+  /* Its own line, under the name of the site rather than beside it. */
+  display: block;
+  /*
+   * The name is drawn at 24px with room to spare below its baseline, so a
+   * couple of pixels are all that is needed to set the word apart from it.
+   */
+  margin-top: 2px;
+  /*
+   * The font of the headings of the site, the very one its name is drawn
+   * with, so the two lines read as one mark. The variable is the site's own;
+   * a build that stopped declaring it falls back to the font the link
+   * already carries.
+   */
+  font-family: var(--font-heading, inherit);
+  font-size: 10px;
+  font-weight: 600;
+  /* Small letters set wide: the shape of a subtitle, under a heavy name. */
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  /* One line exactly, so the word sits right under the name. */
+  line-height: 1;
+  /*
+   * The accent of the site, the colour its own name starts with, held back a
+   * little so the word stays a signature and never competes with the name
+   * above it.
+   */
+  color: var(--color-accent, #2dd4a7);
+  opacity: 0.75;
+  /*
+   * The link belongs to the site: the click goes to it, exactly as a click on
+   * the name does, and this word never takes one of its own.
+   */
+  pointer-events: none;
+  /* Nothing of ours is ever caught by a selection made on the site's text. */
+  user-select: none;
+}

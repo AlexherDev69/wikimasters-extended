@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Logger } from '../../../core/logger/logger';
+import { BRAND_MARK_SELECTOR } from '../../brand-mark/data/brand-selectors';
 import { scanCards } from '../../card-detection/data/scan-cards';
 import type { CardCategory } from '../../categorization/domain/category';
 import type { CardToCategorize } from '../../categorization/domain/categorize-cards';
@@ -38,6 +39,9 @@ const COLLECTION_FILTERS_HTML = readFileSync(
   join(FIXTURES_DIR, 'collection-filters.html'),
   'utf-8',
 );
+
+/** The navigation of the site, with its own name at the top of it. */
+const HEADER_HTML = readFileSync(join(FIXTURES_DIR, 'site-header.html'), 'utf-8');
 
 /** The page of the collection while the site is still fetching its cards. */
 const LOADING_HTML = readFileSync(join(FIXTURES_DIR, 'loading-spinner.html'), 'utf-8');
@@ -182,6 +186,10 @@ function cardImages(): NodeListOf<Element> {
 
 function hideStatsStyle(): Element | null {
   return document.head.querySelector(HIDE_STATS_STYLE_SELECTOR);
+}
+
+function brandMarks(): NodeListOf<Element> {
+  return document.body.querySelectorAll(BRAND_MARK_SELECTOR);
 }
 
 /** The picture of a trade card, which only a card with a known file has. */
@@ -879,6 +887,43 @@ describe('createOverlay', () => {
     const { overlay } = mount({ ...ALL_OFF, pullStats: true });
     scan(overlay);
     expect(pullStatsPanel()).not.toBeNull();
+
+    overlay.destroy();
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+
+  it('should write the word of the extension under the name of the site, every switch off', () => {
+    // It is the signature of the extension and not one of its features: it
+    // has no switch, so it is there even when every one of them is off, and
+    // it costs no request either.
+    document.body.innerHTML = HEADER_HTML + GRID_HTML;
+    const { overlay, categorize } = mount(ALL_OFF);
+
+    scan(overlay);
+
+    expect(brandMarks()).toHaveLength(1);
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should write nothing on a second scan while the word is already there', () => {
+    document.body.innerHTML = HEADER_HTML + GRID_HTML;
+    const { overlay } = mount(ALL_OFF);
+    scan(overlay);
+    const observer = observeBody();
+
+    scan(overlay);
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
+  });
+
+  it('should take the word of the extension back when the context is invalidated', () => {
+    document.body.innerHTML = HEADER_HTML + GRID_HTML;
+    const siteHtml = document.body.innerHTML;
+    const { overlay } = mount(ALL_OFF);
+    scan(overlay);
+    expect(brandMarks()).toHaveLength(1);
 
     overlay.destroy();
 

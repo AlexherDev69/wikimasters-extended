@@ -19,6 +19,7 @@ import { createPullTallyStore } from '../features/pull-stats/data/pull-tally-sto
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
 import type { Settings } from '../features/settings/domain/settings';
 import { createOverlay } from '../features/settings/presentation/overlay';
+import '../features/brand-mark/presentation/brand-mark.css';
 import '../features/compact-view/presentation/compact-view.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/loading-pong/presentation/loading-pong.css';

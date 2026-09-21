@@ -670,6 +670,16 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Jeu témoin : les 100 cartes réelles gardent leurs deux garde-fous observables, le statut de chacune et son adresse Letterboxd. Les colonnes de catégorie de la capture partent avec l'assertion qui les lisait, plutôt que de rester dans un fichier que plus rien ne vérifie
 - Reste connu, à traiter séparément : `primarySubtype` est toujours calculé (vote majoritaire et lecture de la description) et n'est plus lu par personne, le badge étant son seul lecteur. Le retirer ferait tomber la moitié de `classify-person.ts`, mais la description reste nécessaire au départage des métiers de cinéma pour Letterboxd
 
+### Phase 17 : le mot "Extended" sous le nom du site (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture de l'en-tête à l'appui : "ajoute un petit extended en dessous de wikimasters"
+- Ancrage : `a > h1[style*="--font-heading"]`. Le site porte la police de ses titres dans une propriété personnalisée en style en ligne, le signal stable ici (voir DOM_NOTES) ; les titres de page portent la même, mais le nom du site est le seul `h1` qui soit l'enfant direct d'un lien. Mesuré sur cinq exports réels : une occurrence par page, et aucun titre de page dans un lien
+- Le mot est posé à l'intérieur du lien du site, après le `h1` : il se range donc sous le nom sans qu'aucun noeud du site ne soit touché, et le clic reste celui du site. `pointer-events: none` pour qu'il n'en prenne jamais un à lui, et `aria-hidden` pour qu'un lecteur d'écran lise le lien tel que le site l'a écrit
+- Pas de réglage : c'est la signature de l'extension et non une fonctionnalité, elle est donc affichée même quand les sept interrupteurs sont éteints, et elle ne coûte aucune requête. Même forme que `hide-card-stats`, une fonctionnalité qui tient dans `data/` sans couche de présentation
+- Zéro écriture quand le mot est déjà là, prouvé par un test avec MutationObserver : notre mot est cherché DANS le lien et non dans la page, sinon celui laissé dans une navigation que React vient de jeter passerait pour celui qu'il faut
+- Contrôle visuel en navigateur, sur la police réelle du site : bords gauches alignés au pixel (24 px pour le nom comme pour le mot), 2 px sous le nom, et la ligne d'en-tête grandit de 12 px, qu'elle prend sur les 32 px de marge qu'elle avait sous elle
+- Fixture `tests/fixtures/site-header.html` : la navigation du site et le titre d'une page, pour que le test prouve que le titre de page ne reçoit rien
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
