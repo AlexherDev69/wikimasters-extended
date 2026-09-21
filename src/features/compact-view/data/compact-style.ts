@@ -1,4 +1,5 @@
 import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
+import { WIKIPEDIA_BUTTON_SELECTOR } from '../../wikipedia-link/data/wikipedia-button-selectors';
 import {
   COMPACT_CARD_SELECTOR,
   COMPACT_PICTURE_SELECTOR,
@@ -61,9 +62,9 @@ ${COMPACT_TEXT_SELECTOR} {
 /* Of that area, the title alone is kept. The description, the tags and the
    ATK/DEF row are what a compact view trades away for the cards it fits on
    screen, and they are one click away in the detail modal, which this sheet
-   never touches. Our own Letterboxd mark is spared by name: it is not a node
-   of the site, and it is moved rather than hidden, just below. */
-${COMPACT_TEXT_SELECTOR} > *:not(h3):not(${CARD_BUTTON_SELECTOR}) {
+   never touches. Both marks of the extension are spared by name: neither is a
+   node of the site, and both are moved rather than hidden, just below. */
+${COMPACT_TEXT_SELECTOR} > *:not(h3):not(${CARD_BUTTON_SELECTOR}):not(${WIKIPEDIA_BUTTON_SELECTOR}) {
   display: none;
 }
 
@@ -73,11 +74,15 @@ ${COMPACT_TEXT_SELECTOR} > h3 {
   line-height: 1.15;
 }
 
-/* Our Letterboxd mark sits in the band the ATK/DEF row leaves free at the
-   foot of the text area. That band is gone, so the mark moves just above the
-   text area instead, into the bottom right corner of the picture, where the
-   site draws its own dark fade. */
-${COMPACT_CARD_SELECTOR} ${CARD_BUTTON_SELECTOR} {
+/* Our two marks sit in the band the ATK/DEF row leaves free at the foot of
+   the text area. That band is gone, so they move just above the text area
+   instead, into the bottom right corner of the picture, where the site draws
+   its own dark fade. They keep the size and the gap they measured out at full
+   size, the Wikipedia button stepping aside from the Letterboxd one exactly
+   as it does there: both are 12 px tall whatever the card, because the band
+   they were cut for is a 12 px padding whatever the card. */
+${COMPACT_CARD_SELECTOR} ${CARD_BUTTON_SELECTOR},
+${COMPACT_CARD_SELECTOR} ${WIKIPEDIA_BUTTON_SELECTOR} {
   top: -15px;
   bottom: auto;
 }

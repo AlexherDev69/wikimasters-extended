@@ -1,8 +1,11 @@
-import { CARD_TITLE_SELECTOR } from '../../card-detection/data/card-selectors';
+import { CARD_TITLE_SELECTOR } from './card-selectors';
 
 /**
  * Finds the text area of a card: the child of the card root that holds the
- * `h3` the scanner reads as its title. Reads only: no attribute, class or
+ * `h3` the scanner reads as its title. It lives here, with the rest of what
+ * describes the card of the site, because every feature that writes in that
+ * corner of a card needs it: the Letterboxd button and the Wikipedia one
+ * both stand in it. Reads only: no attribute, class or
  * style is ever written on a node of the site.
  *
  * The area carries nothing of its own to match on, and its Tailwind classes

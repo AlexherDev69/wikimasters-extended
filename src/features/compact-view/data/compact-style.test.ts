@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CARD_BUTTON_ATTRIBUTE } from '../../letterboxd/data/card-button-selectors';
+import { WIKIPEDIA_BUTTON_ATTRIBUTE } from '../../wikipedia-link/data/wikipedia-button-selectors';
 import { COMPACT_STYLE_SELECTOR } from './compact-selectors';
 import { applyCompactStyle, removeCompactStyle } from './compact-style';
 
@@ -27,18 +29,39 @@ function gridCard(): Element {
   return card;
 }
 
+/** The area of a card that holds its title, where both features write. */
+function textArea(): Element {
+  const area = gridCard().querySelector('h3')?.parentElement ?? null;
+  if (area === null) {
+    throw new Error('The fixture holds no text area');
+  }
+  return area;
+}
+
 /**
  * The first thing the text area of a card holds beside its title: the line of
  * description on a card of a grid, the ATK/DEF block on the card the detail
  * modal shows for itself. It is what the compact card trades away.
  */
 function textAreaExtra(): Element {
-  const heading = gridCard().querySelector('h3');
-  const extra = heading?.parentElement?.querySelector(':scope > *:not(h3)') ?? null;
+  const extra = textArea().querySelector(':scope > *:not(h3)');
   if (extra === null) {
     throw new Error('The fixture holds no text area');
   }
   return extra;
+}
+
+/**
+ * A mark of the extension, in the corner of a card its feature writes it in.
+ * An anchor carrying one attribute, which is all either feature is to this
+ * sheet: see letterboxd/data/card-button.ts and
+ * wikipedia-link/data/wikipedia-button.ts for the real nodes.
+ */
+function addOwnMark(attribute: string): HTMLElement {
+  const mark = document.createElement('a');
+  mark.setAttribute(attribute, '');
+  textArea().appendChild(mark);
+  return mark;
 }
 
 describe('applyCompactStyle', () => {
@@ -85,13 +108,43 @@ describe('applyCompactStyle', () => {
     applyCompactStyle(document);
     const rules = (styleElement()?.textContent ?? '')
       .split('}')
-      .map((rule) => rule.slice(rule.lastIndexOf('*/') + 1, rule.indexOf('{')).trim())
+      .map((rule) => rule.slice(rule.lastIndexOf('*/') + 1, rule.indexOf('{')))
+      // One rule may name several selectors, and each of them has to carry
+      // the negation of its own.
+      .flatMap((selectors) => selectors.split(','))
+      .map((selector) => selector.trim())
       .filter((selector) => selector !== '');
 
     expect(rules.length).toBeGreaterThan(0);
     for (const selector of rules) {
       expect(selector).toContain(':not(div.fixed.inset-0.z-50 *)');
     }
+  });
+
+  it('should keep both marks of the extension on the card it makes smaller', () => {
+    // What the sheet takes away from the text area stops at the nodes the
+    // site wrote itself: the button of the article and the Letterboxd one are
+    // ours, and a compact card is where they are the most useful, since the
+    // title is all that is left of the card to read.
+    document.body.innerHTML = FIXTURE_CARD_GRID;
+    const letterboxd = addOwnMark(CARD_BUTTON_ATTRIBUTE);
+    const wikipedia = addOwnMark(WIKIPEDIA_BUTTON_ATTRIBUTE);
+
+    applyCompactStyle(document);
+
+    expect(getComputedStyle(letterboxd).display).not.toBe('none');
+    expect(getComputedStyle(wikipedia).display).not.toBe('none');
+  });
+
+  it('should move both marks above the text area, the band they stood in being gone', () => {
+    document.body.innerHTML = FIXTURE_CARD_GRID;
+    const letterboxd = addOwnMark(CARD_BUTTON_ATTRIBUTE);
+    const wikipedia = addOwnMark(WIKIPEDIA_BUTTON_ATTRIBUTE);
+
+    applyCompactStyle(document);
+
+    expect(getComputedStyle(letterboxd).top).toBe('-15px');
+    expect(getComputedStyle(wikipedia).top).toBe('-15px');
   });
 
   it('should draw the card at about two thirds of the size the site gives it', () => {

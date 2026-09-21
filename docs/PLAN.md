@@ -680,6 +680,18 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Contrôle visuel en navigateur, sur la police réelle du site : bords gauches alignés au pixel (24 px pour le nom comme pour le mot), 2 px sous le nom, et la ligne d'en-tête grandit de 12 px, qu'elle prend sur les 32 px de marge qu'elle avait sous elle
 - Fixture `tests/fixtures/site-header.html` : la navigation du site et le titre d'une page, pour que le test prouve que le titre de page ne reçoit rien
 
+### Phase 18 : le bouton Wikipédia sur la carte (faite le 2026-09-21)
+
+- Demande de l'utilisateur : "Aujourd'hui il faut ouvrir la modale pour atteindre l'article, alors que le titre de la carte EST le titre frwiki exact. Coût réseau : zéro. [...] Ok pour ça, met le a coté du bouton letterboxd"
+- L'hypothèse, vérifiée avant d'écrire la fonctionnalité : sur les 100 cartes réelles du jeu témoin, interrogées le 2026-09-21 par `action=query&redirects=1`, 100 titres sur 100 désignent un article existant de frwiki, sans une seule redirection ni une seule normalisation. L'adresse peut donc être construite du titre seul
+- Aucune requête, aucun cache, aucune attente : la fonctionnalité ne passe pas par la catégorisation, donc `wikipediaLink` n'entre pas dans `CATEGORIZATION_SETTING_KEYS` et le bouton est dessiné dès le premier passage, sur toutes les cartes, y compris celles que Wikidata ne connaît pas
+- Domaine : `frwikiArticleUrl` refuse un titre vide ou plus long que 300 caractères, remplace les espaces par des tirets bas comme MediaWiki, et encode le reste, `#`, `?` et `/` compris, qui couperaient l'adresse ou la déplaceraient. `isFrwikiArticleUrl` revérifie l'adresse juste avant le `href`, comme le fait le lien Letterboxd
+- Une ancre, jamais un `div` : activation au clavier, clic du milieu, menu contextuel et aperçu dans la barre d'état viennent avec. C'est le deuxième noeud de l'extension qui prend un clic sur une carte, et pour la raison du premier : sans `stopPropagation`, le clic ouvrirait aussi la modale de détail derrière. Garde `isTrusted`, `preventDefault` jamais appelé
+- La marque est la lettre W à empattements, pas le globe : une sphère de pièces de puzzle lettrées ne se dessine pas honnêtement en douze pixels, et un globe approximatif se lirait comme une icône web quelconque
+- Placement : le coin bas droit, celui que le bouton Letterboxd avait mesuré. Quand les deux sont là, le bouton Wikipédia se décale de 30 px vers la gauche. La règle est écrite deux fois, avec `~` et avec `:has(~ ...)`, pour que l'ordre d'écriture des deux fonctionnalités n'ait jamais d'importance : celui de l'article est posé au premier passage, celui de Letterboxd attend ce que Wikidata sait
+- `find-text-area.ts` remonte de `letterboxd/data/` vers `card-detection/data/` : deux fonctionnalités écrivent maintenant dans ce coin de la carte, et la nouvelle n'a pas à dépendre de l'ancienne
+- Vue compacte : la feuille de style épargne les deux marques par leur nom au lieu d'une seule, et les remonte toutes les deux ensemble au-dessus de la zone de texte. Elles gardent leur taille et leur écart, la bande pour laquelle elles ont été taillées étant une marge de 12 px quelle que soit la carte
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"

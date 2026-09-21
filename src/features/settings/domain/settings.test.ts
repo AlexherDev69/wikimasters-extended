@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, hasEnabledFeature, normalizeSettings, type Settings }
 
 const ALL_OFF: Settings = {
   letterboxdLink: false,
+  wikipediaLink: false,
   missingImages: false,
   tradeCards: false,
   hideCardStats: false,
@@ -25,6 +26,7 @@ describe('normalizeSettings', () => {
   it('should keep the saved switches and default the ones the record does not hold', () => {
     expect(normalizeSettings({ letterboxdLink: false, missingImages: false })).toEqual({
       letterboxdLink: false,
+      wikipediaLink: true,
       missingImages: false,
       tradeCards: true,
       hideCardStats: false,

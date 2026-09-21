@@ -4,8 +4,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findTextArea } from '../../card-detection/data/find-text-area';
 import { scanCards } from '../../card-detection/data/scan-cards';
-import { applyCardButton, removeCardButtons } from './card-button';
-import { CARD_BUTTON_SELECTOR } from './card-button-selectors';
+import { applyWikipediaButton, removeWikipediaButtons } from './wikipedia-button';
+import { WIKIPEDIA_BUTTON_SELECTOR } from './wikipedia-button-selectors';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');
 
@@ -17,8 +17,12 @@ const FIXTURES = {
 } as const;
 
 const TITLE = 'Pulp Fiction';
-const FILM_URL = 'https://letterboxd.com/film/pulp-fiction/';
-const OTHER_URL = 'https://letterboxd.com/film/lost-river/';
+const ARTICLE_URL = 'https://fr.wikipedia.org/wiki/Pulp_Fiction';
+const OTHER_TITLE = 'Saison 1 de Severance';
+const OTHER_ARTICLE_URL = 'https://fr.wikipedia.org/wiki/Saison_1_de_Severance';
+
+/** What a card node the site is in the middle of reusing reads as. */
+const UNREADABLE_TITLE = '   ';
 
 function showFixture(html: string): HTMLElement {
   document.body.innerHTML = html;
@@ -30,7 +34,7 @@ function showFixture(html: string): HTMLElement {
 }
 
 function button(): HTMLAnchorElement | null {
-  return document.body.querySelector<HTMLAnchorElement>(CARD_BUTTON_SELECTOR);
+  return document.body.querySelector<HTMLAnchorElement>(WIKIPEDIA_BUTTON_SELECTOR);
 }
 
 function requireButton(): HTMLAnchorElement {
@@ -67,7 +71,7 @@ function dispatchUntrustedClick(target: EventTarget): MouseEvent {
   return event;
 }
 
-describe('applyCardButton', () => {
+describe('applyWikipediaButton', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -77,38 +81,47 @@ describe('applyCardButton', () => {
     (fixture) => {
       const cardRoot = showFixture(FIXTURES[fixture]);
 
-      applyCardButton(cardRoot, TITLE, FILM_URL);
+      applyWikipediaButton(cardRoot, TITLE);
 
-      expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(1);
+      expect(document.body.querySelectorAll(WIKIPEDIA_BUTTON_SELECTOR)).toHaveLength(1);
       expect(findTextArea(cardRoot)?.contains(button())).toBe(true);
     },
   );
 
-  it('should carry the address, open in a new tab, without opener and with the French label', () => {
+  it('should carry the address of the article, open in a new tab, without opener and with the French label', () => {
     const cardRoot = showFixture(FIXTURES.grid);
 
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
 
     const inserted = requireButton();
-    expect(inserted.getAttribute('href')).toBe(FILM_URL);
+    expect(inserted.getAttribute('href')).toBe(ARTICLE_URL);
     expect(inserted.getAttribute('target')).toBe('_blank');
     expect(inserted.getAttribute('rel')).toBe('noopener noreferrer');
-    expect(inserted.getAttribute('aria-label')).toBe('Voir Pulp Fiction sur Letterboxd');
+    expect(inserted.getAttribute('aria-label')).toBe("Lire l'article Pulp Fiction sur Wikipédia");
   });
 
-  it('should build the button from an anchor and its drawing only, so the scanner ignores it', () => {
+  it('should build the address from the title the card itself shows, asking nothing of anyone', () => {
+    // The whole point of this button: the title of a card IS the title of its
+    // article, so nothing is looked up, waited for or cached to draw it.
+    const cardRoot = showFixture(FIXTURES.grid);
+    const title = cardRoot.querySelector('h3')?.textContent ?? '';
+
+    applyWikipediaButton(cardRoot, title);
+
+    expect(requireButton().getAttribute('href')).toBe("https://fr.wikipedia.org/wiki/Jeu_d'horreur");
+  });
+
+  it('should build the button from an anchor and one letter only, so the scanner ignores it', () => {
     const cardRoot = showFixture(FIXTURES.grid);
 
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
 
     const inserted = requireButton();
     expect(inserted.tagName).toBe('A');
-    // SVG tag names keep the case they were created with, where HTML ones are
-    // reported upper case, so both are compared in the same case here.
-    const tags = [...inserted.querySelectorAll('*')].map((node) => node.tagName.toUpperCase());
-    expect(new Set(tags)).toEqual(new Set(['SVG', 'CIRCLE', 'PATH']));
+    const tags = [...inserted.querySelectorAll('*')].map((node) => node.tagName);
+    expect(tags).toEqual(['SPAN']);
     // The reason for the whitelist above, stated on its own so it survives a
-    // change of drawing: the scanner reads a title in the first `h3` of a card
+    // change of mark: the scanner reads a title in the first `h3` of a card
     // and a description in its first `p`.
     expect(inserted.querySelector('h3')).toBeNull();
     expect(inserted.querySelector('p')).toBeNull();
@@ -117,89 +130,71 @@ describe('applyCardButton', () => {
   it('should carry no class that the card detection could take for a card', () => {
     const cardRoot = showFixture(FIXTURES.grid);
 
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
 
     const inserted = requireButton();
-    const classNames = [inserted, ...inserted.querySelectorAll('*')].map(
-      (node) => node.className,
-    );
+    const classNames = [inserted, ...inserted.querySelectorAll('*')].map((node) => node.className);
     expect(classNames.every((name) => !name.includes('glow-'))).toBe(true);
   });
 
-  it('should add nothing when the card has no Letterboxd address', () => {
+  it('should add nothing when the card shows no title to build an address from', () => {
     const cardRoot = showFixture(FIXTURES.grid);
     const observer = observeBody();
 
-    applyCardButton(cardRoot, TITLE, null);
+    applyWikipediaButton(cardRoot, UNREADABLE_TITLE);
 
     expect(button()).toBeNull();
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();
   });
 
-  it('should remove the button when the card lost its address', () => {
+  it('should remove the button when the card no longer shows a title', () => {
     const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
 
-    applyCardButton(cardRoot, TITLE, null);
+    applyWikipediaButton(cardRoot, UNREADABLE_TITLE);
 
     expect(button()).toBeNull();
   });
 
-  it('should write nothing on a second call with the same address', () => {
+  it('should write nothing on a second call with the same title', () => {
     const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
     const observer = observeBody();
 
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
 
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();
   });
 
-  it('should write nothing on a second call while the card has no address', () => {
+  it('should write nothing on a second call while the card shows no title', () => {
     const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, null);
+    applyWikipediaButton(cardRoot, UNREADABLE_TITLE);
     const observer = observeBody();
 
-    applyCardButton(cardRoot, TITLE, null);
+    applyWikipediaButton(cardRoot, UNREADABLE_TITLE);
 
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();
   });
 
-  it('should rebuild the button rather than patch it when the address changes', () => {
+  it('should rebuild the button rather than patch it when the card changes', () => {
     const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
     const first = button();
 
-    applyCardButton(cardRoot, 'Lost River', OTHER_URL);
+    applyWikipediaButton(cardRoot, OTHER_TITLE);
 
-    expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(1);
+    expect(document.body.querySelectorAll(WIKIPEDIA_BUTTON_SELECTOR)).toHaveLength(1);
     expect(button()).not.toBe(first);
-    expect(button()?.getAttribute('href')).toBe(OTHER_URL);
-  });
-
-  it('should refuse an address on a foreign origin, which never reaches the href', () => {
-    const cardRoot = showFixture(FIXTURES.grid);
-
-    applyCardButton(cardRoot, TITLE, 'https://evil.example.com/film/x/');
-
-    expect(button()).toBeNull();
-  });
-
-  it('should remove the button rather than point it to a foreign origin', () => {
-    const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, FILM_URL);
-
-    applyCardButton(cardRoot, TITLE, 'https://letterboxd.com.evil.example.com/film/x/');
-
-    expect(button()).toBeNull();
+    expect(button()?.getAttribute('href')).toBe(OTHER_ARTICLE_URL);
+    expect(button()?.getAttribute('aria-label')).toContain(OTHER_TITLE);
   });
 
   it('should stop the click from reaching a listener on the card root, and keep the native navigation', () => {
     const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
     const onCardClick = vi.fn();
     cardRoot.addEventListener('click', onCardClick);
 
@@ -211,7 +206,7 @@ describe('applyCardButton', () => {
 
   it('should do nothing on an untrusted click, which reaches the card root as any other click would', () => {
     const cardRoot = showFixture(FIXTURES.grid);
-    applyCardButton(cardRoot, TITLE, FILM_URL);
+    applyWikipediaButton(cardRoot, TITLE);
     const onCardClick = vi.fn();
     cardRoot.addEventListener('click', onCardClick);
 
@@ -226,7 +221,7 @@ describe('applyCardButton', () => {
       const cardRoot = showFixture(FIXTURES[fixture]);
       const before = scanCards(document.body).map((observed) => observed.card);
 
-      applyCardButton(cardRoot, TITLE, FILM_URL);
+      applyWikipediaButton(cardRoot, TITLE);
 
       const after = scanCards(document.body);
       expect(after).toHaveLength(before.length);
@@ -238,15 +233,15 @@ describe('applyCardButton', () => {
     const cardRoot = showFixture(FIXTURES.large);
     const siteHtml = document.body.innerHTML;
 
-    applyCardButton(cardRoot, TITLE, FILM_URL);
-    applyCardButton(cardRoot, TITLE, OTHER_URL);
+    applyWikipediaButton(cardRoot, TITLE);
+    applyWikipediaButton(cardRoot, OTHER_TITLE);
     button()?.remove();
 
     expect(document.body.innerHTML).toBe(siteHtml);
   });
 });
 
-describe('removeCardButtons', () => {
+describe('removeWikipediaButtons', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -255,12 +250,12 @@ describe('removeCardButtons', () => {
     document.body.innerHTML = FIXTURES.grid + FIXTURES.large;
     const siteHtml = document.body.innerHTML;
     for (const observed of scanCards(document.body)) {
-      applyCardButton(observed.element, TITLE, FILM_URL);
+      applyWikipediaButton(observed.element, observed.card.title);
     }
 
-    removeCardButtons(document.body);
+    removeWikipediaButtons(document.body);
 
-    expect(document.body.querySelectorAll(CARD_BUTTON_SELECTOR)).toHaveLength(0);
+    expect(document.body.querySelectorAll(WIKIPEDIA_BUTTON_SELECTOR)).toHaveLength(0);
     expect(document.body.innerHTML).toBe(siteHtml);
   });
 
@@ -268,7 +263,7 @@ describe('removeCardButtons', () => {
     showFixture(FIXTURES.grid);
     const observer = observeBody();
 
-    removeCardButtons(document.body);
+    removeWikipediaButtons(document.body);
 
     expect(observer.takeRecords()).toHaveLength(0);
     observer.disconnect();

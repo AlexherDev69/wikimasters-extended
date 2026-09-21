@@ -26,6 +26,7 @@ import '../features/loading-pong/presentation/loading-pong.css';
 import '../features/missing-image/presentation/missing-image.css';
 import '../features/pull-stats/presentation/pull-stats.css';
 import '../features/trade-cards/presentation/trade-cards.css';
+import '../features/wikipedia-link/presentation/wikipedia-link.css';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected categorization response';
 
