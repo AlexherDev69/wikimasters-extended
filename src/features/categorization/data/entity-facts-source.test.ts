@@ -113,6 +113,7 @@ describe('createEntityFactsSource', () => {
       occupationIds: [],
       externalIds: expect.objectContaining({ tmdbMovieId: null }) as unknown,
       image: null,
+      seriesImage: null,
     });
   });
 
@@ -155,7 +156,43 @@ describe('createEntityFactsSource', () => {
     ).fetchFacts([EINSTEIN_QID]);
 
     expect(withoutImage.get(EINSTEIN_QID)?.image).toBeNull();
+    expect(withoutImage.get(EINSTEIN_QID)?.seriesImage).toBeNull();
     expect(withUnusableImage.get(EINSTEIN_QID)?.image).toBeNull();
+  });
+
+  it('should keep the picture of the series apart from its own when the row carries both', async () => {
+    // Both measured on the live service 2026-09-21: the trophy of the
+    // competition answers for the card of its 2005 edition.
+    const source = makeSource(
+      bindingFetch({
+        imagePicture: `${FILE_PATH_URI_PREFIX}Einstein%201921.jpg`,
+        seriesImagePicture: `${FILE_PATH_URI_PREFIX}Troph%C3%A9e%20des%20champions.jpeg`,
+      }),
+    );
+
+    const facts = await source.fetchFacts([EINSTEIN_QID]);
+
+    expect(facts.get(EINSTEIN_QID)?.image).toEqual({
+      fileName: 'Einstein 1921.jpg',
+      kind: 'picture',
+    });
+    expect(facts.get(EINSTEIN_QID)?.seriesImage).toEqual({
+      fileName: 'Trophée des champions.jpeg',
+      kind: 'picture',
+    });
+  });
+
+  it('should read the picture of the series as an emblem when it is a logo', async () => {
+    const source = makeSource(
+      bindingFetch({ seriesImageLogo: `${FILE_PATH_URI_PREFIX}Grown-ish%20logo.png` }),
+    );
+
+    const facts = await source.fetchFacts([EINSTEIN_QID]);
+
+    expect(facts.get(EINSTEIN_QID)?.seriesImage).toEqual({
+      fileName: 'Grown-ish logo.png',
+      kind: 'emblem',
+    });
   });
 
   it('should read the image of a flag as an emblem', async () => {

@@ -36,10 +36,12 @@ export const CARD_FACTS_KEY_PREFIX = 'wme:card:';
  * is that same story once more: the rule now falls back on the lead picture
  * MediaWiki picked for the article itself. Version 7 does change the shape:
  * the IMDb id left the stored external ids with the Letterboxd rung that was
- * its only reader. Entries of an earlier version are fetched again, once, on
- * the next display of their card.
+ * its only reader. Version 8 changes it again: a card now also remembers the
+ * picture of the whole it is one edition of (phase 7g), a fact no earlier
+ * entry ever asked Wikidata for. Entries of an earlier version are fetched
+ * again, once, on the next display of their card.
  */
-const SCHEMA_VERSION = 7;
+export const CARD_FACTS_SCHEMA_VERSION = 8;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const RESOLVED_TTL_MS = 90 * MILLISECONDS_PER_DAY;
@@ -73,14 +75,15 @@ function isEntityFacts(value: unknown): value is EntityFacts {
     isStringArray(value['parentClassIds']) &&
     isStringArray(value['occupationIds']) &&
     isExternalIds(value['externalIds']) &&
-    (value['image'] === null || isCommonsFile(value['image']))
+    (value['image'] === null || isCommonsFile(value['image'])) &&
+    (value['seriesImage'] === null || isCommonsFile(value['seriesImage']))
   );
 }
 
 function isStoredCardFacts(value: unknown): value is StoredCardFacts {
   return (
     isRecord(value) &&
-    value['schemaVersion'] === SCHEMA_VERSION &&
+    value['schemaVersion'] === CARD_FACTS_SCHEMA_VERSION &&
     isCardFactsStatus(value['status']) &&
     typeof value['fetchedAt'] === 'number' &&
     typeof value['articleImageTried'] === 'boolean' &&
@@ -129,7 +132,7 @@ export function createCardFactsCache(clock: Clock): CardFactsCache {
         [...entries].map(([title, entry]) => ({
           key: cardKey(title),
           value: {
-            schemaVersion: SCHEMA_VERSION,
+            schemaVersion: CARD_FACTS_SCHEMA_VERSION,
             status: entry.status,
             facts: entry.facts,
             fetchedAt,

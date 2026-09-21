@@ -489,6 +489,21 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Garde reprise des règles voisines : l'illustration n'est retenue que si la liste de fichiers reçue la contient. Une réponse tronquée ne porte pas la liste complète d'une page, et un titre qui n'y trouve rien reste non résolu plutôt que mémorisé sans image. Les noms de `pageprops` sont écrits avec des soulignés, ceux des listes de fichiers avec des espaces : conversion à la lecture, les deux étant le même titre pour MediaWiki
 - Cache des faits de carte en version 6. Aucune forme ne change : comme en 7e, c'est la règle qui change, donc une carte mémorisée "sans image d'article" garderait cette réponse pour rien
 
+#### Phase 7g : l'image de l'ensemble dont la carte est une édition (faite le 2026-09-21)
+
+- Signalé par l'utilisateur sur une offre d'échange : "on voit bien janet jackson mais d'autre ont encore des soucis (la solution doit marcher pour toute les cartes on peux pas faire de cas par cas)". Deux cartes de la capture restaient vides, "Coupe de France féminine de football 2014-2015" et "Trophée des champions 2005"
+- Mesure faite avant de toucher au code, sur les 29 cartes sans image des exports de pages de l'utilisateur plus les deux cartes de la capture, soit 31 cartes : l'extension en illustre déjà 9 (7 par Wikidata, 2 par l'article), 3 sont des pages d'homonymie écartées par la règle 2, et 19 restent vides
+- Ce que ces 19 cartes ont réellement à offrir, vérifié article par article : 14 n'ont aucune image de leur sujet nulle part. Pas de catégorie Commons portant un fichier, aucune illustration libre sur l'article anglais, et dans l'article lui-même rien que des drapeaux, des pictogrammes de portail et des photographies d'autre chose : un avocat sur "Affaire Daval", un casino sur "Smoke on the Water". Aucune règle ne peut les remplir, et en fabriquer une reviendrait à poser l'image sans rapport que la phase 7d a mesurée comme pire que pas d'image
+- Restent deux leviers, tous deux mesurés : l'image de l'ensemble dont la carte est une édition (2 cartes sur 19) et les fichiers non libres hébergés par frwiki elle-même (3 cartes sur 19, décision maintenue plus bas)
+- Règle 8, la dernière essayée : quand Wikidata et l'article ne donnent rien, la carte montre l'image de l'ensemble dont elle est UNE édition. Deux liens seulement, P179 (fait partie de la série) et P3450 (saison d'une ligue ou d'une compétition). "Trophée des champions 2005" reçoit la photographie du trophée, "Saison 3 de Grown-ish" le logo de la série
+- Liens volontairement exclus, mesurés le 2026-09-21 : P361 (partie de) poserait l'image d'une région sur une ville, et P664 (organisateur) pose le siège de la Fédération française de football sur une finale de coupe. Les deux liens retenus disent "cet élément est un épisode de celui-là", ce qui fait de l'image de l'ensemble une image de la carte elle-même
+- Deux propriétés d'image seulement sur l'ensemble, P18 et P154 : une série, une franchise ou une compétition porte une photographie ou un logo, jamais un drapeau, des armoiries, une affiche de film ou un photomontage
+- Coût : zéro requête de plus. Les deux valeurs voyagent dans la requête d'entités qui existait déjà, par un chemin `(wdt:P179|wdt:P3450)/wdt:P18`. Mesuré le 2026-09-21 sur 50 éléments de cartes réelles : 32 Ko et une médiane autour de 0,7 s, l'écart avec la forme précédente restant sous la dispersion du service d'une exécution à l'autre
+- Ordre des recours inchangé : l'image de Wikidata, puis le fichier que l'article porte lui-même, puis seulement l'image de l'ensemble. C'est pourquoi elle occupe un champ à part, `seriesImage`, et non le champ `image` : fondue dedans, elle empêcherait la recherche de la phase 7d de partir
+- Étape purement calculatoire, la seule des trois étapes d'image à l'être : aucune requête, aucune écriture de cache, aucun échec possible. Une carte qui a déjà une image la garde, une carte non catégorisée n'est pas touchée, son image devant rester nulle
+- Cache des faits de carte en version 8. La forme change cette fois : aucune entrée antérieure n'a demandé ce fait à Wikidata
+- Décision maintenue sur les fichiers non libres, vérifiée le 2026-09-21 : "Coupe de France féminine de football 2014-2015", "Paprika (film, 2006)" et "Fear Street, partie 2 : 1978" ont bien une illustration, mais elle est hébergée en local sur frwiki et catégorisée "Image non libre de logo" et "Wikipédia:Exceptions au droit d'auteur". L'exception couvre Wikipédia, pas une réutilisation ailleurs. La règle 5 continue de les refuser et ces cartes restent sans image
+
 ### Phase 8 : étiquettes
 
 #### Phase 8a : retrait de l'index de collection (faite le 2026-09-20, revue indépendante passée)
@@ -622,6 +637,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 28. should show the "Commons" mark only once the image added by the extension has loaded, and never on a card illustrated by the site
 29. should show a loading state while the image is on its way, and leave only the site logo when it cannot be loaded
 30. should refuse a thumbnail address whose host merely ends with a Wikimedia host name
+31. should show the picture of the competition on the card of one of its editions, and keep the file the article itself uses when there is one
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 

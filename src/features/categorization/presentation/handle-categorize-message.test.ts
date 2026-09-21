@@ -40,6 +40,7 @@ function makeDeps(): CategorizeCardsDeps {
         tmdbPersonId: null,
       },
       image: null,
+      seriesImage: null,
     },
     articleImageTried: false,
   };

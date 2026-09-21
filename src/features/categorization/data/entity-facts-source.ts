@@ -3,7 +3,11 @@ import { ENTITY_BATCH_SIZE } from '../../../core/config/wikimedia';
 import type { FetchJsonOptions } from '../../../core/http/fetch-json';
 import type { CommonsFile } from '../../missing-image/domain/card-image';
 import { fileNameFromFilePathUri } from '../../missing-image/domain/commons-url';
-import { IMAGE_PROPERTIES } from '../../missing-image/domain/image-properties';
+import {
+  IMAGE_PROPERTIES,
+  SERIES_IMAGE_PROPERTIES,
+  type ImageProperty,
+} from '../../missing-image/domain/image-properties';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
 import type { EntityFactsSource } from '../domain/ports';
 import { createSparqlClient, type SparqlBinding } from './sparql-client';
@@ -38,12 +42,19 @@ function readExternalIds(binding: SparqlBinding): ExternalIds {
 }
 
 /**
- * The first image property the item holds, in the order of the table. A value
- * that yields no usable file name is skipped and the next property is tried:
- * one unusable URI must not cost the card its image.
+ * The first image property of `properties` the row carries, in the order of
+ * the table. A value that yields no usable file name is skipped and the next
+ * property is tried: one unusable URI must not cost the card its image.
+ *
+ * The same reader serves both tables: each one projects its own variables, so
+ * the table it is given is the only thing that tells the picture of the item
+ * from the picture of the whole it is one edition of.
  */
-function readImage(binding: SparqlBinding): CommonsFile | null {
-  for (const property of IMAGE_PROPERTIES) {
+function readImage(
+  binding: SparqlBinding,
+  properties: readonly ImageProperty[],
+): CommonsFile | null {
+  for (const property of properties) {
     const uri = binding[property.variable];
     const fileName = uri === undefined ? null : fileNameFromFilePathUri(uri);
     if (fileName !== null) {
@@ -61,6 +72,7 @@ function emptyFacts(qid: string): EntityFacts {
     occupationIds: [],
     externalIds: emptyExternalIds(),
     image: null,
+    seriesImage: null,
   };
 }
 
@@ -77,7 +89,8 @@ function readFacts(binding: SparqlBinding): EntityFacts | null {
     parentClassIds: qidsFromConcatenatedUris(binding[PARENTS_VARIABLE]),
     occupationIds: qidsFromConcatenatedUris(binding[OCCUPATIONS_VARIABLE]),
     externalIds: readExternalIds(binding),
-    image: readImage(binding),
+    image: readImage(binding, IMAGE_PROPERTIES),
+    seriesImage: readImage(binding, SERIES_IMAGE_PROPERTIES),
   };
 }
 

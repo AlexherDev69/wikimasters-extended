@@ -537,6 +537,30 @@ async function withArticleImages(
   });
 }
 
+/**
+ * The last picture tried, for a card Wikidata AND its article both left
+ * without one: the picture of the whole the card is one edition of, which
+ * came back with the rest of its facts and is already in hand (phase 7g).
+ *
+ * Pure, and the only image stage that is: it sends no request, writes to no
+ * cache and cannot fail, so it is run after the article one rather than
+ * beside it. A card that already has a picture keeps it, and a card that is
+ * not categorized is left alone, the image of any other status having to stay
+ * null.
+ */
+function withSeriesImages(
+  results: readonly CardCategory[],
+  factsByTitle: ReadonlyMap<string, CachedCardFacts>,
+): CardCategory[] {
+  return results.map((result) => {
+    const seriesImage = factsByTitle.get(result.title)?.facts?.seriesImage ?? null;
+    if (result.status !== 'categorized' || result.image !== null || seriesImage === null) {
+      return result;
+    }
+    return { ...result, image: { ...seriesImage, thumbnailUrl: null } };
+  });
+}
+
 /** The distinct Commons files the results of a batch name, in no order. */
 function fileNamesOf(results: readonly CardCategory[]): string[] {
   const fileNames = new Set<string>();
@@ -623,14 +647,15 @@ async function withThumbnailUrls(
  * affected cards to the `error` status, while the cards served by the caches
  * are still categorized.
  *
- * The picture of a card is resolved last, in two stages run after the
+ * The picture of a card is resolved last, in three stages run after the
  * classification: first the article's own image fills a hole Wikidata left,
- * then the address of whatever picture the card now has is resolved. Both
- * share one property that sets them apart from every earlier stage: their
- * failure costs nothing, since a card never loses its category or its
- * Wikidata image because one of them failed. They are also the only stages
- * the caller can decline, through the very same flag, and are then skipped
- * together rather than made to fail.
+ * then the picture of the whole the card is one edition of fills what is
+ * still empty, then the address of whatever picture the card now has is
+ * resolved. All three share one property that sets them apart from every
+ * earlier stage: their failure costs nothing, since a card never loses its
+ * category or its Wikidata image because one of them failed. They are also
+ * the only stages the caller can decline, through the very same flag, and are
+ * then skipped together rather than made to fail.
  */
 export async function categorizeCards(
   cards: readonly CardToCategorize[],
@@ -651,6 +676,6 @@ export async function categorizeCards(
     return results;
   }
 
-  const withFallbackImages = await withArticleImages(results, factsByTitle, deps);
-  return withThumbnailUrls(withFallbackImages, deps);
+  const withArticleFallback = await withArticleImages(results, factsByTitle, deps);
+  return withThumbnailUrls(withSeriesImages(withArticleFallback, factsByTitle), deps);
 }
