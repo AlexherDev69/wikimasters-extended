@@ -647,6 +647,17 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Dixième réglage, activé par défaut : il ajoute un noeud qui lui appartient, ne retire rien du site et ne demande rien à Wikidata
 - Vérification visuelle : la partie rendue en navigateur sur une reprise de l'écran d'attente du site, raquette suivant la souris et adversaire renvoyant la balle
 
+### Phase 15 : popup de la barre d'outils (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture de l'icône à l'appui : "quand on clic sur le logo , fait une belle popup avec toute les option a cocher et décocher stp"
+- Le bouton de la barre d'outils ouvrait la page d'options depuis la phase 11b. Il ouvre maintenant une popup, ce que le navigateur fait seul dès qu'un `default_popup` est déclaré : `action.onClicked` n'est alors plus jamais appelé, donc son écouteur et son handler sont retirés du service worker plutôt que laissés en place sans jamais servir
+- Deux fenêtres, deux longueurs de texte : la popup a une colonne à remplir, pas une page. Les libellés et les textes sont sortis de `features-view.ts` dans un `feature-texts.ts` que les deux lisent, avec un `summary` d'une phrase pour la popup et le `hint` entier pour la page d'options. Une seule source, pour qu'une fonctionnalité ne finisse jamais décrite de deux façons
+- Les dix lignes tiennent dans les 600 px qu'un navigateur donne à une popup, mesuré en navigateur : 582 px au total, sans défilement. La liste défile quand même d'elle-même si une phrase passe à deux lignes, l'en-tête et le bouton du bas restant en place
+- L'interrupteur est une vraie `input[type=checkbox]`, posée transparente par-dessus la piste qui la peint : le clavier, le lecteur d'écran et le clic marchent exactement comme sur une case ordinaire, et la piste ne reçoit aucun clic (`pointer-events: none`)
+- Même prudence que la page d'options : lecture stricte des réglages (une popup qui montrerait les valeurs par défaut sans les avoir lues les écrirait par-dessus celles de l'utilisateur au premier clic), état recalculé à chaque ouverture, et un compteur de génération qui écarte la réponse d'une relecture plus vieille que la fenêtre
+- La page d'options garde ce que la popup laisse de côté : les textes entiers, la confidentialité, et les données locales avec leur effacement. Un bouton en bas de la popup y mène
+- Vérification visuelle : la fenêtre rendue en navigateur à sa largeur réelle, les dix lignes visibles d'un coup, une bascule appuyée jusqu'au "Enregistré"
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
@@ -683,6 +694,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 32. should count the card a pack reveals once when the user walks back and forth between the five, and count the next pack only after the page has shown the packs left again
 33. should draw the cards of the collection smaller when the compact button is pressed, keep the card of the detail modal at its size, and bring every card back when it is pressed again
 34. should show the game only once the page has been showing nothing but a spinner for the whole patience, and take it back as soon as a card appears
+35. should show one switch per setting in the popup, write the new value at once, and put the switch back when the write fails
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 

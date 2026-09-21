@@ -15,7 +15,6 @@ import { createArticleImageSource } from '../features/missing-image/data/article
 import { createThumbnailUrlCache } from '../features/missing-image/data/thumbnail-cache';
 import { createThumbnailUrlResolver } from '../features/missing-image/data/thumbnail-resolver';
 import { createLegacyIndexStorage } from '../features/settings/data/legacy-index-storage';
-import { createActionClickHandler } from '../features/settings/presentation/handle-action-click';
 import { createStorageMessageHandler } from '../features/settings/presentation/handle-storage-messages';
 
 const systemClock: Clock = {
@@ -58,11 +57,8 @@ export default defineBackground({
       // the others, so a message of another origin is simply ignored.
       return handleCategorize(message, sendResponse) || handleStorage(message, sendResponse);
     });
-
-    // The toolbar button has no popup: a click opens the options page, which
-    // is the only window the extension has left.
-    browser.action.onClicked.addListener(
-      createActionClickHandler(() => browser.runtime.openOptionsPage(), logger),
-    );
+    // The toolbar button opens the popup of the extension, which the browser
+    // does on its own: `action.onClicked` is never called while a popup is
+    // declared, so the worker has nothing to do with that click.
   },
 });
