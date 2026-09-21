@@ -6,6 +6,24 @@ où chaque carte à collectionner est un article de Wikipédia.
 Elle ajoute uniquement ses propres éléments par-dessus la page : elle ne clique
 pas, ne scrolle pas, ne saisit rien et n'écrit jamais rien sur le site.
 
+## Installation
+
+Elle n'est pas publiée sur le Chrome Web Store : elle se charge en mode
+développeur, ce qui prend une minute et ne demande aucun compte.
+
+1. Télécharger le fichier `.zip` de la
+   [dernière release](https://github.com/AlexherDev69/wikimasters-extended/releases/latest)
+2. Le décompresser dans un dossier que tu gardes : Chrome le relit à chaque
+   démarrage, donc supprimer ce dossier désinstalle l'extension
+3. Ouvrir `chrome://extensions` et activer le "Mode développeur", en haut à droite
+4. Cliquer sur "Charger l'extension non empaquetée" et sélectionner le dossier
+   décompressé
+5. Ouvrir [wiki-masters.com](https://www.wiki-masters.com) : le mot "Extended"
+   sous le nom du site dit que l'extension est bien chargée
+
+Pour mettre à jour : retélécharger, remplacer le contenu du dossier, puis
+cliquer sur la flèche de rechargement de l'extension dans `chrome://extensions`.
+
 ## Fonctionnalités
 
 Neuf réglages, tous activables depuis la popup de la barre d'outils ou la page
@@ -85,7 +103,7 @@ le reste, et `src/entrypoints` pour le seul câblage. Le manifeste ne demande qu
 `storage`, les deux hôtes Wikimedia et son script de contenu sur
 wiki-masters.com.
 
-## Installation
+## Développement
 
 Node.js 22.12 ou supérieur, pnpm 10 ou supérieur.
 
@@ -93,11 +111,15 @@ Node.js 22.12 ou supérieur, pnpm 10 ou supérieur.
 pnpm install && pnpm build
 ```
 
-Puis dans Chrome : `chrome://extensions`, "Mode développeur", "Charger
-l'extension non empaquetée", et sélectionner `.output/chrome-mv3/`. En
-développement, `pnpm dev` et le dossier `.output/chrome-mv3-dev/` ; aucun
-navigateur n'est ouvert automatiquement, car la vérification Turnstile du site
-refuse les profils automatisés.
+Le dossier à charger dans Chrome est alors `.output/chrome-mv3/`, en suivant les
+étapes 3 et 4 ci-dessus : il n'y a ni zip à télécharger ni archive à
+décompresser. `pnpm dev` construit dans `.output/chrome-mv3-dev/` et reconstruit
+à chaque modification ; aucun navigateur n'est ouvert automatiquement, car la
+vérification Turnstile du site refuse les profils automatisés.
+
+Une release se publie à la main : `pnpm zip`, puis le tag et l'archive
+`.output/wikimasters-extended-<version>-chrome.zip` jointe à la release GitHub.
+Rien dans la CI ne le fait à ta place.
 
 Les journaux apparaissent dans la console de la page (F12), préfixés par le nom
 de l'extension : tous les niveaux en développement, `warn` et `error` seulement
@@ -110,7 +132,7 @@ lien "Service worker".
 | --- | --- |
 | `pnpm dev` | Développement avec rechargement automatique |
 | `pnpm build` | Build de production dans `.output/chrome-mv3/` |
-| `pnpm zip` | Zip pour le Chrome Web Store |
+| `pnpm zip` | Archive de distribution, celle qui est jointe aux releases |
 | `pnpm typecheck` | TypeScript sans émission |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest (`pnpm test:watch` en mode watch) |
@@ -123,3 +145,9 @@ lien "Service worker".
 - [docs/DOM_NOTES.md](docs/DOM_NOTES.md) : ce que le site rend, et les sélecteurs
   stables sur lesquels l'extension s'appuie
 - [docs/IDEAS.md](docs/IDEAS.md) : pistes non retenues, et pourquoi
+
+## Mot du dev
+
+Je développe des extensions et des applications par passion, sur mon temps
+libre. Si celle-ci te sert, tu peux retrouver mes autres projets et me soutenir
+sur [ko-fi.com/alexher](https://ko-fi.com/alexher).
