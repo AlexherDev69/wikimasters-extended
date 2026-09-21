@@ -39,7 +39,7 @@ function makeDeps(): CategorizeCardsDeps {
       seriesImage: null,
     },
     leadImage: null,
-  articleImageTried: false,
+    articleImageTried: false,
   };
   const logger: Logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 

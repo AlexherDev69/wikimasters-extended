@@ -216,7 +216,7 @@ describe('createCardFactsCache', () => {
       facts: { ...FACTS, seriesImage: { fileName: 'Series.exe', kind: 'picture' } },
       fetchedAt: START_TIME,
       leadImage: null,
-  articleImageTried: false,
+      articleImageTried: false,
     });
 
     const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);

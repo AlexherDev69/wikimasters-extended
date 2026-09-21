@@ -393,10 +393,11 @@ function pictureOf(entry: CachedCardFacts, facts: EntityFacts): CardImage | null
 }
 
 /**
- * Titles whose card was categorized, Wikidata gave it no image at all, and
- * whose fresh facts were not already marked as tried against the article's
- * own image: a title still absent from `factsByTitle` (should not happen for
- * a categorized result) is treated as untried, exactly like a missing flag.
+ * Titles whose card was categorized, neither the article nor Wikidata gave it
+ * a picture, and whose fresh facts were not already marked as tried against
+ * the article's own image: a title still absent from `factsByTitle` (should
+ * not happen for a categorized result) is treated as untried, exactly like a
+ * missing flag.
  */
 function titlesWithoutImage(
   results: readonly CardCategory[],
