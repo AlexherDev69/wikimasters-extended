@@ -19,7 +19,7 @@ développeur, ce qui prend une minute et ne demande aucun compte.
 4. Cliquer sur "Charger l'extension non empaquetée" et sélectionner le dossier
    décompressé
 5. Ouvrir [wiki-masters.com](https://www.wiki-masters.com) : le mot "Extended"
-   sous le nom du site dit que tout fonctionne
+   sous le nom du site dit que l'extension est bien chargée
 
 Pour mettre à jour : retélécharger, remplacer le contenu du dossier, puis
 cliquer sur la flèche de rechargement de l'extension dans `chrome://extensions`.
@@ -111,11 +111,15 @@ Node.js 22.12 ou supérieur, pnpm 10 ou supérieur.
 pnpm install && pnpm build
 ```
 
-Le dossier à charger dans Chrome est alors `.output/chrome-mv3/`, avec les mêmes
-étapes que ci-dessus. `pnpm dev` construit dans `.output/chrome-mv3-dev/` et
-reconstruit à chaque modification ; aucun navigateur n'est ouvert
-automatiquement, car la vérification Turnstile du site refuse les profils
-automatisés.
+Le dossier à charger dans Chrome est alors `.output/chrome-mv3/`, en suivant les
+étapes 3 et 4 ci-dessus : il n'y a ni zip à télécharger ni archive à
+décompresser. `pnpm dev` construit dans `.output/chrome-mv3-dev/` et reconstruit
+à chaque modification ; aucun navigateur n'est ouvert automatiquement, car la
+vérification Turnstile du site refuse les profils automatisés.
+
+Une release se publie à la main : `pnpm zip`, puis le tag et l'archive
+`.output/wikimasters-extended-<version>-chrome.zip` jointe à la release GitHub.
+Rien dans la CI ne le fait à ta place.
 
 Les journaux apparaissent dans la console de la page (F12), préfixés par le nom
 de l'extension : tous les niveaux en développement, `warn` et `error` seulement
