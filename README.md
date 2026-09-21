@@ -145,3 +145,9 @@ lien "Service worker".
 - [docs/DOM_NOTES.md](docs/DOM_NOTES.md) : ce que le site rend, et les sélecteurs
   stables sur lesquels l'extension s'appuie
 - [docs/IDEAS.md](docs/IDEAS.md) : pistes non retenues, et pourquoi
+
+## Mot du dev
+
+Je développe des extensions et des applications par passion, sur mon temps
+libre. Si celle-ci te sert, tu peux retrouver mes autres projets et me soutenir
+sur [ko-fi.com/alexher](https://ko-fi.com/alexher).
