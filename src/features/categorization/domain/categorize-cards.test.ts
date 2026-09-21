@@ -273,6 +273,7 @@ const STUB_FACTS: EntityFacts = {
     tmdbPersonId: null,
   },
   image: null,
+  seriesImage: null,
 };
 
 /**
@@ -360,6 +361,24 @@ function makeImageDeps(
     thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
     thumbnailUrlCache: createThumbnailUrlCache(SYSTEM_CLOCK),
     logger,
+  };
+}
+
+/**
+ * The same deps, the item of the stub card also carrying the picture of the
+ * whole it is one edition of.
+ */
+function withSeriesImageFacts(
+  deps: CategorizeCardsDeps,
+  seriesImage: EntityFacts['seriesImage'],
+  image: EntityFacts['image'] = null,
+): CategorizeCardsDeps {
+  return {
+    ...deps,
+    entityFactsSource: {
+      fetchFacts: (): Promise<Map<string, EntityFacts>> =>
+        Promise.resolve(new Map([[STUB_QID, { ...STUB_FACTS, image, seriesImage }]])),
+    },
   };
 }
 
@@ -764,6 +783,59 @@ describe('categorizeCards', () => {
     expect(results[0]?.status).toBe('categorized');
     expect(results[0]?.image?.fileName).toBe(articleImage.fileName);
     expect(results[0]?.image?.kind).toBe(articleImage.kind);
+  });
+
+  it('should give the card the picture of its series when Wikidata and the article gave none', async () => {
+    // "Trophée des champions 2005": the season item holds no picture and
+    // its article uses none, while the competition it is one edition of holds
+    // a photograph of the trophy (measured 2026-09-21).
+    const replay = createReplayFetch();
+    const seriesImage: CommonsFile = { fileName: 'Trophée des champions.jpeg', kind: 'picture' };
+    const deps = withSeriesImageFacts(
+      {
+        ...makeImageDeps(replay.fetchImpl, null),
+        articleImageSource: fakeArticleImageSource(new Map()),
+      },
+      seriesImage,
+    );
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.status).toBe('categorized');
+    expect(results[0]?.image?.fileName).toBe(seriesImage.fileName);
+    expect(results[0]?.image?.kind).toBe(seriesImage.kind);
+  });
+
+  it('should prefer the file the article itself uses over the picture of the series', async () => {
+    const replay = createReplayFetch();
+    const articleImage: CommonsFile = { fileName: 'Poule.jpg', kind: 'picture' };
+    const deps = withSeriesImageFacts(
+      {
+        ...makeImageDeps(replay.fetchImpl, null),
+        articleImageSource: fakeArticleImageSource(new Map([[STUB_CARD.title, articleImage]])),
+      },
+      { fileName: 'Grown-ish logo.png', kind: 'emblem' },
+    );
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.image?.fileName).toBe(articleImage.fileName);
+  });
+
+  it('should prefer the picture of the card itself over the picture of its series', async () => {
+    const replay = createReplayFetch();
+    const articleSource = fakeArticleImageSource(new Map());
+    const deps = withSeriesImageFacts(
+      { ...makeImageDeps(replay.fetchImpl, null), articleImageSource: articleSource },
+      { fileName: 'Grown-ish logo.png', kind: 'emblem' },
+      STUB_IMAGE,
+    );
+
+    const results = await categorizeCards([STUB_CARD], deps, WITH_IMAGE_URLS);
+
+    expect(results[0]?.image?.fileName).toBe(STUB_IMAGE?.fileName);
+    // The card never lost its Wikidata picture, so the article was not asked.
+    expect(articleSource.calls).toHaveLength(0);
   });
 
   it('should keep the card categorized with no image and warn when the article image request fails', async () => {

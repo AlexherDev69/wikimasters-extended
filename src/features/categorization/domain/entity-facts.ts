@@ -48,4 +48,16 @@ export interface EntityFacts {
    * with a lifetime of its own, so it is not one of the facts of the card.
    */
   image: CommonsFile | null;
+  /**
+   * The picture of the whole this item is one edition of, reached through
+   * SERIES_LINK_PROPERTY_IDS: the trophy of the competition for the card of
+   * one of its editions, the logo of the series for the card of one season.
+   * Null for everything that is not an instalment of something, which is most
+   * cards.
+   *
+   * Kept apart from `image` rather than folded into it: it is the LAST
+   * picture tried, after the one the article itself uses, and folding it in
+   * would stop that lookup from ever running (phase 7g).
+   */
+  seriesImage: CommonsFile | null;
 }

@@ -35,3 +35,30 @@ export const IMAGE_PROPERTIES: readonly ImageProperty[] = [
   { variable: 'imageCoatOfArms', propertyId: 'P94', kind: 'emblem' },
   { variable: 'imageCollage', propertyId: 'P2716', kind: 'picture' },
 ];
+
+/**
+ * The links that make an item ONE EDITION of a whole: P179 (part of the
+ * series) for a season, an episode or a volume, P3450 (sports season of
+ * league or competition) for the 2005 edition of a tournament.
+ *
+ * Both say "this item is one instalment of that one", which is what makes the
+ * picture of the whole a true picture of the card. Nothing looser belongs
+ * here: P361 (part of) would put the picture of a region on a town, and P664
+ * (organizer) the headquarters of the French football federation on a cup
+ * final, measured on 2026-09-21.
+ */
+export const SERIES_LINK_PROPERTY_IDS: readonly string[] = ['P179', 'P3450'];
+
+/**
+ * The image properties read on the whole, a deliberate subset of the table
+ * above: a series, a franchise or a competition holds a picture (P18, the
+ * trophy of "Trophée des champions") or a logo (P154, the wordmark of
+ * "Grown-ish"), and never a flag, a coat of arms, a film poster or a collage.
+ *
+ * Their variables carry the `series` prefix of the query, so the reader tells
+ * the two tables apart by the table it walks, never by a prefix of its own.
+ */
+export const SERIES_IMAGE_PROPERTIES: readonly ImageProperty[] = [
+  { variable: 'seriesImagePicture', propertyId: 'P18', kind: 'picture' },
+  { variable: 'seriesImageLogo', propertyId: 'P154', kind: 'emblem' },
+];

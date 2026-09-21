@@ -35,6 +35,7 @@ function makeFacts(overrides: Partial<EntityFacts> = {}): EntityFacts {
       tmdbPersonId: null,
     },
     image: null,
+    seriesImage: null,
     ...overrides,
   };
 }

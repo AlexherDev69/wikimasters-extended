@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { IMAGE_PROPERTIES } from '../../missing-image/domain/image-properties';
+import {
+  IMAGE_PROPERTIES,
+  SERIES_IMAGE_PROPERTIES,
+} from '../../missing-image/domain/image-properties';
 import {
   buildClassLabelsQuery,
   buildClassRootsQuery,
@@ -35,6 +38,23 @@ describe('buildEntityFactsQuery', () => {
       const rawVariable = property.propertyId.toLowerCase();
       expect(query).toContain(`(SAMPLE(?${rawVariable}) AS ?${property.variable})`);
       expect(query).toContain(`OPTIONAL { ?item wdt:${property.propertyId} ?${rawVariable}. }`);
+    }
+  });
+
+  it('should ask for the same image properties on the whole an item is one edition of', () => {
+    const query = buildEntityFactsQuery(['Q1']);
+
+    // Its own table, read through the two edition links rather than on the
+    // item, and with raw variables of its own: both tables name the same
+    // Wikidata properties, and two identical variables would merge the
+    // picture of a season into the picture of its series.
+    expect(SERIES_IMAGE_PROPERTIES).toHaveLength(2);
+    for (const property of SERIES_IMAGE_PROPERTIES) {
+      const rawVariable = `series_${property.propertyId.toLowerCase()}`;
+      expect(query).toContain(`(SAMPLE(?${rawVariable}) AS ?${property.variable})`);
+      expect(query).toContain(
+        `OPTIONAL { ?item (wdt:P179|wdt:P3450)/wdt:${property.propertyId} ?${rawVariable}. }`,
+      );
     }
   });
 

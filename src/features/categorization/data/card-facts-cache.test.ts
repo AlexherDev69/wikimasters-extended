@@ -12,7 +12,7 @@ const START_TIME = new Date('2026-01-01T00:00:00.000Z').getTime();
 
 /** Version 1 held the same facts without the image of the card. */
 const PREVIOUS_SCHEMA_VERSION = 1;
-const CURRENT_SCHEMA_VERSION = 5;
+const CURRENT_SCHEMA_VERSION = 8;
 
 const FACTS: EntityFacts = {
   qid: 'Q937',
@@ -30,6 +30,7 @@ const FACTS: EntityFacts = {
     tmdbPersonId: null,
   },
   image: { fileName: 'Albert Einstein Head.jpg', kind: 'picture' },
+  seriesImage: null,
 };
 
 const RESOLVED_ENTRY: CachedCardFacts = {
@@ -198,6 +199,20 @@ describe('createCardFactsCache', () => {
     const fresh = await cache.getFresh(['Albert Einstein']);
 
     expect(fresh.get('Albert Einstein')).toEqual(triedEntry);
+  });
+
+  it('should ignore an entry whose stored series image is not usable', async () => {
+    await storage.setItem('local:wme:card:Albert Einstein', {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      status: 'resolved',
+      facts: { ...FACTS, seriesImage: { fileName: 'Series.exe', kind: 'picture' } },
+      fetchedAt: START_TIME,
+      articleImageTried: false,
+    });
+
+    const fresh = await createCardFactsCache(systemClock).getFresh(['Albert Einstein']);
+
+    expect(fresh.size).toBe(0);
   });
 
   it('should ignore an entry whose stored image is not usable', async () => {
