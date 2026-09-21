@@ -1,7 +1,7 @@
 import { findChildWithAttribute } from '../../../core/dom/find-child-with-attribute';
+import { findTextArea } from '../../card-detection/data/find-text-area';
 import { isLetterboxdUrl } from '../domain/resolve-letterboxd-url';
 import { CARD_BUTTON_ATTRIBUTE, CARD_BUTTON_SELECTOR } from './card-button-selectors';
-import { findTextArea } from './find-text-area';
 
 /**
  * The button is an anchor, never a `div`: it gives keyboard activation,

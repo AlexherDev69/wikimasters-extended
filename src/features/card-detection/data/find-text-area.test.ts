@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { scanCards } from '../../card-detection/data/scan-cards';
+import { scanCards } from './scan-cards';
 import { findTextArea } from './find-text-area';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');

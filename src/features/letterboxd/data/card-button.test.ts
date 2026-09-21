@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findTextArea } from '../../card-detection/data/find-text-area';
 import { scanCards } from '../../card-detection/data/scan-cards';
 import { applyCardButton, removeCardButtons } from './card-button';
 import { CARD_BUTTON_SELECTOR } from './card-button-selectors';
-import { findTextArea } from './find-text-area';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');
 
