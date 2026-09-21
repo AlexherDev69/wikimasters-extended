@@ -1,0 +1,35 @@
+/*
+ * The panel the game of Pong is played in. Every selector starts with one of
+ * our own classes: no rule here reaches a node of the site.
+ *
+ * The panel lets every click through and only the canvas takes the pointer,
+ * so a page that finishes loading under the game is still perfectly usable
+ * for the instant it takes the next scan to take the game back.
+ */
+
+.wme-pong {
+  --wme-pong-accent: var(--color-accent, #34d399);
+
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* Under the detail modal of the site, which sits at z-50. */
+  z-index: 40;
+  pointer-events: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 45%);
+  overflow: hidden;
+}
+
+.wme-pong-field {
+  display: block;
+  width: min(520px, 90vw);
+  height: auto;
+  pointer-events: auto;
+  border: 1px solid color-mix(in srgb, var(--wme-pong-accent) 35%, transparent);
+  border-radius: 12px;
+  /* The bat follows the pointer, so the cursor itself is only in the way. */
+  cursor: none;
+  touch-action: none;
+}

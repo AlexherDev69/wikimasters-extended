@@ -22,6 +22,7 @@ Fixtures anonymisées (composant carte seul, aucune donnée de compte) dans `tes
 - `body > div.flex.h-dvh` contient la `nav` latérale et `main.overflow-y-auto`. Le conteneur de scroll est `main`, pas `window`
 - La modale de détail est ajoutée en fin de `body` : `div.fixed.inset-0.z-50 > div.card-frame`
 - Classes sémantiques maison repérées (plus stables que les utilitaires Tailwind) : `glow-<rareté>`, `card-frame`, `animate-card-flip`, `animate-fade-in-up`
+- Écran de chargement : tant que le site attend ses données, `main` ne contient que `div.flex-1.flex.items-center.justify-center > div.w-8.h-8.border-2.border-[var(--color-accent)].border-t-transparent.rounded-full.animate-spin`. Seule la classe `animate-spin` est visée, les utilitaires autour changeant à chaque déploiement, et la même classe tourne aussi dans un bouton du site ici ou là : l'absence de carte est donc exigée en plus (relevé le 2026-09-21, export de `/collection`)
 
 ## Composant carte (identique sur toutes les pages connectées)
 

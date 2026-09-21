@@ -49,6 +49,13 @@ export interface Settings {
    * the button is offered at all.
    */
   compactView: boolean;
+  /**
+   * A game of Pong over the loading screen, when the site keeps the reader
+   * waiting for several seconds. Read-only like the rest: it is played in a
+   * canvas of ours, over a page that has nothing to show yet, and it goes
+   * away as soon as the page has.
+   */
+  loadingPong: boolean;
 }
 
 /** Exported so a view can give every switch a place in a display order. */
@@ -62,6 +69,7 @@ export const SETTING_KEYS = [
   'tagAutoFill',
   'pullStats',
   'compactView',
+  'loadingPong',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -76,6 +84,7 @@ export const DEFAULT_SETTINGS: Settings = {
   tagAutoFill: false,
   pullStats: true,
   compactView: true,
+  loadingPong: true,
 };
 
 /**
@@ -90,6 +99,8 @@ export const DEFAULT_SETTINGS: Settings = {
  * reason as `hideCardStats`: it counts the rarity the card already carries in
  * its own class, and asks nothing of anyone. `compactView` is left out too:
  * it changes the size the cards are painted at, not what is known of them.
+ * `loadingPong` is left out for the plainest reason of all: it only runs
+ * while the page shows no card at all, so there is nothing to categorize.
  */
 const CATEGORIZATION_SETTING_KEYS = [
   'categoryBadges',
