@@ -26,7 +26,10 @@ import { PONG_SELECTOR } from '../../loading-pong/data/pong-panel';
 import { PULL_STATS_SELECTOR } from '../../pull-stats/data/pull-stats-panel';
 import { emptyTally } from '../../pull-stats/domain/pull-tally';
 import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
-import { WIKIPEDIA_BUTTON_SELECTOR } from '../../wikipedia-link/data/wikipedia-button-selectors';
+import {
+  WIKIPEDIA_BUTTON_SELECTOR,
+  WIKIPEDIA_BUTTON_ATTRIBUTE,
+} from '../../wikipedia-link/data/wikipedia-button-selectors';
 
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { createOverlay, type Overlay, type OverlayDeps } from './overlay';
@@ -66,6 +69,8 @@ const PULL_REVEAL_HTML = readFileSync(join(FIXTURES_DIR, 'pull-reveal.html'), 'u
 const GRID_CARD_TITLE = "Jeu d'horreur";
 const LARGE_CARD_TITLE = 'Foza';
 const MODAL_CARD_TITLE = 'Dvorichté';
+/** The link of the site in the modal, which our own nodes are inserted after. */
+const MODAL_ARTICLE_URL = 'https://fr.wikipedia.org/wiki/Dvoricht%C3%A9';
 /** A card of the catalogue export the site shows its own logo for. */
 const PLACEHOLDER_CARD_TITLE = 'Adan Canto';
 /** One more than the five notifications the unread header fixture shows. */
@@ -295,6 +300,21 @@ describe('createOverlay', () => {
 
     expect(cardButtons().length).toBeGreaterThan(0);
     expect(document.body.querySelector(LETTERBOXD_LINK_SELECTOR)).not.toBeNull();
+  });
+
+  it('should put the Letterboxd link of the modal under the link of the site', async () => {
+    // The card of the modal carries our own Wikipedia button by then, and it
+    // points at the very same article as the link of the site. The modal
+    // renders that card before the column holding its link, so a link of ours
+    // anchored on the first match would be drawn inside the card.
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount();
+    await scanUntilDrawn(overlay);
+
+    const link = document.body.querySelector(LETTERBOXD_LINK_SELECTOR);
+    const anchor = link?.previousElementSibling ?? null;
+    expect(anchor?.getAttribute('href')).toBe(MODAL_ARTICLE_URL);
+    expect(anchor?.hasAttribute(WIKIPEDIA_BUTTON_ATTRIBUTE)).toBe(false);
   });
 
   it('should show the image of a card the site left without one once the results arrive', async () => {

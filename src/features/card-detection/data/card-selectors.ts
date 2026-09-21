@@ -1,3 +1,5 @@
+import { WIKIPEDIA_BUTTON_ATTRIBUTE } from '../../wikipedia-link/data/wikipedia-button-selectors';
+
 /**
  * Every selector of the site this extension reads, gathered here: the site
  * ships no data attribute and its Tailwind classes change at each deployment,
@@ -24,5 +26,12 @@ export const MODAL_ROOT_SELECTOR = 'div.fixed.inset-0.z-50';
  */
 export const MODAL_FRAME_SELECTOR = 'div.card-frame';
 
-/** The site link the features of the extension insert their own nodes after. */
-export const WIKIPEDIA_LINK_SELECTOR = 'a[href^="https://fr.wikipedia.org/wiki/"]';
+/**
+ * The site link the features of the extension insert their own nodes after.
+ *
+ * Our own button on the card points at the very same article, so it is left
+ * out by name: the modal renders its card before the column holding the link
+ * of the site, so the first match would be ours, and everything the extension
+ * adds to the modal would be anchored inside the card.
+ */
+export const WIKIPEDIA_LINK_SELECTOR = `a[href^="https://fr.wikipedia.org/wiki/"]:not([${WIKIPEDIA_BUTTON_ATTRIBUTE}])`;

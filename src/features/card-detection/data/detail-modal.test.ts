@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WIKIPEDIA_BUTTON_ATTRIBUTE } from '../../wikipedia-link/data/wikipedia-button-selectors';
 import { WIKIPEDIA_LINK_SELECTOR } from './card-selectors';
 import { findDetailModal } from './detail-modal';
 
@@ -20,6 +21,21 @@ const MODAL_ARTICLE_URL = 'https://fr.wikipedia.org/wiki/Dvoricht%C3%A9';
 
 function openModal(): void {
   document.body.innerHTML = MODAL_HTML;
+}
+
+/**
+ * Puts the button of the extension on the card of the modal, where the sync
+ * of the cards puts it: the card of the modal is a card like any other.
+ */
+function addOurButtonToTheCard(): void {
+  const card = document.body.querySelector('[class*="glow-"]');
+  if (card === null) {
+    throw new Error('The fixture has no card');
+  }
+  const button = document.createElement('a');
+  button.setAttribute(WIKIPEDIA_BUTTON_ATTRIBUTE, '');
+  button.href = MODAL_ARTICLE_URL;
+  card.appendChild(button);
 }
 
 /** The site reuses the modal and renders the next card as a skeleton. */
@@ -87,6 +103,31 @@ describe('findDetailModal', () => {
 
   it('should return nothing when the only layer carries no card frame', () => {
     document.body.innerHTML = DECOY_LAYER_HTML;
+
+    expect(findDetailModal(document.body)).toBeNull();
+  });
+
+  it('should read the link of the site when our own button is on the card of the modal', () => {
+    // Our button points at the very same article and is drawn on the card,
+    // which the site renders before the column holding its own link. Taking
+    // it for the link of the site would anchor everything the extension adds
+    // to the modal inside the card instead of under that link.
+    openModal();
+    addOurButtonToTheCard();
+
+    const modal = findDetailModal(document.body);
+
+    expect(modal?.wikipediaLink.hasAttribute(WIKIPEDIA_BUTTON_ATTRIBUTE)).toBe(false);
+    expect(modal?.wikipediaLink.getAttribute('href')).toBe(MODAL_ARTICLE_URL);
+  });
+
+  it('should return nothing when our own button is the only Wikipedia link of the modal', () => {
+    // A modal whose column has not rendered yet is not a modal to write in:
+    // what the extension adds there goes under the link of the site, and
+    // there is none to go under.
+    openModal();
+    document.body.querySelector(WIKIPEDIA_LINK_SELECTOR)?.remove();
+    addOurButtonToTheCard();
 
     expect(findDetailModal(document.body)).toBeNull();
   });

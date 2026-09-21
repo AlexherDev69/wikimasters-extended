@@ -60,6 +60,8 @@ Dans `.card-frame` : `h2` (titre), libellé de rareté, onglets "Détails" et "M
 
 Élément clé : `a[href^="https://fr.wikipedia.org/wiki/"]` ("Voir l'article sur Wikipédia"). Il donne le titre exact de l'article et le sous-domaine de langue. C'est le point d'ancrage naturel du bouton Letterboxd et de l'affichage de la catégorie.
 
+Attention depuis le bouton Wikipédia de la carte (2026-09-21) : la modale affiche une copie complète de la carte, qui porte donc ce bouton, et il pointe vers la même adresse. La modale rend cette carte AVANT la colonne qui porte son propre lien, donc le premier `a[href^="https://fr.wikipedia.org/wiki/"]` de la modale est celui de l'extension. Le sélecteur doit exclure le nôtre (`:not([data-wme-wikipedia-card])`), sans quoi tout ce que l'extension ajoute à la modale est ancré à l'intérieur de la carte.
+
 ## Pages
 
 | Page | Constat |
