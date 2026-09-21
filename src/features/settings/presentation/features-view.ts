@@ -90,6 +90,14 @@ const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       "taille à l'écran change : le site garde exactement la page qu'il a construite, et la " +
       'vignette reprend sa taille normale dès que tu rappuies.',
   },
+  loadingPong: {
+    label: 'Pong pendant les chargements',
+    hint:
+      'Quand le site tourne dans le vide plus de trois secondes, une partie de Pong apparaît à '
+      + "la place du rond qui tourne : la raquette suit ta souris, l'adversaire est battable. Le "
+      + "jeu disparaît dès que la page affiche enfin quelque chose, et rien n'est envoyé ni "
+      + 'écrit sur le site.',
+  },
 };
 
 const LABEL_TAG = 'label';

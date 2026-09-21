@@ -25,6 +25,13 @@ import { removeCardButtons } from '../../letterboxd/data/card-button';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
 import { syncCardButtons } from '../../letterboxd/presentation/sync-card-buttons';
 import { syncModalLink } from '../../letterboxd/presentation/sync-modal-link';
+import { isPageLoading } from '../../loading-pong/data/loading-state';
+import {
+  createLoadingPongState,
+  stopLoadingPong,
+  syncLoadingPong,
+  type LoadingPongDeps,
+} from '../../loading-pong/presentation/sync-loading-pong';
 import { removeCardImages } from '../../missing-image/data/card-image';
 import { removeModalCreditLines } from '../../missing-image/data/modal-credit-line';
 import { syncCardImages } from '../../missing-image/presentation/sync-card-images';
@@ -82,6 +89,8 @@ export interface OverlayDeps {
   isCompact: boolean;
   /** The path of the page right now: the site navigates without reloading. */
   readPath: () => string;
+  /** Asks for the next animation frame, for the game of the loading screen. */
+  requestFrame: (callback: (timeMs: number) => void) => void;
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
@@ -109,6 +118,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * never reloads between two presses.
    */
   const compactView = createCompactViewState(deps.isCompact);
+  /**
+   * How long the page has been showing nothing, and the game that came of it.
+   * It outlives every scan as well: the wait is measured across them.
+   */
+  const loadingPong = createLoadingPongState();
 
   /**
    * The retry of a batch that failed, and the scan without which it never
@@ -126,6 +140,18 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       release();
       processScan(scanCards(root));
     }, delayMs);
+  };
+
+  /** Everything the game of the loading screen needs, built once. */
+  const loadingPongDeps: LoadingPongDeps = {
+    scheduleCheck: deps.scheduleRetry,
+    requestFrame: deps.requestFrame,
+    // A page showing nothing mutates nothing, so the end of the wait has to
+    // ask for the scan that acts on it.
+    requestSync: () => {
+      processScan(scanCards(root));
+    },
+    logger,
   };
 
   /**
@@ -176,6 +202,11 @@ export function createOverlay(deps: OverlayDeps): Overlay {
           processScan(scanCards(root));
         },
       });
+    }
+    // Last of the page-wide parts, and the only one that reads no card at
+    // all: it runs precisely when there is none.
+    if (settings.loadingPong) {
+      syncLoadingPong(root, isPageLoading(root, cards.length), loadingPong, loadingPongDeps);
     }
     if (
       !settings.categoryBadges &&
@@ -287,6 +318,9 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCompactToggles(root);
       removeCompactStyle(root.ownerDocument);
     }
+    if (previous.loadingPong && !settings.loadingPong) {
+      stopLoadingPong(root, loadingPong);
+    }
   }
 
   return {
@@ -319,6 +353,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removePullStatsPanels(root);
       removeCompactToggles(root);
       removeCompactStyle(root.ownerDocument);
+      stopLoadingPong(root, loadingPong);
     },
   };
 }

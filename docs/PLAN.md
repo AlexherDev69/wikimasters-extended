@@ -634,6 +634,19 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Neuvième réglage, activé par défaut : il décide seulement si le bouton est proposé, jamais si la vue est active
 - Vérification visuelle : la grille rendue avec la vraie feuille de style du site et ses images de rareté, en 1 200 px et en 380 px, vue normale et vue compacte, plus la modale de détail ouverte par-dessus une grille compacte pour vérifier que sa carte garde sa taille
 
+### Phase 14 : Pong pendant les chargements (faite le 2026-09-21)
+
+- Demande de l'utilisateur, capture d'une `/collection` réduite à son rond qui tourne : "ok j'ai envie de troll le site un peu, met un jeu de pong quand le loading est trop long", puis "met le pong en plus grand et fait aller la balle plus vite"
+- L'attente est lue sur un signal positif du site : son rond qui tourne (`div[class*="animate-spin"]`) ET aucune carte sur la page. La même classe tourne aussi dans un bouton du site ici ou là, d'où la seconde condition : dès qu'il y a quelque chose à regarder, il n'y a plus d'attente
+- La patience de trois secondes n'est pas mesurée à l'horloge mais avec le timer déjà armé sur le contexte : une page qui n'affiche rien ne mute pas, donc aucune sync ne viendrait constater la fin de l'attente. La première sync qui voit l'attente arme un regard, un seul, et ce regard redemande un scan
+- Le jeu est peint dans un `canvas`, ce qui est ce qui rend la fonctionnalité possible : un score écrit en texte et une balle déplacée en noeud feraient muter la page soixante fois par seconde, et l'observateur du content script ne s'arrêterait jamais. Le panneau est posé une fois, et à partir de là la partie ne coûte pas une mutation, ce qu'un test vérifie avec un `MutationObserver`
+- Les règles sont pures et sans hasard (l'angle de renvoi se lit sur l'endroit de la raquette touché), donc elles se testent sans navigateur. Le pas de temps est plafonné à 50 ms : un onglet laissé en arrière-plan ne doit jamais téléporter la balle à travers une raquette, ce qu'un test vérifie à la vitesse maximale
+- Entrée à la souris sur le terrain uniquement : aucun écouteur de clavier, donc aucune touche du site n'est interceptée, et le panneau laisse passer les clics partout ailleurs
+- La boucle demande ses images au contexte du content script (`ctx.requestAnimationFrame`), donc elle s'arrête avec l'extension, et `stop()` la coupe pour toutes les autres fins de partie (page enfin chargée, réglage décoché, teardown)
+- happy-dom ne donne aucun contexte `2d`, donc les tests installent un contexte qui enregistre ce qui est peint au lieu de le peindre (`tests/helpers/canvas-context.ts`). Le code de production traite d'ailleurs l'absence de contexte comme un cas normal : pas de contexte, pas de jeu
+- Dixième réglage, activé par défaut : il ajoute un noeud qui lui appartient, ne retire rien du site et ne demande rien à Wikidata
+- Vérification visuelle : la partie rendue en navigateur sur une reprise de l'écran d'attente du site, raquette suivant la souris et adversaire renvoyant la balle
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show "Personne / Cinéma" and a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
@@ -669,6 +682,7 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 31. should show the picture of the competition on the card of one of its editions, and keep the file the article itself uses when there is one
 32. should count the card a pack reveals once when the user walks back and forth between the five, and count the next pack only after the page has shown the packs left again
 33. should draw the cards of the collection smaller when the compact button is pressed, keep the card of the detail modal at its size, and bring every card back when it is pressed again
+34. should show the game only once the page has been showing nothing but a spinner for the whole patience, and take it back as soon as a card appears
 
 Note : le scénario 17 décrit le plan initial. Depuis la phase 3, les parents P279 votent et "Hutte" devient "Monument et bâtiment" (voir Catégories v1, règle 3).
 

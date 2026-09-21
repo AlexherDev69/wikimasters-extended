@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi, type Mock } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +20,8 @@ import {
   COMPACT_STYLE_SELECTOR,
   TOGGLE_SELECTOR as COMPACT_TOGGLE_SELECTOR,
 } from '../../compact-view/data/compact-selectors';
+import { stubCanvasContext, type CanvasStub } from '../../../../tests/helpers/canvas-context';
+import { PONG_SELECTOR } from '../../loading-pong/data/pong-panel';
 import { PULL_STATS_SELECTOR } from '../../pull-stats/data/pull-stats-panel';
 import { emptyTally } from '../../pull-stats/domain/pull-tally';
 import { TRADE_PREVIEW_SELECTOR } from '../../trade-cards/data/trade-selectors';
@@ -42,6 +44,9 @@ const COLLECTION_FILTERS_HTML = readFileSync(
   join(FIXTURES_DIR, 'collection-filters.html'),
   'utf-8',
 );
+
+/** The page of the collection while the site is still fetching its cards. */
+const LOADING_HTML = readFileSync(join(FIXTURES_DIR, 'loading-spinner.html'), 'utf-8');
 
 const GRID_HTML = readFileSync(join(FIXTURES_DIR, 'card-grid-with-description.html'), 'utf-8');
 const LARGE_HTML = readFileSync(join(FIXTURES_DIR, 'card-large-with-description.html'), 'utf-8');
@@ -81,6 +86,7 @@ const ALL_OFF: Settings = {
   tagAutoFill: false,
   pullStats: false,
   compactView: false,
+  loadingPong: false,
 };
 
 function makeCategory(title: string, overrides: Partial<CardCategory> = {}): CardCategory {
@@ -135,6 +141,12 @@ interface Harness {
    * reschedule without ever giving the test back its turn.
    */
   retries: (() => void)[];
+  /**
+   * The frames the game of the loading screen would ask the browser for, held
+   * rather than run: a loop that asks for the next frame from inside the one
+   * being run would never give the test its turn back.
+   */
+  frames: ((timeMs: number) => void)[];
 }
 
 function mount(
@@ -142,6 +154,7 @@ function mount(
   categorize: CategorizeMock = makeCategorize(),
 ): Harness {
   const retries: (() => void)[] = [];
+  const frames: ((timeMs: number) => void)[] = [];
   const deps: OverlayDeps = {
     root: document.body,
     settings,
@@ -155,9 +168,12 @@ function mount(
     compactStore: { read: () => Promise.resolve(false), write: () => Promise.resolve() },
     isCompact: false,
     readPath: () => COMPACT_PATH,
+    requestFrame: (callback) => {
+      frames.push(callback);
+    },
   };
 
-  return { overlay: createOverlay(deps), categorize, retries };
+  return { overlay: createOverlay(deps), categorize, retries, frames };
 }
 
 /** What the content script does on every scan. */
@@ -200,6 +216,10 @@ function compactStyle(): Element | null {
   return document.head.querySelector(COMPACT_STYLE_SELECTOR);
 }
 
+function pongPanel(): Element | null {
+  return document.body.querySelector(PONG_SELECTOR);
+}
+
 function pullStatsPanel(): Element | null {
   return document.body.querySelector(PULL_STATS_SELECTOR);
 }
@@ -234,8 +254,20 @@ function observeBody(): MutationObserver {
 }
 
 describe('createOverlay', () => {
+  /**
+   * happy-dom answers null to `getContext`, so the game of the loading screen
+   * could never be built at all. The stub records what is painted instead of
+   * painting it, and touches nothing but the canvases of this file.
+   */
+  let canvas: CanvasStub;
+
   beforeEach(() => {
     document.body.innerHTML = '';
+    canvas = stubCanvasContext();
+  });
+
+  afterEach(() => {
+    canvas.restore();
   });
 
   it('should show every part of the overlay when the settings are on', async () => {
@@ -519,6 +551,59 @@ describe('createOverlay', () => {
 
     expect(compactToggle()).toBeNull();
     expect(compactStyle()).toBeNull();
+  });
+
+  it('should play pong when the page has been loading for the whole patience', () => {
+    document.body.innerHTML = LOADING_HTML;
+    const { overlay, retries } = mount({ ...ALL_OFF, loadingPong: true });
+
+    scan(overlay);
+    expect(pongPanel()).toBeNull();
+    // The page shows nothing, so nothing mutates: the check armed on the
+    // context is what looks at it again once the patience has run out.
+    retries[0]?.();
+
+    expect(pongPanel()).not.toBeNull();
+  });
+
+  it('should play no pong while the setting is off', () => {
+    document.body.innerHTML = LOADING_HTML;
+    const { overlay, retries } = mount({ ...DEFAULT_SETTINGS, loadingPong: false });
+
+    scan(overlay);
+    retries[0]?.();
+
+    expect(pongPanel()).toBeNull();
+  });
+
+  it('should take the game back when the page finally shows its cards', () => {
+    document.body.innerHTML = LOADING_HTML;
+    const { overlay, retries, frames } = mount({ ...ALL_OFF, loadingPong: true });
+    scan(overlay);
+    retries[0]?.();
+    const framesWhilePlaying = frames.length;
+
+    // Added rather than replacing the page, so the panel is taken back by the
+    // overlay and not by the site overwriting its own main area.
+    document.body.insertAdjacentHTML('beforeend', GRID_HTML);
+    scan(overlay);
+
+    expect(pongPanel()).toBeNull();
+    // And the loop is cut: the frame already granted asks for no other.
+    frames[framesWhilePlaying - 1]?.(16);
+    expect(frames).toHaveLength(framesWhilePlaying);
+  });
+
+  it('should take the game back at once when the setting is turned off', () => {
+    document.body.innerHTML = LOADING_HTML;
+    const { overlay, retries } = mount({ ...ALL_OFF, loadingPong: true });
+    scan(overlay);
+    retries[0]?.();
+    expect(pongPanel()).not.toBeNull();
+
+    overlay.applySettings({ ...ALL_OFF, loadingPong: false });
+
+    expect(pongPanel()).toBeNull();
   });
 
   it('should keep the category badge visible while the stats row next to it is hidden', async () => {

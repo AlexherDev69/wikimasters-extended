@@ -11,6 +11,7 @@ const ALL_OFF: Settings = {
   tagAutoFill: false,
   pullStats: false,
   compactView: false,
+  loadingPong: false,
 };
 
 describe('normalizeSettings', () => {
@@ -35,6 +36,7 @@ describe('normalizeSettings', () => {
       tagAutoFill: false,
       pullStats: true,
       compactView: true,
+      loadingPong: true,
     });
   });
 

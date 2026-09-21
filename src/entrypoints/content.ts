@@ -22,6 +22,7 @@ import { createOverlay } from '../features/settings/presentation/overlay';
 import '../features/category-badge/presentation/category-badge.css';
 import '../features/compact-view/presentation/compact-view.css';
 import '../features/letterboxd/presentation/letterboxd.css';
+import '../features/loading-pong/presentation/loading-pong.css';
 import '../features/missing-image/presentation/missing-image.css';
 import '../features/pull-stats/presentation/pull-stats.css';
 import '../features/tag-suggestions/presentation/tag-suggestions.css';
@@ -114,6 +115,11 @@ export default defineContentScript({
       // Read at every sync and never captured: the site navigates from one
       // page to the next without ever reloading this script.
       readPath: () => window.location.pathname,
+      // Armed on the context as well, so the game of the loading screen stops
+      // with the extension rather than painting over a page nobody owns.
+      requestFrame: (callback) => {
+        ctx.requestAnimationFrame(callback);
+      },
     });
     applySettings = (changed): void => {
       overlay.applySettings(changed);
