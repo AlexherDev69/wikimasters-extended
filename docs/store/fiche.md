@@ -23,7 +23,7 @@ CE QUE L'EXTENSION AJOUTE
 • Bouton Wikipédia : un bouton "W" sur chaque carte ouvre son article, sans passer par la modale de détail.
 • Lien Letterboxd : un lien dans la modale et un logo sur la carte, pour les films, les studios et les personnalités du cinéma.
 • Images manquantes : beaucoup de cartes n'ont pas d'illustration, et le site affiche son propre logo à la place. Quand Wikidata ou l'article de Wikipédia connaît une image, elle est posée par-dessus, avec son crédit (auteur et licence) dans la modale de détail.
-• Cartes sur la page d'échange : les offres nomment les cartes dans des pastilles coupées au bout de quelques caractères. L'extension dessine la carte entière à la place, titre complet et image comprises.
+• Cartes sur la page d'échange : les offres nomment les cartes dans des pastilles coupées au bout de quelques caractères. L'extension dessine la carte entière à la place, titre complet et image comprises. Ces cartes n'ouvrent aucune modale, donc une marque dans le coin de l'image mène droit à sa page sur Wikimedia Commons, où figurent son auteur et sa licence.
 • Vue compacte : un bouton réduit les cartes de la collection et du catalogue à deux tiers de leur taille, pour en voir environ deux fois plus à l'écran.
 • Statistiques de tirage : la part de chaque rareté dans les cartes que tes paquets révèlent. Six nombres gardés sur ta machine, jamais le titre d'une carte.
 • Masquer les statistiques des cartes : cache les valeurs ATK et DEF, sur les cartes et dans la modale. Désactivé par défaut.
