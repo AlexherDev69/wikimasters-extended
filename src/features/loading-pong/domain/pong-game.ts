@@ -48,8 +48,9 @@ const PLAYER_SPEED = 200;
  * The rival is slower than the ball can be, which is what makes it beatable:
  * it cannot reach a ball returned at a sharp angle from the far side. Raised
  * with the ball, and by the same measure, so a faster game does not become a
- * free win: it crosses the field in 0.81 second against the 0.57 the ball
- * takes to reach it at top speed.
+ * free win: its bat needs 0.64 second to travel the whole range a bat has
+ * (60 less its own 13, at 74 a second), against the 0.50 a ball sent straight
+ * at the ceiling takes to cross the 87.4 that separate the two bats.
  */
 const RIVAL_SPEED = 74;
 
@@ -68,10 +69,17 @@ const MAX_FRAME_SECONDS = 0.05;
  * is cut into as many steps as it takes to hold this bound, so how accurate
  * the game is no longer depends on how fast the ball goes.
  *
- * Below the diameter of the ball, which is what the bound is for: a ball that
+ * What the bound is really for is the diameter of the ball, 2.6: a ball that
  * moves less than its own width in a step cannot pass anything without being
- * level with it first, so the return is decided on a ball still in front of
- * the bat rather than on one already behind it.
+ * level with it first, so a return is decided on a ball still in front of the
+ * bat rather than on one already behind it.
+ *
+ * Two, and not 2.6, because the count is fixed at the top of the frame while
+ * a return raises the speed inside it. The steps left after a bounce are
+ * therefore longer than this number by at most the ratio a return adds, which
+ * is worst at the slowest ball there is: (92 + 7) / 92, so 2.16 at most. That
+ * is still under the diameter, and those steps carry the ball AWAY from the
+ * bat it just left, across a field far too wide to cross in one frame.
  */
 const MAX_STEP_DISTANCE = 2;
 

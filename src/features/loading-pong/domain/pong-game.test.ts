@@ -200,13 +200,14 @@ describe('advance', () => {
 
   it('should judge a return the same way whatever speed the ball arrives at', () => {
     // A ball grazing the very end of the bat, one whole frame away from it,
-    // at three speeds. The frame is cut into steps short enough that the ball
-    // moves less than its own width in each, so it is level with the bat on
-    // some step whatever its speed.
+    // at three speeds. The verdict must be the same at all three, so raising
+    // the ceiling can never turn a return the player earned into a point.
     //
-    // The last speed is one the game never reaches. It is here on purpose:
-    // it is what shows that the ceiling is a choice about how the game plays
-    // and not a bound the rules need to stay right.
+    // The last speed is one the game never reaches. It is here on purpose: it
+    // is what shows that the ceiling is a choice about how the game plays and
+    // not a bound the rules need to stay right. This ball carries nothing
+    // vertical, so it says nothing about the cutting of a frame itself; the
+    // test right below is the one that does.
     const graze = BAT_HEIGHT / 2 + BALL_RADIUS - 0.1;
 
     for (const speed of [SERVE_SPEED, MAX_SPEED, MAX_SPEED * 4]) {
@@ -224,6 +225,26 @@ describe('advance', () => {
       expect(next.ball.dx).toBeGreaterThan(0);
       expect(next.rivalScore).toBe(0);
     }
+  });
+
+  it('should read a return off where the ball crossed, not off where it ended', () => {
+    // A ball climbing fast toward the edge of the bat. It crosses the face of
+    // the bat 6 units below its centre, well inside the 7.8 that count as
+    // level with it, and ends the frame 8 below it, just outside.
+    //
+    // Judged on the end of the frame, this is a miss: the ball is behind the
+    // bat and the point is lost on the frame after. Judged step by step, it
+    // is the return the player earned. This is the case the whole cutting of
+    // a frame exists for, and the one a ball with no vertical cannot show.
+    const game = makeGame({
+      ball: { x: PLAYER_FACE + 2, y: CENTRE_Y + 6, dx: -140, dy: 40 },
+      playerY: CENTRE_Y,
+    });
+
+    const next = advance(game, CENTRE_Y, LONG_STEP);
+
+    expect(next.ball.dx).toBeGreaterThan(0);
+    expect(next.rivalScore).toBe(0);
   });
 
   it('should move the bat of the player toward the pointer', () => {
