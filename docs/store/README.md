@@ -21,6 +21,11 @@ L'icône 128x128 que le formulaire demande en plus est
 [`public/icon/128.png`](../../public/icon/128.png), le même fichier que celui du
 manifeste.
 
+Toutes ces images sont dessinées par les scripts de
+[`tools/`](../../tools/README.md), jamais retouchées à la main : les rognages,
+les zones pixelisées et le dessin des bannières y sont écrits, donc une image
+se refait à l'identique.
+
 ## Ce qui est flouté
 
 Les pseudonymes des autres joueurs, sur la capture des échanges, sont pixelisés.

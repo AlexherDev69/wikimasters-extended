@@ -148,6 +148,8 @@ lien "Service worker".
 - [docs/DOM_NOTES.md](docs/DOM_NOTES.md) : ce que le site rend, et les sélecteurs
   stables sur lesquels l'extension s'appuie
 - [docs/IDEAS.md](docs/IDEAS.md) : pistes non retenues, et pourquoi
+- [tools/README.md](tools/README.md) : les scripts qui dessinent l'icône, les
+  bannières et les captures de la fiche du store
 
 ## Mot du dev
 
