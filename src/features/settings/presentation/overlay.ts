@@ -96,6 +96,14 @@ export interface OverlayDeps {
   requestFrame: (callback: (timeMs: number) => void) => void;
   /** Plays the sound of an arriving notification, on the page that owns it. */
   chime: ChimePlayer;
+  /**
+   * DEVELOPMENT ONLY, and absent everywhere else: true while the button of
+   * the development build is asking for a game of the loading screen,
+   * whatever the page itself shows. A release never passes it, and neither
+   * does a test that has no interest in it, so the game is then offered on
+   * what the page says and on nothing else.
+   */
+  isPongForced?: () => boolean;
 }
 
 export function createOverlay(deps: OverlayDeps): Overlay {
@@ -227,7 +235,10 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // Last of the page-wide parts, and the only one that reads no card at
     // all: it runs precisely when there is none.
     if (settings.loadingPong) {
-      syncLoadingPong(root, isPageLoading(root, cards.length), loadingPong, loadingPongDeps);
+      // The button of the development build only ever answers this question.
+      // Everything after it is the machinery a stuck page goes through.
+      const isLoading = deps.isPongForced?.() === true || isPageLoading(root, cards.length);
+      syncLoadingPong(root, isLoading, loadingPong, loadingPongDeps);
     }
     // The only part that reads the navigation of the site rather than its
     // cards, and the only one that writes nothing at all: what it produces is
