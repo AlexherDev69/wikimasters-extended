@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { CardImage } from '../../missing-image/domain/card-image';
-import { commonsThumbnailUrl } from '../../missing-image/domain/commons-url';
+import { commonsFilePageUrl, commonsThumbnailUrl } from '../../missing-image/domain/commons-url';
+import { IMAGE_CREDIT_MARK_SELECTOR } from '../../missing-image/data/image-selectors';
 import { CARD_BUTTON_SELECTOR } from '../../letterboxd/data/card-button-selectors';
 import { WIKIPEDIA_BUTTON_SELECTOR } from '../../wikipedia-link/data/wikipedia-button-selectors';
 import { scanTradeChips, type ObservedTradeCard } from './scan-trade-chips';
@@ -20,6 +21,12 @@ import {
 } from './trade-selectors';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');
+
+/** The sheet the extension ships, read rather than copied into the test. */
+const FEATURE_STYLE_SHEET = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../presentation/trade-cards.css'),
+  'utf-8',
+);
 
 /** Two real offers of the exchange page, one card against one and one against four. */
 const TRADES_HTML = readFileSync(join(FIXTURES_DIR, 'trades-list.html'), 'utf-8');
@@ -400,5 +407,118 @@ describe('the two marks of the extension on a card of a trade offer', () => {
     removeTradePreviews(document.body);
 
     expect(document.body.innerHTML).toBe(siteHtml);
+  });
+});
+
+/**
+ * The picture drawn here comes from Wikimedia Commons, whose free licences
+ * ask for the author and the licence to be reachable. On a card of the site
+ * they are in the credit line of the detail modal that card opens; this card
+ * opens the detail of the OFFER, so the mark in its corner is the only way
+ * to them.
+ */
+describe('the credit of the picture on a card of a trade offer', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  function creditMark(): HTMLAnchorElement | null {
+    return document.body.querySelector<HTMLAnchorElement>(IMAGE_CREDIT_MARK_SELECTOR);
+  }
+
+  it('should open the file page of the picture it draws', () => {
+    const first = requireCard(showTrades(), 0);
+
+    applyPreview(first, IMAGE);
+
+    expect(creditMark()?.getAttribute('href')).toBe(commonsFilePageUrl(IMAGE.fileName));
+  });
+
+  it('should credit an emblem exactly as it credits a photograph', () => {
+    const first = requireCard(showTrades(), 0);
+
+    applyPreview(first, EMBLEM);
+
+    expect(creditMark()?.getAttribute('href')).toBe(commonsFilePageUrl(EMBLEM.fileName));
+  });
+
+  it('should credit nothing while the card shows no picture at all', () => {
+    const first = requireCard(showTrades(), 0);
+
+    applyPreview(first, null);
+
+    expect(creditMark()).toBeNull();
+  });
+
+  it('should credit the picture as soon as it arrives on a later sync', () => {
+    const first = requireCard(showTrades(), 0);
+    applyPreview(first, null);
+
+    applyPreview(first, IMAGE);
+
+    expect(previews()).toHaveLength(1);
+    expect(creditMark()).not.toBeNull();
+  });
+
+  it('should take the credit back with the picture it names', () => {
+    const first = requireCard(showTrades(), 0);
+    applyPreview(first, IMAGE);
+
+    applyPreview(first, null);
+
+    expect(previews()).toHaveLength(1);
+    expect(creditMark()).toBeNull();
+  });
+
+  it('should leave the page exactly as the site built it once the card is taken back', () => {
+    document.body.innerHTML = TRADES_HTML;
+    const siteHtml = document.body.innerHTML;
+    for (const observed of scanTradeChips(document.body)) {
+      applyPreview(observed, IMAGE);
+    }
+
+    removeTradePreviews(document.body);
+
+    expect(document.body.innerHTML).toBe(siteHtml);
+  });
+});
+
+/**
+ * What the credit actually does on screen, read from the style sheet the
+ * extension ships rather than from a copy of its rules. Both behaviours live
+ * entirely in CSS: a mark nothing can click credits nobody, and a mark over a
+ * picture that never loaded points at a file the reader cannot see.
+ */
+describe('the credit of the picture, as the style sheet draws it', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    const style = document.createElement('style');
+    style.textContent = FEATURE_STYLE_SHEET;
+    document.head.replaceChildren(style);
+  });
+
+  function creditMark(): HTMLAnchorElement | null {
+    return document.body.querySelector<HTMLAnchorElement>(IMAGE_CREDIT_MARK_SELECTOR);
+  }
+
+  it('should take a click while the card around it lets every one through', () => {
+    // The whole offer is one button of the site, so the card stays out of the
+    // way of a click meant for it. The credit is the exception, and it has to
+    // be: an attribution nobody can follow attributes nothing.
+    const first = requireCard(showTrades(), 0);
+    applyPreview(first, IMAGE);
+    const preview = previews()[0];
+
+    expect(getComputedStyle(preview as Element).pointerEvents).toBe('none');
+    expect(getComputedStyle(creditMark() as Element).pointerEvents).toBe('auto');
+  });
+
+  it('should go away with a picture that failed to load', () => {
+    const first = requireCard(showTrades(), 0);
+    applyPreview(first, IMAGE);
+
+    document.body.querySelector('.wme-trade-media')?.dispatchEvent(new Event('error'));
+
+    expect(getComputedStyle(creditMark() as Element).display).toBe('none');
   });
 });

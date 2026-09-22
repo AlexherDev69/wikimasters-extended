@@ -1,5 +1,6 @@
 import type { DetectedCard } from '../../card-detection/domain/detected-card';
 import { silentCardButton } from '../../letterboxd/data/card-button';
+import { commonsCreditMark } from '../../missing-image/data/commons-credit-mark';
 import { isCommonsFileName, type CardImage } from '../../missing-image/domain/card-image';
 import { thumbnailAddress } from '../../missing-image/domain/thumbnail-address';
 import { silentWikipediaButton } from '../../wikipedia-link/data/wikipedia-button';
@@ -95,6 +96,20 @@ function appendMarks(art: HTMLElement, title: string, marks: TradeCardMarks): vo
   }
 }
 
+/**
+ * The credit of the picture, in the one corner nothing else claims. A
+ * card of the site names the author and the licence of its picture in the
+ * detail modal it opens; this card opens the detail of the OFFER, so the mark
+ * itself is the only way to them, and the licences of Commons ask for a way.
+ */
+function appendCredit(art: HTMLElement, image: CardImage): void {
+  const credit = commonsCreditMark(art.ownerDocument, image.fileName);
+
+  if (credit !== null) {
+    art.appendChild(credit);
+  }
+}
+
 function buildPreview(
   document: Document,
   card: DetectedCard,
@@ -114,6 +129,7 @@ function buildPreview(
   if (image !== null) {
     preview.setAttribute(TRADE_KIND_ATTRIBUTE, image.kind);
     art.appendChild(buildMedia(document, preview, image));
+    appendCredit(art, image);
   }
 
   // The rarity, spelled as the site spells it on its own cards: the codes are
