@@ -226,7 +226,7 @@ describe('handleScan', () => {
     expect(seen.has('Alpha')).toBe(false);
   });
 
-  it('should release only the failed and missing titles when some cards are categorized', async () => {
+  it('should release a title that failed and one the answer left out, and keep a not_found for good', async () => {
     const seen = new Set<string>();
     const retries = captureRetries();
     const categorize: CategorizeCards = () =>
