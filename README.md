@@ -58,9 +58,11 @@ l'extension ajoute disparaît quand elle est désactivée.
 
 **Les licences de Wikimedia.** Seuls les fichiers hébergés par Wikimedia Commons
 sont affichés, jamais ceux que Wikipédia héberge sous son exception de droit
-d'auteur. La modale de détail crédite l'image qu'elle montre par un lien vers la
-page du fichier, où figurent son auteur et sa licence. Les données de Wikidata
-sont sous CC0.
+d'auteur. Chaque image posée par l'extension mène à la page de son fichier, où
+figurent son auteur et sa licence : par la ligne de crédit de la modale de
+détail pour les cartes du site, par la marque dans le coin de l'image pour les
+cartes dessinées sur la page des échanges, qui n'ouvrent aucune modale. Les
+données de Wikidata sont sous CC0.
 
 **Ta vie privée.** Les seules requêtes de l'extension partent vers deux hôtes.
 `fr.wikipedia.org` reçoit les titres publics des articles, puis les noms des

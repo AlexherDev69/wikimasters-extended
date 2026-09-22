@@ -167,6 +167,70 @@
   box-shadow: 0 0 5px color-mix(in srgb, var(--wme-trade-colour) 60%, transparent);
 }
 
+/*
+ * The credit of the picture, built by missing-image/data/commons-credit-mark.ts
+ * and drawn nowhere else: a card of the site names the author and the licence
+ * of its picture in the detail modal it opens, while this card opens the
+ * detail of the OFFER, so this mark is the only way to them.
+ *
+ * The top right corner, which is the one corner nothing else claims: the
+ * rarity badge takes the left one, and the marks of the article and of
+ * Letterboxd take the two at the foot. The card is `rounded-2xl` at this
+ * size, an 8px radius, so its arc is inset 1.8px from the right edge three
+ * pixels down, and a mark whose own edge stops at 3px is clear of it.
+ */
+[data-wme-trade-preview] .wme-credit-mark {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  /* The height of the two marks at the foot, so the three read as one set. */
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  /*
+   * Filled, never a ring: a letter inside a thin ring reads as the copyright
+   * glyph, and these files are under a free licence, so that shape would say
+   * the opposite of the truth. The same reading as the mark of a site card,
+   * see missing-image.css.
+   */
+  background-color: rgba(9, 12, 17, 0.72);
+  /*
+   * The third and last node of the extension that takes a click on a card,
+   * and the one that has to: everything else of ours is `pointer-events:
+   * none` so a click reaches the offer button underneath, and an attribution
+   * nobody can follow attributes nothing. See data/trade-preview.ts.
+   */
+  pointer-events: auto;
+  cursor: pointer;
+  /*
+   * A stack of its own rather than the font of the site, so the letter reads
+   * the same whatever font the site gives the page around it.
+   */
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 8px;
+  font-weight: 500;
+  /* One line exactly, so the letter sits on the centre of the disc. */
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  /* Nothing of ours is ever caught by a selection made on the site's text. */
+  user-select: none;
+}
+
+/*
+ * A credit must never stand over a picture that is not there. A file that
+ * failed to load leaves the flat ground of the rarity, exactly as on a card
+ * the extension knows no picture for, and naming the author of a picture
+ * nobody can see would only point at a broken address.
+ */
+[data-wme-trade-failed] .wme-credit-mark {
+  display: none;
+}
+
 [data-wme-trade-preview] .wme-trade-title {
   display: block;
   /*

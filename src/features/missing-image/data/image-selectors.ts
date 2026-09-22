@@ -59,3 +59,14 @@ export const IMAGE_SOURCE_MARK_ATTRIBUTE = 'data-wme-image-source';
 export const IMAGE_CREDIT_ATTRIBUTE = 'data-wme-image-credit';
 
 export const IMAGE_CREDIT_SELECTOR = `[${IMAGE_CREDIT_ATTRIBUTE}]`;
+
+/**
+ * Marks the credit of a picture drawn on a card the extension builds itself,
+ * which opens no detail modal and therefore reaches no credit line. A name of
+ * its own rather than a shape of the one above: the two are looked up apart,
+ * and an attribute selector matches a name whole, so neither can ever take
+ * back the other's node.
+ */
+export const IMAGE_CREDIT_MARK_ATTRIBUTE = 'data-wme-image-credit-mark';
+
+export const IMAGE_CREDIT_MARK_SELECTOR = `[${IMAGE_CREDIT_MARK_ATTRIBUTE}]`;

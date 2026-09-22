@@ -721,6 +721,17 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Le contexte audio est rendu à la page quand l'extension est rechargée : c'est la seule chose que cette fonctionnalité ait à reprendre, et un navigateur n'en distribue qu'un nombre limité par page
 - Décocher puis recocher l'interrupteur oublie le compte : recocher écoute à partir de la cloche telle qu'elle est à ce moment, donc rien ne sonne pour ce qui est arrivé entre les deux
 
+### Phase 22 : le crédit des images des cartes d'échange (faite le 2026-09-22)
+
+- Manquement relevé pendant la revue de la fiche du store, pas une demande : les cartes dessinées sur la page des échanges portent une image de Commons, et l'auteur et la licence que ses licences libres demandent n'étaient atteignables de nulle part
+- Cause : le crédit vit dans la ligne "Image : Wikimedia Commons (auteur et licence)" de la modale de détail, et `syncModalCredit` sort immédiatement quand aucune modale n'est ouverte. Une carte de la collection ouvre cette modale d'un clic ; une carte d'échange est dans un bouton qui ouvre le détail de l'OFFRE, donc la ligne était hors d'atteinte, pas seulement absente
+- Tranché : la marque `C` que portent déjà les cartes du site devient une ancre sur la page du fichier, dans le coin haut droit de l'image, le seul que rien ne réclame (la rareté prend celui de gauche, l'article et Letterboxd les deux du bas). Même lettre, même disque plein, donc une lettre veut dire une seule chose dans toute l'extension
+- Disque plein et jamais un anneau : un C dans un anneau fin, c'est le glyphe du copyright, et ces fichiers sont sous licence libre. C'est déjà la raison qui vaut pour les cartes du site
+- Troisième et dernier noeud de l'extension qui prend un clic sur une carte, pour la raison des deux premiers : l'offre entière est un bouton du site, tout le reste est en `pointer-events: none`, et une attribution que personne ne peut suivre n'attribue rien. `stopPropagation` sur un clic authentique uniquement, jamais `preventDefault`
+- `aria-hidden` et `tabindex="-1"`, comme les deux autres marques et pour une raison plus forte ici : un lien étiqueté de notre part ne serait pas seulement lu au milieu du nom du bouton du site, il en ferait PARTIE
+- La marque disparaît avec une image qui n'a pas pu se charger : ce qui reste alors est le fond plat de la rareté, et créditer l'auteur d'une image que personne ne voit ne pointerait que sur une adresse cassée. Les deux comportements sont dans la feuille de style, donc testés en la chargeant plutôt qu'en recopiant ses règles
+- Rien à ajouter à la clé de la carte : le nom du fichier y est déjà, donc une image qui change redessine la carte et son crédit ensemble. Zéro écriture quand rien n'a changé, toujours prouvé au MutationObserver
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
