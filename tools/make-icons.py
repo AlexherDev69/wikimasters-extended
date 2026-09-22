@@ -19,8 +19,13 @@ OUT = ROOT / "public" / "icon"
 # counterpart, the extensions page, and the store listing.
 SIZES = [16, 32, 48, 128]
 
-OUT.mkdir(parents=True, exist_ok=True)
-for size in SIZES:
-    path = OUT / f"{size}.png"
-    draw_icon(size).save(path)
-    print("wrote", path.relative_to(ROOT), path.stat().st_size, "bytes")
+def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    for size in SIZES:
+        path = OUT / f"{size}.png"
+        draw_icon(size).save(path)
+        print("wrote", path.relative_to(ROOT), path.stat().st_size, "bytes")
+
+
+if __name__ == "__main__":
+    main()

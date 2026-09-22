@@ -111,8 +111,13 @@ def marquee() -> Image.Image:
     return image
 
 
-OUT.mkdir(parents=True, exist_ok=True)
-for name, image in (("5-promo-440x280.png", small_tile()), ("6-promo-1400x560.png", marquee())):
-    path = OUT / name
-    image.save(path)
-    print("wrote", path.relative_to(ROOT), image.size, image.mode)
+def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    for name, image in (("5-promo-440x280.png", small_tile()), ("6-promo-1400x560.png", marquee())):
+        path = OUT / name
+        image.save(path)
+        print("wrote", path.relative_to(ROOT), image.size, image.mode)
+
+
+if __name__ == "__main__":
+    main()
