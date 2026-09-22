@@ -8,6 +8,8 @@ import {
   BAT_WIDTH,
   FIELD_HEIGHT,
   FIELD_WIDTH,
+  MAX_SPEED,
+  SERVE_SPEED,
   type PongGame,
 } from './pong-game';
 
@@ -161,18 +163,26 @@ describe('advance', () => {
     const game = makeGame({
       ball: { x: 0.5, y: FIELD_HEIGHT - BALL_RADIUS - 1, dx: -46, dy: 0 },
       playerY: BAT_HEIGHT / 2,
-      speed: 80,
+      // A rally well under way, so the speed of the next serve is a reset and
+      // not simply the speed this game already had.
+      speed: MAX_SPEED,
     });
 
     const next = advance(game, BAT_HEIGHT / 2, LONG_STEP);
 
+    // Exactly the middle, which is also what says the frame ended on the
+    // point: the steps left in it would have carried the new ball away.
     expect(next.ball.x).toBe(FIELD_WIDTH / 2);
     expect(next.ball.y).toBe(CENTRE_Y);
-    expect(next.speed).toBeLessThan(game.speed);
+    // The rule itself rather than a proxy for it: what a rally gathered is
+    // forgotten, and the next point starts at the speed of a serve.
+    expect(next.speed).toBe(SERVE_SPEED);
   });
 
   it('should still catch the ball at its highest speed', () => {
-    const fastest = 115;
+    // Read from the rules rather than copied, so raising the ceiling raises
+    // what this test proves instead of quietly leaving it behind.
+    const fastest = MAX_SPEED;
     const game = makeGame({
       // One long frame away from the bat, at the speed a long rally reaches.
       ball: { x: PLAYER_FACE + fastest * LONG_STEP, y: CENTRE_Y, dx: -fastest, dy: 0 },
@@ -184,6 +194,55 @@ describe('advance', () => {
 
     // A ball that crossed its own bat between two frames would score against
     // a player who did everything right.
+    expect(next.ball.dx).toBeGreaterThan(0);
+    expect(next.rivalScore).toBe(0);
+  });
+
+  it('should judge a return the same way whatever speed the ball arrives at', () => {
+    // A ball grazing the very end of the bat, one whole frame away from it,
+    // at three speeds. The verdict must be the same at all three, so raising
+    // the ceiling can never turn a return the player earned into a point.
+    //
+    // The last speed is one the game never reaches. It is here on purpose: it
+    // is what shows that the ceiling is a choice about how the game plays and
+    // not a bound the rules need to stay right. This ball carries nothing
+    // vertical, so it says nothing about the cutting of a frame itself; the
+    // test right below is the one that does.
+    const graze = BAT_HEIGHT / 2 + BALL_RADIUS - 0.1;
+
+    for (const speed of [SERVE_SPEED, MAX_SPEED, MAX_SPEED * 4]) {
+      const game = makeGame({
+        ball: { x: PLAYER_FACE + speed * LONG_STEP, y: CENTRE_Y + graze, dx: -speed, dy: 0 },
+        playerY: CENTRE_Y,
+        speed,
+      });
+
+      // Two frames, as the test above needs them: a ball placed exactly one
+      // frame from the face lands a hair in front of it, on the residue of
+      // the arithmetic, and is returned on the frame after.
+      const next = advance(advance(game, CENTRE_Y, LONG_STEP), CENTRE_Y, LONG_STEP);
+
+      expect(next.ball.dx).toBeGreaterThan(0);
+      expect(next.rivalScore).toBe(0);
+    }
+  });
+
+  it('should read a return off where the ball crossed, not off where it ended', () => {
+    // A ball climbing fast toward the edge of the bat. It crosses the face of
+    // the bat 6 units below its centre, well inside the 7.8 that count as
+    // level with it, and ends the frame 8 below it, just outside.
+    //
+    // Judged on the end of the frame, this is a miss: the ball is behind the
+    // bat and the point is lost on the frame after. Judged step by step, it
+    // is the return the player earned. This is the case the whole cutting of
+    // a frame exists for, and the one a ball with no vertical cannot show.
+    const game = makeGame({
+      ball: { x: PLAYER_FACE + 2, y: CENTRE_Y + 6, dx: -140, dy: 40 },
+      playerY: CENTRE_Y,
+    });
+
+    const next = advance(game, CENTRE_Y, LONG_STEP);
+
     expect(next.ball.dx).toBeGreaterThan(0);
     expect(next.rivalScore).toBe(0);
   });

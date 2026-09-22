@@ -25,24 +25,34 @@ export const BALL_RADIUS = 1.3;
  * 100 wide, so the ball crosses it in well under two seconds from the very
  * first serve: this is a game to wake the reader up, not a rally to watch.
  */
-const SERVE_SPEED = 66;
+export const SERVE_SPEED = 92;
 /** Added at each return, so a long rally gets harder. */
-const SPEED_PER_RETURN = 4;
+const SPEED_PER_RETURN = 7;
 /**
- * Fast enough to be hard, and still slow enough that the ball cannot cross a
- * bat between two frames: a step of the longest frame allowed is 5.75 field
- * units, against the 13 that separate the face of a bat from the line behind
- * it.
+ * The ceiling of a long rally. It is set by what stays playable and not by
+ * what stays accurate: the simulation is cut into steps short enough for any
+ * speed, see MAX_STEP_DISTANCE below, so raising this number costs a few more
+ * steps a frame and nothing else.
  */
-const MAX_SPEED = 115;
+export const MAX_SPEED = 175;
 
-/** The bat of the player follows the pointer, and fast. */
-const PLAYER_SPEED = 130;
+/**
+ * The bat of the player follows the pointer, and fast enough to outrun the
+ * steepest ball there is: a return sent at the very end of a bat carries
+ * MAX_BOUNCE_RATIO of the top speed into the vertical, which is 131 units a
+ * second, so a bat slower than that could be beaten by a ball the player saw
+ * coming.
+ */
+const PLAYER_SPEED = 200;
 /**
  * The rival is slower than the ball can be, which is what makes it beatable:
- * it cannot reach a ball returned at a sharp angle from the far side.
+ * it cannot reach a ball returned at a sharp angle from the far side. Raised
+ * with the ball, and by the same measure, so a faster game does not become a
+ * free win: its bat needs 0.64 second to travel the whole range a bat has
+ * (60 less its own 13, at 74 a second), against the 0.50 a ball sent straight
+ * at the ceiling takes to cross the 87.4 that separate the two bats.
  */
-const RIVAL_SPEED = 52;
+const RIVAL_SPEED = 74;
 
 /**
  * How far from straight a return can be sent: the fraction of the ball's
@@ -51,8 +61,27 @@ const RIVAL_SPEED = 52;
 const MAX_BOUNCE_RATIO = 0.75;
 
 /** A frame longer than this is treated as this: a tab left in the background
- * must never teleport the ball through a bat. */
-const MAX_STEP_SECONDS = 0.05;
+ * must never fast forward the game by everything it slept through. */
+const MAX_FRAME_SECONDS = 0.05;
+
+/**
+ * The furthest the ball may travel inside ONE step of the simulation. A frame
+ * is cut into as many steps as it takes to hold this bound, so how accurate
+ * the game is no longer depends on how fast the ball goes.
+ *
+ * What the bound is really for is the diameter of the ball, 2.6: a ball that
+ * moves less than its own width in a step cannot pass anything without being
+ * level with it first, so a return is decided on a ball still in front of the
+ * bat rather than on one already behind it.
+ *
+ * Two, and not 2.6, because the count is fixed at the top of the frame while
+ * a return raises the speed inside it. The steps left after a bounce are
+ * therefore longer than this number by at most the ratio a return adds, which
+ * is worst at the slowest ball there is: (92 + 7) / 92, so 2.16 at most. That
+ * is still under the diameter, and those steps carry the ball AWAY from the
+ * bat it just left, across a field far too wide to cross in one frame.
+ */
+const MAX_STEP_DISTANCE = 2;
 
 interface Ball {
   x: number;
@@ -156,17 +185,13 @@ function moveBall(ball: Ball, seconds: number): Ball {
 }
 
 /**
- * The game one slice of time later. `targetY` is where the player is asking
- * their bat to be, which is the pointer over the canvas.
- *
- * Pure: the game handed in is never modified, so a caller can keep a state
- * as long as it likes, and a test can step the same one twice.
+ * The game one step of the simulation later, with a step that `advance` has
+ * already made short enough that nothing can be crossed inside it.
  */
-export function advance(game: PongGame, targetY: number, seconds: number): PongGame {
-  const step = clamp(seconds, 0, MAX_STEP_SECONDS);
-  const playerY = moveBat(game.playerY, targetY, PLAYER_SPEED, step);
-  const rivalY = moveBat(game.rivalY, game.ball.y, RIVAL_SPEED, step);
-  const moved = moveBall(game.ball, step);
+function stepGame(game: PongGame, targetY: number, seconds: number): PongGame {
+  const playerY = moveBat(game.playerY, targetY, PLAYER_SPEED, seconds);
+  const rivalY = moveBat(game.rivalY, game.ball.y, RIVAL_SPEED, seconds);
+  const moved = moveBall(game.ball, seconds);
   const next: PongGame = { ...game, ball: moved, playerY, rivalY };
 
   if (moved.dx < 0 && moved.x <= PLAYER_FACE) {
@@ -189,4 +214,43 @@ export function advance(game: PongGame, targetY: number, seconds: number): PongG
     }
   }
   return next;
+}
+
+/** True when a step just ended a point, whichever of the two won it. */
+function hasScored(before: PongGame, after: PongGame): boolean {
+  return after.playerScore !== before.playerScore || after.rivalScore !== before.rivalScore;
+}
+
+/**
+ * The game one frame later. `targetY` is where the player is asking their bat
+ * to be, which is the pointer over the canvas.
+ *
+ * The frame is cut into as many steps as it takes for the ball to travel less
+ * than MAX_STEP_DISTANCE in each one, so how fast the ball goes and how
+ * accurately the game reads a return are no longer tied together: a rally at
+ * top speed is judged on exactly the same footing as a serve. The count is
+ * read off the speed the ball ACTUALLY carries rather than off `game.speed`,
+ * which a hand made state can disagree with.
+ *
+ * A step that scores ends the frame there. The serve that follows therefore
+ * leaves from the middle of the field rather than from wherever the rest of
+ * the frame would have carried it, and a point stays one discrete thing.
+ *
+ * Pure: the game handed in is never modified, so a caller can keep a state
+ * as long as it likes, and a test can step the same one twice.
+ */
+export function advance(game: PongGame, targetY: number, seconds: number): PongGame {
+  const frame = clamp(seconds, 0, MAX_FRAME_SECONDS);
+  const travel = Math.hypot(game.ball.dx, game.ball.dy) * frame;
+  const steps = Math.max(Math.ceil(travel / MAX_STEP_DISTANCE), 1);
+  let current = game;
+
+  for (let index = 0; index < steps; index += 1) {
+    const next = stepGame(current, targetY, frame / steps);
+    if (hasScored(current, next)) {
+      return next;
+    }
+    current = next;
+  }
+  return current;
 }
