@@ -1,4 +1,4 @@
-import { isCommonsFileName, type CardImageKind, type CommonsFile } from './card-image';
+import { isCommonsFileName, type CardImageKind, type CommonsFile } from '../../../core/mediawiki/card-image';
 
 /**
  * The picture an article leads with, which is the very file the site draws on

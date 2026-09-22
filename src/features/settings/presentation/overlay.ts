@@ -174,10 +174,54 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   };
 
   /**
+   * Parts that threw on the scan before, so one broken part says so once
+   * instead of at every scan. A page that keeps mutating asks for a scan
+   * every 200 ms, and a warning five times a second would bury the one line
+   * that matters. Cleared as soon as the part works again, so a part that
+   * breaks, recovers and breaks again is heard each time.
+   */
+  const failingParts = new Set<string>();
+
+  /**
+   * Runs one part of a scan, and lets the others run when it throws.
+   *
+   * The parts are independent: whether the compact button is drawn changes
+   * nothing about whether a card carries its picture. Without this they were
+   * not independent at all, because `sync` ran them in one straight line: a
+   * page of the site that changed shape under us could make one throw, and
+   * the parts ordered after it would never run again for as long as the tab
+   * stayed open. The observer survives a throw, so the next mutation only
+   * reached the same wall, silently.
+   *
+   * This is the "mode dégradé silencieux" the risk table promises against a
+   * redesign of the site: one part gives up, the other nine keep working.
+   */
+  function runPart(name: string, part: () => void): void {
+    try {
+      part();
+      failingParts.delete(name);
+    } catch (error: unknown) {
+      if (failingParts.has(name)) {
+        return;
+      }
+      failingParts.add(name);
+      logger.warn('A part of the overlay failed and was skipped', {
+        part: name,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
    * Brings every enabled part in line with what is known of the cards given,
    * and writes strictly nothing for the others. Every sync writes only what
    * differs, so running it on every scan costs nothing once the page already
    * shows the right thing.
+   *
+   * Every part runs inside `runPart`, so one that throws costs only itself.
+   * What is left outside is what cannot throw: reading `settings`, and the
+   * two `querySelector` lookups, which only ever throw on a selector that is
+   * malformed, and those are constants of this extension.
    */
   function sync(cards: readonly ObservedCard[], trades: readonly ObservedTradeCard[]): void {
     const { categoriesByTitle } = memory;
@@ -185,67 +229,88 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // The signature of the extension, under the name of the site. It has no
     // switch of its own: it says that this browser shows more than the site
     // sends, which is true of the extension itself and not of one feature.
-    applyBrandMark(root);
+    runPart('brandMark', () => {
+      applyBrandMark(root);
+    });
 
     if (settings.letterboxdLink) {
-      syncCardButtons(cards, categoriesByTitle);
+      runPart('letterboxdLink', () => {
+        syncCardButtons(cards, categoriesByTitle);
+      });
     }
     // Needs nothing of what Wikidata knows: the address is built from the
     // title the scan has just read, so this one draws on the very first pass.
     if (settings.wikipediaLink) {
-      syncWikipediaButtons(cards);
+      runPart('wikipediaLink', () => {
+        syncWikipediaButtons(cards);
+      });
     }
     if (settings.missingImages) {
-      syncCardImages(cards, categoriesByTitle);
+      runPart('missingImages', () => {
+        syncCardImages(cards, categoriesByTitle);
+      });
     }
     // Not a part of a card of the site but a card of its own, drawn beside
     // the chip that names it, and never inside the detail modal: it is synced
     // before the modal is even looked for.
     if (settings.tradeCards) {
-      syncTradePreviews(root, trades, categoriesByTitle, {
-        wikipedia: settings.wikipediaLink,
-        letterboxd: settings.letterboxdLink,
+      runPart('tradeCards', () => {
+        syncTradePreviews(root, trades, categoriesByTitle, {
+          wikipedia: settings.wikipediaLink,
+          letterboxd: settings.letterboxdLink,
+        });
       });
     }
     // Global to the page rather than per card, and needs nothing that came
     // from a scan: it can run before the cards are even looked at.
     if (settings.hideCardStats) {
-      applyHideCardStats(root.ownerDocument);
+      runPart('hideCardStats', () => {
+        applyHideCardStats(root.ownerDocument);
+      });
     }
     // Reads the rarity the cards already carry, and knows nothing of their
     // category: it is synced before the early return below, which only guards
     // what needs the detail modal.
     if (settings.pullStats) {
-      syncPullStats(root, cards, pullStats, { store: deps.pullTallyStore, logger });
+      runPart('pullStats', () => {
+        syncPullStats(root, cards, pullStats, { store: deps.pullTallyStore, logger });
+      });
     }
     // Global to the page as well, and needs nothing of a card either: it only
     // decides the size the site's own cards are painted at.
     if (settings.compactView) {
-      syncCompactView(root, compactView, {
-        store: deps.compactStore,
-        logger,
-        readPath: deps.readPath,
-        // The press writes nothing on the page, so nothing would make it
-        // mutate: the scan that shows the new size has to be asked for.
-        requestSync: () => {
-          processScan(scanCards(root));
-        },
+      runPart('compactView', () => {
+        syncCompactView(root, compactView, {
+          store: deps.compactStore,
+          logger,
+          readPath: deps.readPath,
+          // The press writes nothing on the page, so nothing would make it
+          // mutate: the scan that shows the new size has to be asked for.
+          requestSync: () => {
+            processScan(scanCards(root));
+          },
+        });
       });
     }
     // Last of the page-wide parts, and the only one that reads no card at
     // all: it runs precisely when there is none.
     if (settings.loadingPong) {
-      // The button of the development build only ever answers this question.
-      // Everything after it is the machinery a stuck page goes through.
-      const isLoading = deps.isPongForced?.() === true || isPageLoading(root, cards.length);
-      syncLoadingPong(root, isLoading, loadingPong, loadingPongDeps);
+      runPart('loadingPong', () => {
+        // The button of the development build only ever answers this
+        // question. Everything after it is the machinery a stuck page goes
+        // through.
+        const isLoading = deps.isPongForced?.() === true || isPageLoading(root, cards.length);
+        syncLoadingPong(root, isLoading, loadingPong, loadingPongDeps);
+      });
     }
     // The only part that reads the navigation of the site rather than its
     // cards, and the only one that writes nothing at all: what it produces is
     // a sound. The observer of the cards is what brings it here, since the
     // badge of the bell appears, changes and goes away inside the page.
     if (settings.notificationSound) {
-      syncNotificationSound(root, notificationSound, deps.chime);
+      runPart('notificationSound', () => {
+        syncNotificationSound(root, notificationSound, deps.chime);
+      });
     }
     if (!settings.letterboxdLink && !settings.missingImages) {
       return;
@@ -255,10 +320,14 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // is looked up once and shared: the two features write in the same one.
     const modal = findDetailModal(root);
     if (settings.letterboxdLink) {
-      syncModalLink(modal, categoriesByTitle);
+      runPart('modalLink', () => {
+        syncModalLink(modal, categoriesByTitle);
+      });
     }
     if (settings.missingImages) {
-      syncModalCredit(modal, categoriesByTitle);
+      runPart('modalCredit', () => {
+        syncModalCredit(modal, categoriesByTitle);
+      });
     }
   }
 

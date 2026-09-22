@@ -9,6 +9,7 @@ import { createClassTargetCache } from '../features/categorization/data/class-ta
 import { createEntityFactsSource } from '../features/categorization/data/entity-facts-source';
 import { createTitleResolver } from '../features/categorization/data/title-resolver';
 import type { CategorizeCardsDeps } from '../features/categorization/domain/categorize-cards';
+import { resolveLetterboxdCardLink } from '../features/letterboxd/domain/letterboxd-card-link';
 import type { Clock } from '../features/categorization/domain/ports';
 import { createCategorizeMessageHandler } from '../features/categorization/presentation/handle-categorize-message';
 import { createArticleImageSource } from '../features/missing-image/data/article-image-source';
@@ -41,6 +42,9 @@ export default defineBackground({
       articleImageSource: createArticleImageSource(httpOptions),
       thumbnailUrlSource: createThumbnailUrlResolver(httpOptions),
       thumbnailUrlCache: createThumbnailUrlCache(systemClock),
+      // The rules of Letterboxd are wired in here and nowhere else: the
+      // pipeline below is told how to build an address, never which site.
+      resolveCardLink: resolveLetterboxdCardLink,
       logger,
     };
     const handleCategorize = createCategorizeMessageHandler(deps);

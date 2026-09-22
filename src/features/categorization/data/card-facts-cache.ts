@@ -1,6 +1,6 @@
 import { storage, type StorageItemKey } from '#imports';
 import { isNullableString, isRecord, isStringArray } from '../../../core/types/guards';
-import { isCommonsFile, type CommonsFile } from '../../missing-image/domain/card-image';
+import { isCommonsFile, type CommonsFile } from '../../../core/mediawiki/card-image';
 import { EXTERNAL_ID_KEYS, type EntityFacts, type ExternalIds } from '../domain/entity-facts';
 import type { CachedCardFacts, CardFactsCache, CardFactsStatus, Clock } from '../domain/ports';
 

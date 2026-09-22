@@ -1,7 +1,7 @@
 import type { DetailModal } from '../../card-detection/data/detail-modal';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
-import { isCommonsFileName } from '../domain/card-image';
-import { commonsFilePageUrl } from '../domain/commons-url';
+import { isCommonsFileName } from '../../../core/mediawiki/card-image';
+import { commonsFilePageUrl } from '../../../core/mediawiki/commons-url';
 import { IMAGE_CREDIT_ATTRIBUTE, IMAGE_CREDIT_SELECTOR } from './image-selectors';
 
 /**

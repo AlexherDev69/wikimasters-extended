@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MAX_COMMONS_FILE_NAME_LENGTH } from '../domain/card-image';
+import { MAX_COMMONS_FILE_NAME_LENGTH } from '../../../core/mediawiki/card-image';
 import { commonsCreditMark } from './commons-credit-mark';
 import { IMAGE_CREDIT_MARK_SELECTOR } from './image-selectors';
 

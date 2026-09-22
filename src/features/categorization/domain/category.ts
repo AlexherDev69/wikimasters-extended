@@ -1,4 +1,4 @@
-import type { CardImage } from '../../missing-image/domain/card-image';
+import type { CardImage } from '../../../core/mediawiki/card-image';
 
 /** The known categories: the source of both the type and its guard. */
 const CATEGORY_IDS = [

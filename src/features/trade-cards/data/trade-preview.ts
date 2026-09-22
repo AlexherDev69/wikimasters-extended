@@ -1,7 +1,7 @@
 import type { DetectedCard } from '../../card-detection/domain/detected-card';
 import { silentCardButton } from '../../letterboxd/data/card-button';
 import { commonsCreditMark } from '../../missing-image/data/commons-credit-mark';
-import { isCommonsFileName, type CardImage } from '../../missing-image/domain/card-image';
+import { isCommonsFileName, type CardImage } from '../../../core/mediawiki/card-image';
 import { thumbnailAddress } from '../../missing-image/domain/thumbnail-address';
 import { silentWikipediaButton } from '../../wikipedia-link/data/wikipedia-button';
 import type { ObservedTradeCard } from './scan-trade-chips';

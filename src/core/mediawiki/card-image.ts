@@ -1,4 +1,4 @@
-import { isRecord } from '../../../core/types/guards';
+import { isRecord } from '../types/guards';
 import { isWikimediaThumbnailUrl } from './thumbnail-url';
 
 /**

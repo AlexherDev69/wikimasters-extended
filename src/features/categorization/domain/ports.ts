@@ -1,4 +1,4 @@
-import type { CommonsFile } from '../../missing-image/domain/card-image';
+import type { CommonsFile } from '../../../core/mediawiki/card-image';
 import type { CategoryId, PersonSubtypeId } from './category';
 import type { EntityFacts } from './entity-facts';
 
