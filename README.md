@@ -8,8 +8,18 @@ pas, ne scrolle pas, ne saisit rien et n'écrit jamais rien sur le site.
 
 ## Installation
 
-Elle n'est pas publiée sur le Chrome Web Store : elle se charge en mode
-développeur, ce qui prend une minute et ne demande aucun compte.
+Elle est sur le Chrome Web Store :
+**[WikiMasters Extended](https://chromewebstore.google.com/detail/wikimasters-extended/ikoohipceahjbaheacljepkfaeelhbpj)**, un bouton et rien d'autre. Chrome la
+tient à jour tout seul.
+
+Ouvre ensuite [wiki-masters.com](https://www.wiki-masters.com) : le mot
+"Extended" sous le nom du site dit qu'elle est bien chargée.
+
+### Sans passer par le store
+
+L'archive de chaque version est jointe à sa release, pour qui préfère voir ce
+qu'il installe, ou veut une version qui n'est pas la dernière. Le chargement
+est alors manuel, et Chrome ne met plus rien à jour.
 
 1. Télécharger le fichier `.zip` de la
    [dernière release](https://github.com/AlexherDev69/wikimasters-extended/releases/latest)
@@ -18,11 +28,13 @@ développeur, ce qui prend une minute et ne demande aucun compte.
 3. Ouvrir `chrome://extensions` et activer le "Mode développeur", en haut à droite
 4. Cliquer sur "Charger l'extension non empaquetée" et sélectionner le dossier
    décompressé
-5. Ouvrir [wiki-masters.com](https://www.wiki-masters.com) : le mot "Extended"
-   sous le nom du site dit que l'extension est bien chargée
 
 Pour mettre à jour : retélécharger, remplacer le contenu du dossier, puis
 cliquer sur la flèche de rechargement de l'extension dans `chrome://extensions`.
+
+N'installe pas les deux en même temps. Chacune poserait ses noeuds sur la même
+page, et chacune reconnaît les siens à un attribut qui ne dit pas de laquelle
+il vient.
 
 ## Fonctionnalités
 
