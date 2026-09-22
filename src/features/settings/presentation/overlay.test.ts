@@ -156,6 +156,7 @@ interface Harness {
 function mount(
   settings: Settings = DEFAULT_SETTINGS,
   categorize: CategorizeMock = makeCategorize(),
+  isPongForced?: () => boolean,
 ): Harness {
   const retries: (() => void)[] = [];
   const frames: ((timeMs: number) => void)[] = [];
@@ -177,6 +178,7 @@ function mount(
       frames.push(callback);
     },
     chime,
+    isPongForced,
   };
 
   return { overlay: createOverlay(deps), categorize, retries, frames, chime };
@@ -591,6 +593,54 @@ describe('createOverlay', () => {
     // And the loop is cut: the frame already granted asks for no other.
     frames[framesWhilePlaying - 1]?.(16);
     expect(frames).toHaveLength(framesWhilePlaying);
+  });
+
+  it('should play pong on a page that loaded when the development button asks for one', () => {
+    // The button of the development build answers this one question and
+    // nothing else, so what follows is the machinery a stuck page goes
+    // through: the patience, then the check armed on the context.
+    document.body.innerHTML = GRID_HTML;
+    const isForcing = true;
+    const { overlay, retries } = mount(
+      { ...ALL_OFF, loadingPong: true },
+      makeCategorize(),
+      () => isForcing,
+    );
+
+    scan(overlay);
+    retries[0]?.();
+
+    expect(pongPanel()).not.toBeNull();
+  });
+
+  it('should take the game back when the development button stops asking for one', () => {
+    document.body.innerHTML = GRID_HTML;
+    let isForcing = true;
+    const { overlay, retries } = mount(
+      { ...ALL_OFF, loadingPong: true },
+      makeCategorize(),
+      () => isForcing,
+    );
+    scan(overlay);
+    retries[0]?.();
+    expect(pongPanel()).not.toBeNull();
+
+    isForcing = false;
+    scan(overlay);
+
+    expect(pongPanel()).toBeNull();
+  });
+
+  it('should play no pong on a page that loaded while nothing asks for one', () => {
+    // The guard of the two tests above: without the button, a page showing
+    // its cards is not a wait and never offers a game.
+    document.body.innerHTML = GRID_HTML;
+    const { overlay, retries } = mount({ ...ALL_OFF, loadingPong: true });
+
+    scan(overlay);
+    retries[0]?.();
+
+    expect(pongPanel()).toBeNull();
   });
 
   it('should take the game back at once when the setting is turned off', () => {

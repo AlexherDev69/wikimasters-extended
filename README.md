@@ -142,6 +142,15 @@ charge que celle de développement dedans. Crée-le depuis Chrome et pas avec un
 outil : la vérification Turnstile du site refuse les profils automatisés, ce
 qui est aussi la raison de `webExt.disabled` dans `wxt.config.ts`.
 
+Le build de développement pose en bas à gauche de la page un bouton
+`Pong : lancer`. Il ne lance pas la partie lui-même : il fait croire à
+l'extension que la page charge, et la suite est la vraie. La patience de trois
+secondes court quand même, le réglage Pong doit être activé, et un second appui
+range la partie par le même chemin qu'une page qui finit par répondre. Ce
+bouton n'existe que là : il est monté derrière `import.meta.env.DEV`, que Vite
+remplace par `false` au build, et le paquet de production ne contient ni son
+code ni son style.
+
 Une release se publie à la main : `pnpm zip`, puis le tag et l'archive
 `.output/wikimasters-extended-<version>-chrome.zip` jointe à la release GitHub.
 Rien dans la CI ne le fait à ta place.

@@ -744,6 +744,16 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - Deux constantes du domaine sont maintenant exportées pour que les tests lisent la règle au lieu d'en recopier le chiffre : celui qui vérifie qu'une balle à la vitesse maximale est encore rattrapée suivra le plafond si on le remonte encore
 - Le test qui prouve le découpage porte une balle qui monte vite : elle croise la face de la raquette 6 unités sous son centre, dans les 7,8 qui comptent comme au niveau, et finit l'image 8 dessous, juste en dehors. Jugée sur la fin de l'image c'est un raté, jugée pas par pas c'est le renvoi que le joueur a gagné. Vérifié en le faisant tourner contre le code de `main`, où il échoue, pendant que les dix-neuf autres y passent : une balle sans composante verticale ne distingue pas les deux versions, ce qu'une première rédaction du test croyait à tort
 
+### Phase 24 : un bouton pour lancer le Pong, en développement seulement (faite le 2026-09-22)
+
+- Demande de l'utilisateur : "en mode dev uniquement met moi un bouton pour lancer le pong". Le jeu n'arrive que si le site n'affiche que son rond qui tourne depuis trois secondes, donc le relire demandait d'attendre que le site rame vraiment
+- Tranché : le bouton ne lance pas la partie, il répond à la seule question que l'overlay lui pose. `isPongForced` s'ajoute à ce que l'overlay lit déjà sur la page, et toute la suite est la vraie : la patience de trois secondes court quand même, le réglage Pong doit être activé, la partie démarre par le même scan et un second appui la range par le même démontage. Un raccourci direct vers une partie en cours aurait montré quelque chose que l'extension ne fait jamais
+- Monté depuis `src/entrypoints/content.ts` et pas depuis l'overlay, pour deux raisons : l'entrypoint est la couche de câblage du dépôt, et les tests de l'overlay vérifient à plusieurs endroits que la page est rendue à l'identique, ce qu'un bouton posé par l'overlay lui-même contredirait
+- Rien n'en arrive dans une release : `import.meta.env.DEV` vaut `false` au build, Vite replie la branche et le module part avec. Vérifié sur le script construit, pas sur l'intention
+- Un tableau joint au niveau d'un module est un appel, et un bundler n'a pas le droit de supposer qu'un appel ne fait rien : le `const STYLE = [...].join('; ')` a survécu, 364 octets du style d'un bouton absent, pendant que tout le reste du fichier disparaissait. Déplacé dans une fonction. L'écart entre les deux paquets est passé de 420 à 56 octets, et ces 56 sont le site d'appel `isPongForced?.()` lui-même, qui reste par choix : l'overlay honore une dépendance optionnelle sans rien savoir du mode de build, donc son test dit la même chose dans les deux
+- Style en ligne et pas dans une feuille : une feuille de style est copiée dans le paquet que ses règles servent ou non, et `z-index: 41`, un au-dessus du panneau du jeu, pour qu'une partie en cours ne couvre jamais le bouton qui l'arrête
+- Un rechargement de l'extension laisse la page ouverte et le bouton du run d'avant posé dessus : le montage retire d'abord celui qu'il trouve
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"

@@ -15,6 +15,7 @@ import {
   type CategorizeCardsRequest,
 } from '../features/categorization/presentation/messages';
 import { createCompactPreferenceStore } from '../features/compact-view/data/compact-preference-store';
+import { mountDevPongButton } from '../features/loading-pong/data/dev-pong-button';
 import { createChimePlayer } from '../features/notification-sound/data/chime';
 import { createPullTallyStore } from '../features/pull-stats/data/pull-tally-store';
 import { createSettingsRepository } from '../features/settings/data/settings-repository';
@@ -103,6 +104,22 @@ export default defineContentScript({
       return;
     }
 
+    /**
+     * DEVELOPMENT ONLY: the button that makes the overlay believe the page is
+     * stuck, so the game of the loading screen can be looked at on a site that
+     * works. `import.meta.env.DEV` is replaced by `false` in a production
+     * build, so this whole branch and the module it calls are dropped from the
+     * package rather than shipped unreachable.
+     */
+    const devPong = import.meta.env.DEV
+      ? mountDevPongButton(root, () => {
+          // The press writes on nothing but the button itself, and the page
+          // this is meant for shows nothing at all, so the scan that acts on
+          // it has to be asked for.
+          onScan(scanCards(root));
+        })
+      : null;
+
     const overlay = createOverlay({
       root,
       settings: latestSettings ?? settings,
@@ -124,6 +141,7 @@ export default defineContentScript({
       // Built once for this page: a browser stops handing out audio contexts
       // after a few dozen, so one per sound would go quiet for good.
       chime: createChimePlayer(window),
+      isPongForced: devPong === null ? undefined : (): boolean => devPong.isForcing(),
     });
     applySettings = (changed): void => {
       overlay.applySettings(changed);
@@ -147,6 +165,7 @@ export default defineContentScript({
       disconnect();
       unwatchSettings();
       overlay.destroy();
+      devPong?.remove();
     });
   },
 });
