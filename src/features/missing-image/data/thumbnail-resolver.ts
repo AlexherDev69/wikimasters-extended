@@ -1,18 +1,13 @@
 import { chunk } from '../../../core/array/chunk';
-import {
-  API_USER_AGENT,
-  API_USER_AGENT_HEADER,
-  FRWIKI_API_URL,
-  FRWIKI_TITLE_SEPARATOR,
-  TITLE_BATCH_SIZE,
-} from '../../../core/config/wikimedia';
-import { fetchJson, type FetchJsonOptions } from '../../../core/http/fetch-json';
+import { TITLE_BATCH_SIZE } from '../../../core/config/wikimedia';
+import type { FetchJsonOptions } from '../../../core/http/fetch-json';
+import { fetchFrwikiQuery } from '../../../core/mediawiki/frwiki-query';
 import { parseTitleMappings } from '../../../core/mediawiki/title-mappings';
 import { isRecord } from '../../../core/types/guards';
 import type { ThumbnailUrlSource } from '../../categorization/domain/ports';
-import { isCommonsFileName } from '../domain/card-image';
-import { THUMBNAIL_WIDTH } from '../domain/commons-url';
-import { isWikimediaThumbnailUrl } from '../domain/thumbnail-url';
+import { isCommonsFileName } from '../../../core/mediawiki/card-image';
+import { THUMBNAIL_WIDTH } from '../../../core/mediawiki/commons-url';
+import { isWikimediaThumbnailUrl } from '../../../core/mediawiki/thumbnail-url';
 
 /**
  * Asks the frwiki API for the final address of each Commons file, so that the
@@ -24,22 +19,15 @@ import { isWikimediaThumbnailUrl } from '../domain/thumbnail-url';
  * titles, with its timeout, its retries, its cooldowns and no credentials.
  */
 
-const JSON_MEDIA_TYPE = 'application/json';
-
 /** The namespace a Commons file is asked for under, which frwiki normalizes. */
 const FILE_NAMESPACE_PREFIX = 'File:';
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected frwiki imageinfo response shape';
 
 const QUERY_PARAMETERS = {
-  action: 'query',
   prop: 'imageinfo',
   iiprop: 'url',
   iiurlwidth: String(THUMBNAIL_WIDTH),
-  format: 'json',
-  formatversion: '2',
-  // Forces the anonymous CORS mode of the MediaWiki API, as the titles do.
-  origin: '*',
 } as const;
 
 interface ParsedImageInfo {
@@ -96,22 +84,9 @@ async function requestBatch(
   fileNames: readonly string[],
   httpOptions: FetchJsonOptions,
 ): Promise<ParsedImageInfo> {
-  const parameters = new URLSearchParams({
-    ...QUERY_PARAMETERS,
-    titles: fileNames
-      .map((fileName) => `${FILE_NAMESPACE_PREFIX}${fileName}`)
-      .join(FRWIKI_TITLE_SEPARATOR),
-  });
-
-  const payload = await fetchJson(
-    {
-      url: `${FRWIKI_API_URL}?${parameters.toString()}`,
-      method: 'GET',
-      headers: {
-        Accept: JSON_MEDIA_TYPE,
-        [API_USER_AGENT_HEADER]: API_USER_AGENT,
-      },
-    },
+  const payload = await fetchFrwikiQuery(
+    QUERY_PARAMETERS,
+    fileNames.map((fileName) => `${FILE_NAMESPACE_PREFIX}${fileName}`),
     httpOptions,
   );
 

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scanCards } from '../../card-detection/data/scan-cards';
-import type { CardImage } from '../domain/card-image';
+import type { CardImage } from '../../../core/mediawiki/card-image';
 import { applyCardImage, removeCardImages } from './card-image';
 import { findPictureArea } from './find-placeholder';
 import {

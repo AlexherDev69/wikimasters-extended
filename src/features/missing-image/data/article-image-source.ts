@@ -1,17 +1,12 @@
 import { chunk } from '../../../core/array/chunk';
-import {
-  API_USER_AGENT,
-  API_USER_AGENT_HEADER,
-  FRWIKI_API_URL,
-  FRWIKI_TITLE_SEPARATOR,
-  TITLE_BATCH_SIZE,
-} from '../../../core/config/wikimedia';
-import { fetchJson, type FetchJsonOptions } from '../../../core/http/fetch-json';
-import { parseTitleMappings } from '../../../core/mediawiki/title-mappings';
+import { FRWIKI_TITLE_SEPARATOR, TITLE_BATCH_SIZE } from '../../../core/config/wikimedia';
+import type { FetchJsonOptions } from '../../../core/http/fetch-json';
+import { fetchFrwikiQuery } from '../../../core/mediawiki/frwiki-query';
+import { parseTitleMappings, resolveFinalTitle } from '../../../core/mediawiki/title-mappings';
 import { isRecord } from '../../../core/types/guards';
 import type { ArticleImageSource } from '../../categorization/domain/ports';
 import { findArticleImageFile, stripTrailingParenthetical } from '../domain/article-image-match';
-import type { CommonsFile } from '../domain/card-image';
+import type { CommonsFile } from '../../../core/mediawiki/card-image';
 
 /**
  * The article's own picture, for a card Wikidata's image properties leave
@@ -33,15 +28,10 @@ import type { CommonsFile } from '../domain/card-image';
  * retries, its cooldowns and no credentials, as every other frwiki request.
  */
 
-const JSON_MEDIA_TYPE = 'application/json';
-
 /** The namespace a Commons file is asked for under, which frwiki normalizes. */
 const FILE_NAMESPACE_PREFIX = 'File:';
 /** The namespace name the French wiki normalizes it to in every answer. */
 const NORMALIZED_FILE_NAMESPACE_PREFIX = 'Fichier:';
-
-/** Upper bound on the redirect chain of a single title, also guards cycles. */
-const MAX_REDIRECT_HOPS = 5;
 
 const DISAMBIGUATION_PROPERTY = 'disambiguation';
 
@@ -81,23 +71,14 @@ const IMAGES_CONTINUATION_PARAMETER = 'imcontinue';
 export const ARTICLE_TITLE_BATCH_SIZE = 20;
 
 const ARTICLE_QUERY_PARAMETERS = {
-  action: 'query',
   prop: 'images|pageprops',
   ppprop: `${DISAMBIGUATION_PROPERTY}|${LEAD_IMAGE_PROPERTY}`,
   imlimit: 'max',
   redirects: '1',
-  format: 'json',
-  formatversion: '2',
-  // Forces the anonymous CORS mode of the MediaWiki API, as the titles do.
-  origin: '*',
 } as const;
 
 const REPOSITORY_QUERY_PARAMETERS = {
-  action: 'query',
   prop: 'imageinfo',
-  format: 'json',
-  formatversion: '2',
-  origin: '*',
 } as const;
 
 interface ParsedArticlePages {
@@ -204,23 +185,6 @@ function parseArticleResponse(payload: unknown): ParsedArticlePages {
   };
 }
 
-/** Applies the normalization then follows the redirect chain of one title. */
-function resolveFinalTitle(requestedTitle: string, pages: ParsedArticlePages): string {
-  let title = pages.normalized.get(requestedTitle) ?? requestedTitle;
-
-  const visited = new Set<string>([title]);
-  for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop += 1) {
-    const next = pages.redirects.get(title);
-    if (next === undefined || visited.has(next)) {
-      break;
-    }
-    visited.add(next);
-    title = next;
-  }
-
-  return title;
-}
-
 /**
  * MediaWiki may CONTINUE this answer (`continue.imcontinue`) when the titles
  * of a batch together use more files than `imlimit=max` allows across all of
@@ -235,22 +199,7 @@ async function requestArticleBatch(
   titles: readonly string[],
   httpOptions: FetchJsonOptions,
 ): Promise<ParsedArticlePages> {
-  const parameters = new URLSearchParams({
-    ...ARTICLE_QUERY_PARAMETERS,
-    titles: titles.join(FRWIKI_TITLE_SEPARATOR),
-  });
-
-  const payload = await fetchJson(
-    {
-      url: `${FRWIKI_API_URL}?${parameters.toString()}`,
-      method: 'GET',
-      headers: {
-        Accept: JSON_MEDIA_TYPE,
-        [API_USER_AGENT_HEADER]: API_USER_AGENT,
-      },
-    },
-    httpOptions,
-  );
+  const payload = await fetchFrwikiQuery(ARTICLE_QUERY_PARAMETERS, titles, httpOptions);
 
   return parseArticleResponse(payload);
 }
@@ -292,22 +241,9 @@ async function requestRepositoryBatch(
   fileNames: readonly string[],
   httpOptions: FetchJsonOptions,
 ): Promise<ParsedRepositoryPages> {
-  const parameters = new URLSearchParams({
-    ...REPOSITORY_QUERY_PARAMETERS,
-    titles: fileNames
-      .map((fileName) => `${FILE_NAMESPACE_PREFIX}${fileName}`)
-      .join(FRWIKI_TITLE_SEPARATOR),
-  });
-
-  const payload = await fetchJson(
-    {
-      url: `${FRWIKI_API_URL}?${parameters.toString()}`,
-      method: 'GET',
-      headers: {
-        Accept: JSON_MEDIA_TYPE,
-        [API_USER_AGENT_HEADER]: API_USER_AGENT,
-      },
-    },
+  const payload = await fetchFrwikiQuery(
+    REPOSITORY_QUERY_PARAMETERS,
+    fileNames.map((fileName) => `${FILE_NAMESPACE_PREFIX}${fileName}`),
     httpOptions,
   );
 

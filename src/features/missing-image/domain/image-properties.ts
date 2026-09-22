@@ -1,4 +1,4 @@
-import type { CardImageKind } from './card-image';
+import type { CardImageKind } from '../../../core/mediawiki/card-image';
 
 /**
  * The image properties of Wikidata the entity facts query asks for, in the

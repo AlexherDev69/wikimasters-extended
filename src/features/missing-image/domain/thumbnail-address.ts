@@ -1,6 +1,6 @@
-import type { CardImage } from './card-image';
-import { commonsThumbnailUrl } from './commons-url';
-import { isWikimediaThumbnailUrl } from './thumbnail-url';
+import type { CardImage } from '../../../core/mediawiki/card-image';
+import { commonsThumbnailUrl } from '../../../core/mediawiki/commons-url';
+import { isWikimediaThumbnailUrl } from '../../../core/mediawiki/thumbnail-url';
 
 /**
  * Address a picture is asked for at: the one resolved by the service worker

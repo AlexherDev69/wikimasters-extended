@@ -1,5 +1,14 @@
-/** Kept in sync with the `version` field of package.json and wxt.config.ts. */
-const EXTENSION_VERSION = '0.1.0';
+/**
+ * The version Wikimedia is told about. It is written here by hand, because
+ * this module is loaded at import time by both the service worker and the
+ * content script, long before a manifest could be read for it.
+ *
+ * A comment asking the next reader to keep it in sync is not a mechanism: it
+ * drifted to 0.1.0 while the package, the config and the built manifest all
+ * said 0.1.1, and nothing noticed. The mechanism is in wikimedia.test.ts,
+ * which fails when the three disagree.
+ */
+const EXTENSION_VERSION = '0.1.1';
 
 const REPOSITORY_URL = 'https://github.com/AlexherDev69/wikimasters-extended';
 

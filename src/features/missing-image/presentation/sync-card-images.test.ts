@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { scanCards } from '../../card-detection/data/scan-cards';
 import type { CardCategory } from '../../categorization/domain/category';
 import { CARD_IMAGE_SELECTOR, IMAGE_FILE_ATTRIBUTE } from '../data/image-selectors';
-import type { CardImage } from '../domain/card-image';
+import type { CardImage } from '../../../core/mediawiki/card-image';
 import { syncCardImages } from './sync-card-images';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');

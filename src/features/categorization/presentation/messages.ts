@@ -1,7 +1,7 @@
 import { FRWIKI_TITLE_SEPARATOR } from '../../../core/config/wikimedia';
 import { isRecord } from '../../../core/types/guards';
 import { isLetterboxdUrl } from '../../letterboxd/domain/resolve-letterboxd-url';
-import { isCardImage } from '../../missing-image/domain/card-image';
+import { isCardImage } from '../../../core/mediawiki/card-image';
 import { isCategorizationStatus, type CardCategory } from '../domain/category';
 import type { CardToCategorize, CategorizeCardsOptions } from '../domain/categorize-cards';
 

@@ -1,8 +1,8 @@
 import { chunk } from '../../../core/array/chunk';
 import { ENTITY_BATCH_SIZE } from '../../../core/config/wikimedia';
 import type { FetchJsonOptions } from '../../../core/http/fetch-json';
-import type { CommonsFile } from '../../missing-image/domain/card-image';
-import { fileNameFromFilePathUri } from '../../missing-image/domain/commons-url';
+import type { CommonsFile } from '../../../core/mediawiki/card-image';
+import { fileNameFromFilePathUri } from '../../../core/mediawiki/commons-url';
 import {
   IMAGE_PROPERTIES,
   SERIES_IMAGE_PROPERTIES,

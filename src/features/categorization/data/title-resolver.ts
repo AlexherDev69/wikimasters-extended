@@ -1,22 +1,12 @@
-import {
-  API_USER_AGENT,
-  API_USER_AGENT_HEADER,
-  FRWIKI_API_URL,
-  FRWIKI_TITLE_SEPARATOR,
-  TITLE_BATCH_SIZE,
-} from '../../../core/config/wikimedia';
+import { FRWIKI_TITLE_SEPARATOR, TITLE_BATCH_SIZE } from '../../../core/config/wikimedia';
 import { chunk } from '../../../core/array/chunk';
-import { fetchJson, type FetchJsonOptions } from '../../../core/http/fetch-json';
-import { parseTitleMappings } from '../../../core/mediawiki/title-mappings';
+import type { FetchJsonOptions } from '../../../core/http/fetch-json';
+import { fetchFrwikiQuery } from '../../../core/mediawiki/frwiki-query';
+import { parseTitleMappings, resolveFinalTitle } from '../../../core/mediawiki/title-mappings';
 import { isRecord } from '../../../core/types/guards';
 import { leadImageFile } from '../../missing-image/domain/lead-image';
 import type { ResolvedTitle, TitleResolver } from '../domain/ports';
 import { isQid } from './wikidata-uri';
-
-const JSON_MEDIA_TYPE = 'application/json';
-
-/** Upper bound on the redirect chain of a single title, also guards cycles. */
-const MAX_REDIRECT_HOPS = 5;
 
 const INVALID_RESPONSE_MESSAGE = 'Unexpected frwiki response shape';
 
@@ -34,14 +24,9 @@ const INVALID_RESPONSE_MESSAGE = 'Unexpected frwiki response shape';
 const LEAD_IMAGE_PROPERTY = 'page_image_free';
 
 const QUERY_PARAMETERS = {
-  action: 'query',
   prop: 'pageprops',
   ppprop: `wikibase_item|${LEAD_IMAGE_PROPERTY}`,
   redirects: '1',
-  format: 'json',
-  formatversion: '2',
-  // Forces the anonymous CORS mode of the MediaWiki API.
-  origin: '*',
 } as const;
 
 interface ParsedPages {
@@ -93,43 +78,11 @@ function parseResponse(payload: unknown): ParsedPages {
   };
 }
 
-/** Applies the normalization then follows the redirect chain of one title. */
-function resolveFinalTitle(requestedTitle: string, pages: ParsedPages): string {
-  let title = pages.normalized.get(requestedTitle) ?? requestedTitle;
-
-  const visited = new Set<string>([title]);
-  for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop += 1) {
-    const next = pages.redirects.get(title);
-    if (next === undefined || visited.has(next)) {
-      break;
-    }
-    visited.add(next);
-    title = next;
-  }
-
-  return title;
-}
-
 async function requestBatch(
   titles: readonly string[],
   httpOptions: FetchJsonOptions,
 ): Promise<ParsedPages> {
-  const parameters = new URLSearchParams({
-    ...QUERY_PARAMETERS,
-    titles: titles.join(FRWIKI_TITLE_SEPARATOR),
-  });
-
-  const payload = await fetchJson(
-    {
-      url: `${FRWIKI_API_URL}?${parameters.toString()}`,
-      method: 'GET',
-      headers: {
-        Accept: JSON_MEDIA_TYPE,
-        [API_USER_AGENT_HEADER]: API_USER_AGENT,
-      },
-    },
-    httpOptions,
-  );
+  const payload = await fetchFrwikiQuery(QUERY_PARAMETERS, titles, httpOptions);
 
   return parseResponse(payload);
 }

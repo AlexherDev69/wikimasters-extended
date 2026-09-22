@@ -1,5 +1,5 @@
 import { findChildWithAttribute } from '../../../core/dom/find-child-with-attribute';
-import { isCommonsFileName, type CardImage } from '../domain/card-image';
+import { isCommonsFileName, type CardImage } from '../../../core/mediawiki/card-image';
 import { thumbnailAddress } from '../domain/thumbnail-address';
 import { findPictureArea } from './find-placeholder';
 import {

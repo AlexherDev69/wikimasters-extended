@@ -1,20 +1,14 @@
 import type { Logger } from '../../../core/logger/logger';
-import { cinemaRoleFromRoots, CINEMA_SUBTYPE } from '../../letterboxd/domain/cinema-role';
-import {
-  resolveLetterboxdUrl,
-  type CinemaRoleOccupation,
-  type LetterboxdCard,
-} from '../../letterboxd/domain/resolve-letterboxd-url';
-import type { CardImage, CommonsFile } from '../../missing-image/domain/card-image';
+import type { CardImage, CommonsFile } from '../../../core/mediawiki/card-image';
+import type { CardLinkResolver } from './card-link';
 import type { CardCategory, CategoryId, PersonSubtypeId } from './category';
 import {
   classifyCachedCard,
   collectNeededClassIds,
   requiredClassIds,
-  type CachedCardClassification,
   type NeededClassIds,
 } from './classify-cached-card';
-import { decisiveClassIds, isHuman } from './classify-entity';
+import { isHuman } from './classify-entity';
 import type { EntityFacts } from './entity-facts';
 import type {
   ArticleImageSource,
@@ -55,6 +49,11 @@ export interface CategorizeCardsDeps {
   articleImageSource: ArticleImageSource;
   thumbnailUrlSource: ThumbnailUrlSource;
   thumbnailUrlCache: ThumbnailUrlCache;
+  /**
+   * Builds the address a card has on a site of its own. Injected rather than
+   * imported, so this pipeline names no feature: see `card-link.ts`.
+   */
+  resolveCardLink: CardLinkResolver;
   logger: Logger;
 }
 
@@ -281,67 +280,11 @@ async function loadClassStage(
   };
 }
 
-/**
- * The two film roots of the `film_tv` group. A card that only matches the
- * television roots shares the `film_tv` category but is not a film, and
- * Letterboxd covers almost no series.
- *
- * Exported so a test checks that the group still queries both: dropping one
- * there would silently turn every film into a card without a link.
- */
-export const FILM_ROOT_IDS: readonly string[] = ['Q11424', 'Q24856'];
-
-function isFilm(facts: EntityFacts, categoryId: CategoryId, stage: ClassStage): boolean {
-  if (categoryId !== 'film_tv') {
-    return false;
-  }
-  // The classes that really voted, so a parent of an already elected card
-  // cannot turn a television series into a film.
-  return decisiveClassIds(facts, stage.categoryTargets).some((classId) => {
-    const matchedRootIds = stage.categoryResolutions.get(classId)?.matchedRootIds ?? [];
-    return matchedRootIds.some((rootId) => FILM_ROOT_IDS.includes(rootId));
-  });
-}
-
-/** Occupations carrying a Letterboxd role, with the label of the tie-break. */
-function cinemaRolesOf(facts: EntityFacts, stage: ClassStage): CinemaRoleOccupation[] {
-  const roles: CinemaRoleOccupation[] = [];
-
-  for (const classId of facts.occupationIds) {
-    const resolution = stage.occupationResolutions.get(classId);
-    if (resolution === undefined || resolution.target !== CINEMA_SUBTYPE) {
-      continue;
-    }
-    const role = cinemaRoleFromRoots(resolution.matchedRootIds);
-    if (role !== null) {
-      roles.push({ role, label: resolution.label });
-    }
-  }
-  return roles;
-}
-
-/** Everything the Letterboxd resolver needs, gathered from this batch. */
-function toLetterboxdCard(
-  card: CardToCategorize,
-  facts: EntityFacts,
-  classification: CachedCardClassification,
-  stage: ClassStage,
-): LetterboxdCard {
-  return {
-    title: card.title,
-    description: card.description,
-    categoryId: classification.categoryId,
-    personSubtypes: classification.personSubtypes,
-    externalIds: facts.externalIds,
-    isFilm: isFilm(facts, classification.categoryId, stage),
-    cinemaRoles: cinemaRolesOf(facts, stage),
-  };
-}
-
 function buildResult(
   card: CardToCategorize,
   entry: CachedCardFacts | undefined,
   stage: ClassStage,
+  resolveCardLink: CardLinkResolver,
 ): CardCategory {
   if (entry === undefined) {
     return emptyResult(card.title, 'error');
@@ -368,9 +311,19 @@ function buildResult(
     title: card.title,
     status: 'categorized',
     qid: facts.qid,
-    // The classification stays here: it says whether a Letterboxd address may
-    // be built at all, and nothing beyond this worker reads a category.
-    letterboxdUrl: resolveLetterboxdUrl(toLetterboxdCard(card, facts, classification, stage)),
+    // The classification stays here: it says whether an address of another
+    // site may be built at all, and nothing beyond this worker reads a
+    // category. What is handed out is the address alone.
+    letterboxdUrl: resolveCardLink({
+      title: card.title,
+      description: card.description,
+      categoryId: classification.categoryId,
+      personSubtypes: classification.personSubtypes,
+      facts,
+      categoryTargets: stage.categoryTargets,
+      categoryResolutions: stage.categoryResolutions,
+      occupationResolutions: stage.occupationResolutions,
+    }),
     // The address of the picture is resolved by the stage below, once the whole
     // batch is known: one request for every file rather than one per card.
     image: pictureOf(entry, facts),
@@ -656,7 +609,7 @@ export async function categorizeCards(
   const factsByTitle = await loadFacts(uniqueCards, deps);
   const stage = await loadClassStage(factsByTitle, deps);
   const results = uniqueCards.map((card) =>
-    buildResult(card, factsByTitle.get(card.title), stage),
+    buildResult(card, factsByTitle.get(card.title), stage, deps.resolveCardLink),
   );
   if (!options.resolveImageUrls) {
     return results;

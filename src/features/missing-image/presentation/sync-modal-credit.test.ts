@@ -8,7 +8,7 @@ import type { CardCategory } from '../../categorization/domain/category';
 import { LETTERBOXD_LINK_SELECTOR } from '../../letterboxd/data/modal-selectors';
 import { syncModalLink } from '../../letterboxd/presentation/sync-modal-link';
 import { IMAGE_CREDIT_SELECTOR } from '../data/image-selectors';
-import type { CardImage } from '../domain/card-image';
+import type { CardImage } from '../../../core/mediawiki/card-image';
 import { syncModalCredit } from './sync-modal-credit';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');

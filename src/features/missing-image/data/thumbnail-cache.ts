@@ -1,8 +1,8 @@
 import { storage, type StorageItemKey } from '#imports';
 import { isRecord } from '../../../core/types/guards';
 import type { Clock, ThumbnailUrlCache } from '../../categorization/domain/ports';
-import { isCommonsFileName } from '../domain/card-image';
-import { isWikimediaThumbnailUrl } from '../domain/thumbnail-url';
+import { isCommonsFileName } from '../../../core/mediawiki/card-image';
+import { isWikimediaThumbnailUrl } from '../../../core/mediawiki/thumbnail-url';
 
 /**
  * Final thumbnail address of each Commons file, cached per file name. This is

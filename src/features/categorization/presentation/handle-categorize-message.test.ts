@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Logger } from '../../../core/logger/logger';
-import type { CommonsFile } from '../../missing-image/domain/card-image';
+import type { CommonsFile } from '../../../core/mediawiki/card-image';
 import type { CardCategory } from '../domain/category';
 import type { CategorizeCardsDeps } from '../domain/categorize-cards';
 import type { CachedCardFacts, ClassResolution } from '../domain/ports';
+import { resolveLetterboxdCardLink } from '../../letterboxd/domain/letterboxd-card-link';
 import { createCategorizeMessageHandler } from './handle-categorize-message';
 import { CATEGORIZE_CARDS_MESSAGE, type CategorizeCardsResponse } from './messages';
 
@@ -72,6 +73,7 @@ function makeDeps(): CategorizeCardsDeps {
     },
     thumbnailUrlSource: { resolveThumbnailUrls: vi.fn() },
     thumbnailUrlCache: { getFresh: vi.fn(), putMany: vi.fn() },
+    resolveCardLink: resolveLetterboxdCardLink,
     logger,
   };
 }

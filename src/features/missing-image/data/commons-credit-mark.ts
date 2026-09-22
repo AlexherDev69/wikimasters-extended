@@ -1,5 +1,5 @@
-import { isCommonsFileName } from '../domain/card-image';
-import { commonsFilePageUrl } from '../domain/commons-url';
+import { isCommonsFileName } from '../../../core/mediawiki/card-image';
+import { commonsFilePageUrl } from '../../../core/mediawiki/commons-url';
 import { IMAGE_CREDIT_MARK_ATTRIBUTE } from './image-selectors';
 
 /**

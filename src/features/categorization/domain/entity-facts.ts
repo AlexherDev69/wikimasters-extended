@@ -1,4 +1,4 @@
-import type { CommonsFile } from '../../missing-image/domain/card-image';
+import type { CommonsFile } from '../../../core/mediawiki/card-image';
 
 /**
  * External identifiers fetched with the rest of the facts because the same
