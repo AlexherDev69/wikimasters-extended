@@ -732,6 +732,17 @@ Aucune pénalité attribuable aux six propriétés n'en ressort : l'écart entre
 - La marque disparaît avec une image qui n'a pas pu se charger : ce qui reste alors est le fond plat de la rareté, et créditer l'auteur d'une image que personne ne voit ne pointerait que sur une adresse cassée. Les deux comportements sont dans la feuille de style, donc testés en la chargeant plutôt qu'en recopiant ses règles
 - Rien à ajouter à la clé de la carte : le nom du fichier y est déjà, donc une image qui change redessine la carte et son crédit ensemble. Zéro écriture quand rien n'a changé, toujours prouvé au MutationObserver
 
+### Phase 23 : une balle plus rapide dans le Pong (faite le 2026-09-22)
+
+- Demande de l'utilisateur : "il faudrait rendre le pong encore plus rapide", après le "fait aller la balle plus vite" de la phase 14
+- Ce qui bloquait : le plafond de vitesse n'était pas un choix de jeu mais une contrainte de justesse. Une image durait au plus 50 ms, donc la balle parcourait au plus 5,75 unités d'un coup, et monter la vitesse aurait fait juger un renvoi sur une balle déjà passée derrière la raquette
+- Découplé avant d'accélérer : une image est maintenant découpée en autant de pas qu'il faut pour que la balle avance de moins de 2 unités par pas, soit moins que son propre diamètre. Une balle qui avance de moins que sa largeur ne peut rien traverser sans se trouver au niveau à un moment, donc la justesse ne dépend plus de la vitesse. Le compte des pas se lit sur la vitesse réellement portée par la balle, pas sur le champ `speed`, qu'un état fabriqué à la main peut contredire
+- Un pas qui marque termine l'image : l'engagement qui suit part donc du milieu du terrain et pas de là où le reste de l'image l'aurait emmené. Un point reste une chose discrète
+- Le plafond de 50 ms reste, mais pour ce qu'il a toujours vraiment fait : un onglet en arrière-plan ne doit pas rejouer d'un coup tout ce qu'il a dormi. Ce n'est plus lui qui empêche la balle de traverser une raquette, c'est le pas
+- Vitesses : engagement 66 à 92, gain par renvoi 4 à 7, plafond 115 à 175. La raquette du joueur passe de 130 à 200, parce qu'un renvoi au bout de la raquette emporte 75 % du plafond dans la verticale, soit 131 unités par seconde : une raquette plus lente que ça se ferait battre par une balle que le joueur a vue venir. L'adversaire passe de 52 à 74, dans la même proportion que la balle, sinon accélérer revenait à offrir la partie
+- Mesuré sur 60 secondes simulées, joueur qui suit parfaitement la balle : 75 renvois contre 116, 1,06 s entre les premiers échanges contre 0,75 s, et 0,77 s contre 0,50 s une fois le plafond atteint. L'équilibre joueur contre adversaire est inchangé, les deux versions renvoient indéfiniment face à un suivi parfait
+- Deux constantes du domaine sont maintenant exportées pour que les tests lisent la règle au lieu d'en recopier le chiffre : celui qui vérifie qu'une balle à la vitesse maximale est encore rattrapée suivra le plafond si on le remonte encore
+
 ## 7. Scénarios de test proposés (à valider ou compléter)
 
 1. should show a `/director/quentin-tarantino/` link when the card is "Quentin Tarantino"
