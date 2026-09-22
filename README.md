@@ -120,6 +120,28 @@ décompresser. `pnpm dev` construit dans `.output/chrome-mv3-dev/` et reconstrui
 à chaque modification ; aucun navigateur n'est ouvert automatiquement, car la
 vérification Turnstile du site refuse les profils automatisés.
 
+### Tester à côté d'une version déjà installée
+
+Le build de développement s'appelle `WikiMasters Extended (dev)` et se charge
+depuis un autre dossier, donc Chrome lui donne une identité à lui. Les deux
+tiennent ensemble dans `chrome://extensions`, sans rien désinstaller.
+
+Ne les laisse pas tourner en même temps pour autant. Les deux poseraient leurs
+noeuds sur la même page, et chacune reconnaît les siens à un attribut
+`data-wme-*` qui ne dit pas de laquelle il vient. Chaque copie a en plus son
+propre `chrome.storage.local`, donc celle de développement démarre avec les
+réglages par défaut : c'est exactement le cas où les deux ne sont pas d'accord.
+
+Le plus simple est de **désactiver** l'installée avec son interrupteur dans
+`chrome://extensions`, au lieu de la désinstaller. Désactiver garde son
+stockage ; désinstaller l'efface, réglages, caches et compteur de tirage
+compris. Tu la réactives quand tu as fini.
+
+Pour avoir les deux en même temps, utilise un profil Chrome séparé et ne
+charge que celle de développement dedans. Crée-le depuis Chrome et pas avec un
+outil : la vérification Turnstile du site refuse les profils automatisés, ce
+qui est aussi la raison de `webExt.disabled` dans `wxt.config.ts`.
+
 Une release se publie à la main : `pnpm zip`, puis le tag et l'archive
 `.output/wikimasters-extended-<version>-chrome.zip` jointe à la release GitHub.
 Rien dans la CI ne le fait à ta place.
