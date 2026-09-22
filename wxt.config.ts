@@ -39,7 +39,7 @@ export default defineConfig({
         // Chrome cuts a description at 132 characters, so this one names the
         // three features that are visible on a card and stops there.
         "Overlay en lecture seule pour wiki-masters.com : images manquantes, bouton Wikipédia et lien Letterboxd, cartes des échanges.",
-      version: '0.1.1',
+      version: '0.1.2',
       // No `action` here: the popup entrypoint writes the whole field, its
       // window from the file itself and its tooltip from the <title> of that
       // file, and it overrides whatever this config declares. Measured on the

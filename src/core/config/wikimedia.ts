@@ -8,7 +8,7 @@
  * said 0.1.1, and nothing noticed. The mechanism is in wikimedia.test.ts,
  * which fails when the three disagree.
  */
-const EXTENSION_VERSION = '0.1.1';
+const EXTENSION_VERSION = '0.1.2';
 
 const REPOSITORY_URL = 'https://github.com/AlexherDev69/wikimasters-extended';
 
