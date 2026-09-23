@@ -38,8 +38,8 @@ python tools/make-screenshots.py <dossier des captures brutes>
 Les captures brutes ne sont pas versionnées : elles montrent une collection
 réelle et des pseudonymes réels, comme tout ce qui vit dans
 `tests/fixtures/raw/`. Les zones rognées et pixelisées de `make-screenshots.py`
-sont mesurées sur les captures du 21 septembre 2026, dans leurs pixels à elles :
-un nouveau jeu de captures demande de les remesurer, pas de les réutiliser.
+sont mesurées sur chaque capture, dans ses pixels à elle : une nouvelle capture
+demande de les remesurer, pas de les réutiliser.
 
 ## Ce que le manifeste attend
 

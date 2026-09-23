@@ -6,7 +6,7 @@ PNG 24 bits, sans canal alpha. L'autre taille acceptée est 640x400.
 | Fichier | Ce qu'il met en avant |
 | --- | --- |
 | `1-statistiques-de-tirage.png` | Le panneau des raretés sous les paquets disponibles |
-| `2-liens-wikipedia-letterboxd.png` | Le lien Letterboxd de la modale, et les deux marques sur la carte |
+| `2-modale-de-detail.png` | La modale de détail : le lien Letterboxd, les deux marques sur la carte et, à côté d'elle, les boutons plein écran et copie |
 | `3-vue-compacte.png` | La page entière en vue compacte, pour montrer ce qui tient à l'écran |
 | `4-cartes-des-echanges.png` | Les cartes dessinées à la place des noms tronqués des offres |
 
