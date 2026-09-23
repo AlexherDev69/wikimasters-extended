@@ -1,0 +1,130 @@
+/*
+ * Styles of the bar this feature adds beside the card of the detail modal,
+ * and of its buttons. Every rule styles that bar or what it holds: the ones
+ * that start with `:fullscreen` only say where it stands once the column
+ * holding it fills the screen. What happens to the card of the site then
+ * lives in the style sheet data/fullscreen-style.ts writes, only for as long
+ * as the full screen lasts.
+ *
+ * The buttons follow the round close button of the modal, with the ink the
+ * page publishes as a variable and a fallback for a page that stops shipping it.
+ */
+
+[data-wme-card-actions] {
+  --wme-card-action-ink: var(--color-foreground, #f2f4f3);
+  --wme-card-action-accent: var(--color-accent, #34d399);
+
+  /* The column of the modal is a flex row: this keeps the bar at the top of
+     the card, at its own size, rather than stretched along it. */
+  align-self: flex-start;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+[data-wme-card-actions] .wme-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--wme-card-action-ink) 14%, transparent);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--wme-card-action-ink) 6%, transparent);
+  color: color-mix(in srgb, var(--wme-card-action-ink) 70%, transparent);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+[data-wme-card-actions] .wme-card-action:hover {
+  color: var(--wme-card-action-ink);
+  border-color: color-mix(in srgb, var(--wme-card-action-ink) 28%, transparent);
+}
+
+[data-wme-card-actions] .wme-card-action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wme-card-action-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+[data-wme-card-actions] svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Full screen: the way in shows at rest, the way out once the bar fills the
+   screen with its column. */
+[data-wme-card-actions] .wme-fullscreen-exit {
+  display: none;
+}
+
+/* Copy: the sheets at rest, then for a moment the outcome of the last press,
+   in the accent of the page when it worked. */
+[data-wme-card-actions] .wme-copy-done,
+[data-wme-card-actions] .wme-copy-failed {
+  display: none;
+}
+
+[data-wme-copy-button][data-wme-copy-outcome='done'] {
+  color: var(--wme-card-action-accent);
+  border-color: color-mix(in srgb, var(--wme-card-action-accent) 45%, transparent);
+}
+
+[data-wme-copy-button][data-wme-copy-outcome='done'] .wme-copy-idle,
+[data-wme-copy-button][data-wme-copy-outcome='failed'] .wme-copy-idle {
+  display: none;
+}
+
+[data-wme-copy-button][data-wme-copy-outcome='done'] .wme-copy-done,
+[data-wme-copy-button][data-wme-copy-outcome='failed'] .wme-copy-failed {
+  display: inline;
+}
+
+/*
+ * In full screen the bar leaves the side of the card for the corner of the
+ * screen, where every player puts the way out, on dark discs that read over
+ * the black the browser paints behind the card.
+ */
+:fullscreen > [data-wme-card-actions] {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  margin: 0;
+}
+
+:fullscreen > [data-wme-card-actions] .wme-card-action {
+  width: 40px;
+  height: 40px;
+  background-color: rgb(0 0 0 / 55%);
+  color: #fff;
+}
+
+:fullscreen > [data-wme-card-actions] svg {
+  width: 20px;
+  height: 20px;
+}
+
+:fullscreen > [data-wme-card-actions] .wme-fullscreen-enter {
+  display: none;
+}
+
+:fullscreen > [data-wme-card-actions] .wme-fullscreen-exit {
+  display: inline;
+}
+
+/* The copy is taken from the card as the modal shows it: in full screen the
+   card carries a zoom the picture would inherit, so the button waits there. */
+:fullscreen > [data-wme-card-actions] [data-wme-copy-button] {
+  display: none;
+}

@@ -16,7 +16,7 @@ décrites dans [README.md](README.md).
 ```
 WikiMasters Extended ajoute à wiki-masters.com ce que le site ne montre pas : une image sur les cartes qui n'en ont aucune, l'article de Wikipédia à un clic, le lien Letterboxd des films, et six autres choses.
 
-Neuf réglages, tous débrayables depuis la fenêtre de l'extension ou sa page d'options, appliqués sans recharger les onglets déjà ouverts.
+Onze réglages, tous débrayables depuis la fenêtre de l'extension ou sa page d'options, appliqués sans recharger les onglets déjà ouverts.
 
 CE QUE L'EXTENSION AJOUTE
 
@@ -27,6 +27,8 @@ CE QUE L'EXTENSION AJOUTE
 • Vue compacte : un bouton réduit les cartes de la collection et du catalogue à deux tiers de leur taille, pour en voir environ deux fois plus à l'écran.
 • Statistiques de tirage : la part de chaque rareté dans les cartes que tes paquets révèlent. Six nombres gardés sur ta machine, jamais le titre d'une carte.
 • Masquer les statistiques des cartes : cache les valeurs ATK et DEF, sur les cartes et dans la modale. Désactivé par défaut.
+• Carte en plein écran : un bouton à côté de la carte, dans la modale de détail, l'affiche en plein écran, agrandie à la taille de l'écran.
+• Copier la carte : un second bouton la copie en image dans le presse-papiers, prête à coller dans une conversation.
 • Pong pendant les chargements : une partie de Pong quand le site n'affiche que son rond qui tourne depuis plus de trois secondes.
 • Son de notification : deux notes quand le compteur de la cloche du site augmente.
 
@@ -41,6 +43,7 @@ CONFIDENTIALITÉ
 • Ses seules requêtes partent vers fr.wikipedia.org (les titres publics des articles, puis les noms des fichiers Wikimedia Commons dont l'adresse doit être résolue) et query.wikidata.org (l'identifiant Wikidata de la carte, jamais son titre).
 • Elles sont envoyées sans cookie, donc aucun compte n'est identifié.
 • Rien n'est envoyé au site WikiMasters, à Letterboxd ni à aucun autre serveur.
+• Copier une carte relit dans le cache du navigateur les images et les polices que la page affiche déjà.
 • Aucune télémétrie, aucune analyse d'usage, aucune donnée personnelle collectée.
 • Les réglages et les caches restent dans le stockage local de l'extension, sur votre machine. La page d'options affiche ce qui est stocké et permet de l'effacer.
 • En désactivant les trois fonctionnalités qui consultent Wikidata, plus aucune requête ne part.
@@ -56,7 +59,7 @@ Projet indépendant, sans aucun lien avec wiki-masters.com, Wikipédia, Wikimedi
 
 - **Objectif unique** : enrichir l'affichage des cartes de wiki-masters.com avec
   des données publiques de Wikipédia et Wikidata, en lecture seule.
-- **`storage`** : enregistre les neuf réglages et le cache des résultats
+- **`storage`** : enregistre les onze réglages et le cache des résultats
   Wikidata et Wikipédia sur la machine de l'utilisateur. Rien n'en sort.
 - **`fr.wikipedia.org`** : résout les titres des cartes en articles, récupère
   l'image de tête et l'adresse des fichiers Wikimedia Commons affichés sur les

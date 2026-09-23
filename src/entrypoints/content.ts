@@ -23,6 +23,7 @@ import type { Settings } from '../features/settings/domain/settings';
 import { createOverlay } from '../features/settings/presentation/overlay';
 import '../features/brand-mark/presentation/brand-mark.css';
 import '../features/compact-view/presentation/compact-view.css';
+import '../features/card-actions/presentation/card-actions.css';
 import '../features/letterboxd/presentation/letterboxd.css';
 import '../features/loading-pong/presentation/loading-pong.css';
 import '../features/missing-image/presentation/missing-image.css';

@@ -2,7 +2,8 @@
  * The parts the overlay draws on a card and in its detail modal: the
  * Letterboxd button and link, the button of the Wikipedia article, the image
  * of a card the site left without one with its credit line, the numbers of the
- * card being hidden, and the cards a trade offer names.
+ * card being hidden, the cards a trade offer names, and the bar beside the card
+ * of the modal that shows it in full screen and copies it.
  *
  * The seam: every case here is anchored on a card. What is drawn beside the
  * cards lives in `overlay.page-parts.test.ts`, and what is given back when the
@@ -10,6 +11,11 @@
  */
 
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+import {
+  CARD_ACTIONS_SELECTOR,
+  COPY_BUTTON_SELECTOR,
+  FULLSCREEN_BUTTON_SELECTOR,
+} from '../../card-actions/data/card-actions-selectors';
 import {
   CARD_ATTACK_VALUE_SELECTOR,
   HIDE_STATS_STYLE_SELECTOR,
@@ -47,6 +53,14 @@ const MODAL_ARTICLE_URL = 'https://fr.wikipedia.org/wiki/Dvoricht%C3%A9';
 
 function wikipediaButtons(): NodeListOf<Element> {
   return document.body.querySelectorAll(WIKIPEDIA_BUTTON_SELECTOR);
+}
+
+function fullscreenButtons(): NodeListOf<Element> {
+  return document.body.querySelectorAll(FULLSCREEN_BUTTON_SELECTOR);
+}
+
+function copyButtons(): NodeListOf<Element> {
+  return document.body.querySelectorAll(COPY_BUTTON_SELECTOR);
 }
 
 function cardImages(): NodeListOf<Element> {
@@ -125,6 +139,61 @@ describe('createOverlay', () => {
     const anchor = link?.previousElementSibling ?? null;
     expect(anchor?.getAttribute('href')).toBe(MODAL_ARTICLE_URL);
     expect(anchor?.hasAttribute(WIKIPEDIA_BUTTON_ATTRIBUTE)).toBe(false);
+  });
+
+  it('should put the full screen button beside the card of the modal while only it is on', () => {
+    // The two other features of the modal are off: the modal must still be
+    // looked for, and nothing asked of Wikidata to draw this one.
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay, categorize } = mount({ ...ALL_OFF, fullscreenCard: true });
+
+    scan(overlay);
+
+    expect(fullscreenButtons()).toHaveLength(1);
+    expect(categorize).not.toHaveBeenCalled();
+  });
+
+  it('should draw no full screen button while the setting is off', () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...DEFAULT_SETTINGS, fullscreenCard: false });
+
+    scan(overlay);
+
+    expect(fullscreenButtons()).toHaveLength(0);
+  });
+
+  it('should take the full screen button back at once when the setting is turned off', () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, fullscreenCard: true });
+    scan(overlay);
+
+    overlay.applySettings(ALL_OFF);
+
+    expect(fullscreenButtons()).toHaveLength(0);
+    expect(document.body.querySelector(CARD_ACTIONS_SELECTOR)).toBeNull();
+  });
+
+  it('should stack the full screen and copy buttons in one bar while both are on', () => {
+    document.body.innerHTML = MODAL_HTML;
+    const { overlay } = mount({ ...ALL_OFF, fullscreenCard: true, copyCard: true });
+
+    scan(overlay);
+
+    const bars = document.body.querySelectorAll(CARD_ACTIONS_SELECTOR);
+    expect(bars).toHaveLength(1);
+    expect([...(bars[0]?.children ?? [])]).toEqual([fullscreenButtons()[0], copyButtons()[0]]);
+  });
+
+  it('should take back only the copy button when copy alone is turned off', () => {
+    document.body.innerHTML = MODAL_HTML;
+    const both = { ...ALL_OFF, fullscreenCard: true, copyCard: true };
+    const { overlay } = mount(both);
+    scan(overlay);
+
+    overlay.applySettings({ ...both, copyCard: false });
+
+    expect(copyButtons()).toHaveLength(0);
+    expect(fullscreenButtons()).toHaveLength(1);
   });
 
   it('should show the image of a card the site left without one once the results arrive', async () => {

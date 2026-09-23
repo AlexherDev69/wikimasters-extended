@@ -17,6 +17,12 @@ import {
   createCompactViewState,
   syncCompactView,
 } from '../../compact-view/presentation/sync-compact-view';
+import {
+  applyCardActions,
+  removeCardActions,
+  type CardActionsDeps,
+} from '../../card-actions/data/card-actions';
+import { removeFullscreenStyle } from '../../card-actions/data/fullscreen-style';
 import { applyHideCardStats, removeHideCardStats } from '../../hide-card-stats/data/hide-stats-style';
 import { removeCardButtons } from '../../letterboxd/data/card-button';
 import { removeModalLink } from '../../letterboxd/data/modal-link';
@@ -174,6 +180,13 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   };
 
   /**
+   * What the buttons beside the card of the modal need, built once. The
+   * feedback of a copy is reset on the same timer as a retry: armed on the
+   * context, so it dies with it.
+   */
+  const cardActionsDeps: CardActionsDeps = { logger, schedule: deps.scheduleRetry };
+
+  /**
    * Parts that threw on the scan before, so one broken part says so once
    * instead of at every scan. A page that keeps mutating asks for a scan
    * every 200 ms, and a warning five times a second would bury the one line
@@ -194,7 +207,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * reached the same wall, silently.
    *
    * This is the "mode dégradé silencieux" the risk table promises against a
-   * redesign of the site: one part gives up, the other nine keep working.
+   * redesign of the site: one part gives up, the others keep working.
    */
   function runPart(name: string, part: () => void): void {
     try {
@@ -312,12 +325,13 @@ export function createOverlay(deps: OverlayDeps): Overlay {
         syncNotificationSound(root, notificationSound, deps.chime);
       });
     }
-    if (!settings.letterboxdLink && !settings.missingImages) {
+    const wantsCardActions = settings.fullscreenCard || settings.copyCard;
+    if (!settings.letterboxdLink && !settings.missingImages && !wantsCardActions) {
       return;
     }
     // The observer of the cards also fires when the modal opens, so no
     // observer, no polling and no timer of its own is needed here. The modal
-    // is looked up once and shared: the two features write in the same one.
+    // is looked up once and shared: every feature of the modal writes in it.
     const modal = findDetailModal(root);
     if (settings.letterboxdLink) {
       runPart('modalLink', () => {
@@ -327,6 +341,18 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     if (settings.missingImages) {
       runPart('modalCredit', () => {
         syncModalCredit(modal, categoriesByTitle);
+      });
+    }
+    // Needs nothing of what Wikidata knows either: it enlarges or copies the
+    // card the modal shows, whatever that card is. One bar holds the buttons
+    // of both settings, so it is synced once with both.
+    if (wantsCardActions) {
+      runPart('cardActions', () => {
+        applyCardActions(
+          modal,
+          { fullscreen: settings.fullscreenCard, copy: settings.copyCard },
+          cardActionsDeps,
+        );
       });
     }
   }
@@ -407,6 +433,14 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removeCompactToggles(root);
       removeCompactStyle(root.ownerDocument);
     }
+    // One setting of the two switched off is taken back by the scan that
+    // follows, which rebuilds the bar without its button. Both off leave no
+    // scan to do it, since the modal is then never looked at.
+    const hadCardActions = previous.fullscreenCard || previous.copyCard;
+    if (hadCardActions && !settings.fullscreenCard && !settings.copyCard) {
+      removeCardActions(root);
+      removeFullscreenStyle(root.ownerDocument);
+    }
     if (previous.loadingPong && !settings.loadingPong) {
       stopLoadingPong(root, loadingPong);
     }
@@ -447,6 +481,8 @@ export function createOverlay(deps: OverlayDeps): Overlay {
       removePullStatsPanels(root);
       removeCompactToggles(root);
       removeCompactStyle(root.ownerDocument);
+      removeCardActions(root);
+      removeFullscreenStyle(root.ownerDocument);
       stopLoadingPong(root, loadingPong);
       removeBrandMarks(root);
       // The sound of the notifications adds no node, so it has nothing to

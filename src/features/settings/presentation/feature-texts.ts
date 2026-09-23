@@ -73,6 +73,24 @@ export const FEATURE_TEXTS: Record<SettingKey, FeatureText> = {
       "taille à l'écran change : le site garde exactement la page qu'il a construite, et la " +
       'vignette reprend sa taille normale dès que tu rappuies.',
   },
+  fullscreenCard: {
+    label: 'Carte en plein écran',
+    summary: 'Un bouton pour voir la carte en grand.',
+    hint:
+      "Ajoute à côté de la carte, dans la modale de détail, un bouton qui l'affiche en plein " +
+      "écran, agrandie à la taille de l'écran. Échap, le même bouton ou la fermeture de la " +
+      "modale la ramènent à sa place. Le navigateur agrandit la carte que le site affiche déjà : " +
+      "rien n'est envoyé ni écrit sur le site.",
+  },
+  copyCard: {
+    label: 'Copier la carte',
+    summary: "Un bouton pour copier l'image de la carte.",
+    hint:
+      "Ajoute à côté de la carte, dans la modale de détail, un bouton qui la copie en image " +
+      "dans le presse-papiers, prête à coller dans une conversation. L'image est faite à partir " +
+      "de la carte que le site affiche, avec les images et les polices que la page a déjà " +
+      "chargées : rien n'est envoyé ni écrit sur le site.",
+  },
   loadingPong: {
     label: 'Pong pendant les chargements',
     summary: 'Une partie de Pong quand le site rame.',
