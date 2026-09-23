@@ -60,7 +60,8 @@ sous le nom du site, partout où le site écrit son nom.
 
 ## Ce que l'extension respecte
 
-**Les règles du site.** Elles interdisent "tout outil visant à jouer, ouvrir des
+**Les [règles du site](https://www.wiki-masters.com/rules).**
+Elles interdisent "tout outil visant à jouer, ouvrir des
 paquets, échanger ou interagir à votre place", sous peine de bannissement sans
 préavis. L'extension est un overlay en lecture seule : aucune classe, aucun
 attribut, aucun style et aucun texte n'est posé sur un élément du site, aucune
@@ -174,7 +175,11 @@ code ni son style.
 
 Une release se publie à la main : `pnpm zip`, puis le tag et l'archive
 `.output/wikimasters-extended-<version>-chrome.zip` jointe à la release GitHub.
-Rien dans la CI ne le fait à ta place.
+La même archive part ensuite sur le tableau de bord du Chrome Web Store, avec
+la description de [docs/store/fiche.md](docs/store/fiche.md) et les captures
+de `docs/store/` quand elles ont changé, puis "Envoyer pour examen" : Chrome ne
+met les joueurs à jour qu'une fois l'examen de Google passé. Rien dans la CI
+ne le fait à ta place.
 
 Les journaux apparaissent dans la console de la page (F12), préfixés par le nom
 de l'extension : tous les niveaux en développement, `warn` et `error` seulement
@@ -200,6 +205,8 @@ lien "Service worker".
 - [docs/DOM_NOTES.md](docs/DOM_NOTES.md) : ce que le site rend, et les sélecteurs
   stables sur lesquels l'extension s'appuie
 - [docs/IDEAS.md](docs/IDEAS.md) : pistes non retenues, et pourquoi
+- [docs/store/fiche.md](docs/store/fiche.md) : les textes de la fiche du
+  Chrome Web Store, prêts à coller dans son formulaire
 - [tools/README.md](tools/README.md) : les scripts qui dessinent l'icône, les
   bannières et les captures de la fiche du store
 
