@@ -8,8 +8,8 @@ the dark ground of the site rather than stretched.
 
 The raw captures are NOT versioned: they show a real collection and real
 player names, like everything under tests/fixtures/raw. Every box below was
-measured on the captures of 2026-09-21, in their own pixels, so a new set of
-captures needs its boxes measured again rather than reused.
+measured on its own capture, in its own pixels, so a new capture needs its box
+measured again rather than reused.
 """
 
 import sys
@@ -35,9 +35,12 @@ SHOTS: list[tuple[str, str, Box | None, list[Box]]] = [
     # The pull tally, under the packs left to open. The whole pack is kept:
     # cutting it to enlarge the panel made the frame look broken.
     ("37.png", "1-statistiques-de-tirage.png", (522, 140, 1642, 840), []),
-    # The detail modal: the Letterboxd link under the one of the site, and the
-    # two marks in the bottom right corner of the card it shows.
-    ("38.webp", "2-liens-wikipedia-letterboxd.png", (166, 90, 1126, 690), []),
+    # The detail modal (capture of 2026-09-23): the Letterboxd link under the
+    # one of the site, the two marks in the bottom right corner of the card,
+    # and the bar of the full screen and copy buttons beside it. The modal
+    # spans (583, 157, 1322, 783); the box keeps a margin of the dimmed page
+    # around it, at the 1.6 ratio of the frame, so nothing is stretched.
+    ("46.png", "2-modale-de-detail.png", (409, 130, 1497, 810), []),
     # The compact view, whole page: what it changes is how much fits on screen,
     # so the page is shown entire rather than cropped.
     ("39.webp", "3-vue-compacte.png", None, []),
