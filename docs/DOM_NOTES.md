@@ -58,6 +58,8 @@ La carte de la landing publique est différente (`aspect-[5/7]`, pas de `glow-*`
 
 Dans `.card-frame` : `h2` (titre), libellé de rareté, onglets "Détails" et "Marché" (PRO), champ "Étiquettes" (`input[role="combobox"]`), ATK, DEF, Q-Score, Exemplaires, Vues (30j), signalement d'image, actions "Mettre aux enchères" et "Défausser".
 
+La carte de la modale est l'unique enfant de sa colonne, `div.flex-shrink-0.flex.justify-center`, premier enfant de la rangée `div.flex.flex-col.md:flex-row.gap-6` qui porte à côté la colonne des informations. C'est cette colonne que la carte en plein écran confie au navigateur, trouvée par la structure (le parent de la racine `glow-<rareté>` lue par le scanner) et jamais par ses classes. La barre de boutons de l'extension (plein écran, copie) y est ajoutée juste après la carte : la colonne est une rangée flex, elle se place donc à droite de la carte (relevé sur la fixture `card-detail-modal.html`).
+
 Élément clé : `a[href^="https://fr.wikipedia.org/wiki/"]` ("Voir l'article sur Wikipédia"). Il donne le titre exact de l'article et le sous-domaine de langue. C'est le point d'ancrage naturel du bouton Letterboxd et de l'affichage de la catégorie.
 
 Attention depuis le bouton Wikipédia de la carte (2026-09-21) : la modale affiche une copie complète de la carte, qui porte donc ce bouton, et il pointe vers la même adresse. La modale rend cette carte AVANT la colonne qui porte son propre lien, donc le premier `a[href^="https://fr.wikipedia.org/wiki/"]` de la modale est celui de l'extension. Le sélecteur doit exclure le nôtre (`:not([data-wme-wikipedia-card])`), sans quoi tout ce que l'extension ajoute à la modale est ancré à l'intérieur de la carte.

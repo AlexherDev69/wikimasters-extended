@@ -90,6 +90,8 @@ export const ALL_OFF: Settings = {
   hideCardStats: false,
   pullStats: false,
   compactView: false,
+  fullscreenCard: false,
+  copyCard: false,
   loadingPong: false,
   notificationSound: false,
 };

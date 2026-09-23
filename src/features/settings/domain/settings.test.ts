@@ -9,6 +9,8 @@ const ALL_OFF: Settings = {
   hideCardStats: false,
   pullStats: false,
   compactView: false,
+  fullscreenCard: false,
+  copyCard: false,
   loadingPong: false,
   notificationSound: false,
 };
@@ -33,6 +35,8 @@ describe('normalizeSettings', () => {
       hideCardStats: false,
       pullStats: true,
       compactView: true,
+      fullscreenCard: true,
+      copyCard: true,
       loadingPong: true,
       notificationSound: true,
     });

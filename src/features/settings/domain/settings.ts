@@ -41,6 +41,18 @@ export interface Settings {
    */
   compactView: boolean;
   /**
+   * The button beside the card of the detail modal that shows that card in
+   * full screen. Read-only like the rest: the browser enlarges the card the
+   * site already shows, and nothing of the site is written for it.
+   */
+  fullscreenCard: boolean;
+  /**
+   * The button beside the card of the detail modal that copies that card to
+   * the clipboard, as a picture. It reads the card the site shows and the
+   * files the page has already loaded, and writes nothing on the site.
+   */
+  copyCard: boolean;
+  /**
    * A game of Pong over the loading screen, when the site keeps the reader
    * waiting for several seconds. Read-only like the rest: it is played in a
    * canvas of ours, over a page that has nothing to show yet, and it goes
@@ -64,6 +76,8 @@ export const SETTING_KEYS = [
   'hideCardStats',
   'pullStats',
   'compactView',
+  'fullscreenCard',
+  'copyCard',
   'loadingPong',
   'notificationSound',
 ] as const satisfies readonly (keyof Settings)[];
@@ -78,6 +92,8 @@ export const DEFAULT_SETTINGS: Settings = {
   hideCardStats: false,
   pullStats: true,
   compactView: true,
+  fullscreenCard: true,
+  copyCard: true,
   loadingPong: true,
   notificationSound: true,
 };
@@ -91,7 +107,10 @@ export const DEFAULT_SETTINGS: Settings = {
  * traffic another setting still needs. `pullStats` is left out for the same
  * reason: it counts the rarity the card already carries in its own class, and
  * asks nothing of anyone. `compactView` is left out too: it changes the size
- * the cards are painted at, not what is known of them. `wikipediaLink` is
+ * the cards are painted at, not what is known of them. `fullscreenCard` and
+ * `copyCard` are left out for the same reason: they enlarge or copy a card
+ * the modal already shows.
+ * `wikipediaLink` is
  * left out for the plainest reason there is: the title of a card IS the
  * title of its article, so its button is built from what the page already
  * shows and no one is ever asked anything. `loadingPong` is left
