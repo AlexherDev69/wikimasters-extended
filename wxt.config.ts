@@ -5,9 +5,9 @@ const EXTENSION_NAME = 'WikiMasters Extended';
 /**
  * The name the development build carries instead. It is loaded from another
  * folder than a release, so Chrome gives it an identity of its own and the
- * two sit side by side on chrome://extensions: without this, two cards
- * would show the same name, the same version and the same icon, and the only
- * way to tell which is which would be the folder each was loaded from.
+ * two sit side by side on chrome://extensions: without this, two cards would
+ * show the same name, the same version and the same icon, and the only way
+ * to tell which is which would be the folder each was loaded from.
  *
  * `command` is "serve" for `wxt` alone, which is the build that lands in
  * .output/chrome-mv3-dev, and "build" for `wxt build` and `wxt zip`. A
