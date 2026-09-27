@@ -34,17 +34,23 @@ export default defineConfig({
     const name = command === 'serve' ? `${EXTENSION_NAME}${DEV_SUFFIX}` : EXTENSION_NAME;
 
     return {
-      name,
-      description:
-        // Chrome cuts a description at 132 characters, so this one names the
-        // three features that are visible on a card and stops there.
-        "Overlay en lecture seule pour wiki-masters.com : images manquantes, bouton Wikipédia et lien Letterboxd, cartes des échanges.",
-      version: '0.1.3',
-      // No `action` here: the popup entrypoint writes the whole field, its
-      // window from the file itself and its tooltip from the <title> of that
-      // file, and it overrides whatever this config declares. Measured on the
-      // built manifest, not assumed.
-      permissions: ['storage'],
+  name,
+  description:
+    "Overlay en lecture seule pour wiki-masters.com : images manquantes, bouton Wikipédia et lien Letterboxd, cartes des échanges.",
+  browser_specific_settings: {
+    gecko: {
+      id: '@wikimasters-extended-local',
+      data_collection_permissions: {
+        required: ['none'],
+      },
+    },
+  },
+  version: '0.1.3',
+  // No `action` here: the popup entrypoint writes the whole field, its
+  // window from the file itself and its tooltip from the <title> of that
+  // file, and it overrides whatever this config declares. Measured on the
+  // built manifest, not assumed.
+  permissions: ['storage'],
       // The only outgoing hosts. The site itself is never called by the extension.
       host_permissions: ['https://fr.wikipedia.org/*', 'https://query.wikidata.org/*'],
     };
