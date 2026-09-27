@@ -1,12 +1,15 @@
 # WikiMasters Extended
 
-Extension Chrome (Manifest V3) qui enrichit [wiki-masters.com](https://www.wiki-masters.com),
-où chaque carte à collectionner est un article de Wikipédia.
+Extension Manifest V3 qui enrichit [wiki-masters.com](https://www.wiki-masters.com),
+où chaque carte à collectionner est un article de Wikipédia. Elle se construit
+pour Chrome et pour Firefox, donc aussi pour Zen, depuis le même code.
 
 Elle ajoute uniquement ses propres éléments par-dessus la page : elle ne clique
 pas, ne scrolle pas, ne saisit rien et n'écrit jamais rien sur le site.
 
 ## Installation
+
+### Sur Chrome
 
 Elle est sur le Chrome Web Store :
 **[WikiMasters Extended](https://chromewebstore.google.com/detail/wikimasters-extended/ikoohipceahjbaheacljepkfaeelhbpj)**, un bouton et rien d'autre. Chrome la
@@ -35,6 +38,22 @@ cliquer sur la flèche de rechargement de l'extension dans `chrome://extensions`
 N'installe pas les deux en même temps. Chacune poserait ses noeuds sur la même
 page, et chacune reconnaît les siens à un attribut qui ne dit pas de laquelle
 il vient.
+
+### Sur Firefox ou Zen
+
+Elle n'est pas encore sur addons.mozilla.org. En attendant, deux chemins :
+
+- **Pour essayer** : `pnpm install && pnpm build:firefox`, puis
+  `about:debugging#/runtime/this-firefox`, "Charger un module temporaire", et
+  choisir `.output/firefox-mv3/manifest.json`. L'extension disparaît à la
+  fermeture du navigateur, réglages compris.
+- **Pour la garder** : il faut un paquet signé par Mozilla, que Firefox et Zen
+  exigent. `pnpm zip:firefox`, envoi sur AMO en auto-distribution, et le `.xpi`
+  signé qui revient s'installe à vie.
+
+Les deux chemins, la déclaration de données que Firefox demande et ce qui
+change par rapport au paquet Chrome sont dans
+[docs/firefox.md](docs/firefox.md).
 
 ## Fonctionnalités
 
@@ -94,8 +113,8 @@ cache du navigateur et nulle part ailleurs, les images dans ce cache aussi, et
 une image qui n'y serait plus est redemandée, sans cookie, là où la page l'avait
 prise. Rien n'est envoyé au site, à
 Letterboxd ni à aucun autre serveur, et il n'y a ni télémétrie ni analyse
-d'usage. Réglages, caches et comptes de tirage restent dans
-`chrome.storage.local`, sur ta machine, et la page d'options affiche les caches
+d'usage. Réglages, caches et comptes de tirage restent dans le
+`storage.local` du navigateur, sur ta machine, et la page d'options affiche les caches
 avec de quoi les vider. L'extension ne tient aucun index de ta collection.
 Désactive les trois fonctionnalités qui consultent Wikidata et plus aucune
 requête ne part.
@@ -142,6 +161,12 @@ décompresser. `pnpm dev` construit dans `.output/chrome-mv3-dev/` et reconstrui
 à chaque modification ; aucun navigateur n'est ouvert automatiquement, car la
 vérification Turnstile du site refuse les profils automatisés.
 
+`pnpm build:firefox` et `pnpm dev:firefox` font la même chose pour Firefox et
+Zen, dans `.output/firefox-mv3/` et `.output/firefox-mv3-dev/`. Le paquet y est
+en Manifest V3 lui aussi, avec un arrière-plan que Firefox exécute comme event
+page faute de service worker, un identifiant `gecko` définitif et la déclaration
+de données qu'AMO exige : [docs/firefox.md](docs/firefox.md) détaille les trois.
+
 ### Tester à côté d'une version déjà installée
 
 Le build de développement s'appelle `WikiMasters Extended (dev)` et se charge
@@ -181,18 +206,27 @@ de `docs/store/` quand elles ont changé, puis "Envoyer pour examen" : Chrome ne
 met les joueurs à jour qu'une fois l'examen de Google passé. Rien dans la CI
 ne le fait à ta place.
 
+Le paquet Firefox se publie séparément, avec `pnpm zip:firefox` : il produit
+l'archive `-firefox.zip` et, à côté, l'archive `-sources.zip` que Mozilla réclame
+pour un paquet minifié. La marche à suivre sur AMO est dans
+[docs/firefox.md](docs/firefox.md).
+
 Les journaux apparaissent dans la console de la page (F12), préfixés par le nom
 de l'extension : tous les niveaux en développement, `warn` et `error` seulement
-en production. Ceux du service worker se lisent depuis `chrome://extensions`,
-lien "Service worker".
+en production. Ceux de l'arrière-plan se lisent depuis `chrome://extensions`,
+lien "Service worker", et sous Firefox depuis
+`about:debugging#/runtime/this-firefox`, bouton "Inspecter".
 
 ## Scripts
 
 | Commande | Description |
 | --- | --- |
 | `pnpm dev` | Développement avec rechargement automatique |
+| `pnpm dev:firefox` | Le même, pour Firefox et Zen |
 | `pnpm build` | Build de production dans `.output/chrome-mv3/` |
+| `pnpm build:firefox` | Build de production dans `.output/firefox-mv3/` |
 | `pnpm zip` | Archive de distribution, celle qui est jointe aux releases |
+| `pnpm zip:firefox` | Archive Firefox, plus l'archive des sources qu'AMO demande |
 | `pnpm typecheck` | TypeScript sans émission |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest (`pnpm test:watch` en mode watch) |
@@ -205,6 +239,8 @@ lien "Service worker".
 - [docs/DOM_NOTES.md](docs/DOM_NOTES.md) : ce que le site rend, et les sélecteurs
   stables sur lesquels l'extension s'appuie
 - [docs/IDEAS.md](docs/IDEAS.md) : pistes non retenues, et pourquoi
+- [docs/firefox.md](docs/firefox.md) : ce que le paquet Firefox change, comment
+  le charger dans Zen et comment le faire signer par Mozilla
 - [docs/store/fiche.md](docs/store/fiche.md) : les textes de la fiche du
   Chrome Web Store, prêts à coller dans son formulaire
 - [tools/README.md](tools/README.md) : les scripts qui dessinent l'icône, les

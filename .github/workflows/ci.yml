@@ -44,5 +44,10 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # The two packages come from the same code but not from the same
+      # manifest, and only a build catches a key Firefox refuses.
+      - name: Build (Firefox)
+        run: pnpm build:firefox
+
       - name: Check for dead code
         run: pnpm knip
