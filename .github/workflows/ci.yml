@@ -44,5 +44,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Same code, another manifest: the Firefox package must build as well.
+      - name: Build (Firefox)
+        run: pnpm build:firefox
+
       - name: Check for dead code
         run: pnpm knip

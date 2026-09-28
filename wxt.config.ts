@@ -15,9 +15,34 @@ const EXTENSION_NAME = 'WikiMasters Extended';
  */
 const DEV_SUFFIX = ' (dev)';
 
+/**
+ * The identity Firefox files the extension under. It becomes permanent with
+ * the first version Mozilla signs: another one would make another extension,
+ * installed beside this one instead of updating it.
+ */
+const GECKO_ID = 'wikimasters-extended@alexherdev69.github.io';
+
+/**
+ * From Firefox 127 on, the host permissions of a Manifest V3 extension are
+ * granted with the install instead of waiting for the user to allow them, so
+ * the calls to Wikimedia work from the first page, as they do on Chrome. 128
+ * is the extended support release that follows.
+ */
+const FIREFOX_MIN_VERSION = '128.0';
+
 export default defineConfig({
   srcDir: 'src',
   imports: false,
+  // WXT builds Firefox in Manifest V2 by default. Pinned to 3, the Firefox
+  // package declares its permissions the way the Chrome one does, and there is
+  // one manifest format to reason about instead of two.
+  manifestVersion: 3,
+  zip: {
+    // `wxt zip -b firefox` also packs the sources Mozilla asks for, and that
+    // archive does not read .gitignore: the raw page exports, which carry a
+    // real pseudonym, are kept out of it by name.
+    excludeSources: ['tests/fixtures/raw/**'],
+  },
   // The options page is an HTML page, so Vite would add its modulepreload
   // polyfill to it. That polyfill calls `fetch`, which an extension that
   // performs no request of its own in that page has no reason to ship. Chrome
@@ -26,11 +51,11 @@ export default defineConfig({
     build: { modulePreload: { polyfill: false } },
   }),
   // The site's Turnstile check rejects automated browser profiles, so the dev
-  // build is loaded manually into the developer's own Chrome instead.
+  // build is loaded manually into the developer's own browser instead.
   webExt: {
     disabled: true,
   },
-  manifest: ({ command }) => {
+  manifest: ({ browser, command }) => {
     const name = command === 'serve' ? `${EXTENSION_NAME}${DEV_SUFFIX}` : EXTENSION_NAME;
 
     return {
@@ -39,14 +64,25 @@ export default defineConfig({
         // Chrome cuts a description at 132 characters, so this one names the
         // three features that are visible on a card and stops there.
         "Overlay en lecture seule pour wiki-masters.com : images manquantes, bouton Wikipédia et lien Letterboxd, cartes des échanges.",
-      browser_specific_settings: {
-        gecko: {
-          id: '@wikimasters-extended-local',
-          data_collection_permissions: {
-            required: ['none'],
-          },
-        },
-      },
+      // Firefox only: Chrome would flag these keys as unknown on its
+      // extensions page.
+      ...(browser === 'firefox'
+        ? {
+            browser_specific_settings: {
+              gecko: {
+                id: GECKO_ID,
+                strict_min_version: FIREFOX_MIN_VERSION,
+                // The titles of the cards are read on the page and sent to
+                // Wikipedia and Wikidata: content of a website that leaves the
+                // browser, which Mozilla asks to declare. Nothing goes to a
+                // server of ours, there is none.
+                data_collection_permissions: {
+                  required: ['websiteContent'],
+                },
+              },
+            },
+          }
+        : {}),
       version: '0.1.3',
       // No `action` here: the popup entrypoint writes the whole field, its
       // window from the file itself and its tooltip from the <title> of that
