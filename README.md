@@ -1,6 +1,6 @@
 # WikiMasters Extended
 
-Extension Chrome (Manifest V3) qui enrichit [wiki-masters.com](https://www.wiki-masters.com),
+Extension Chrome et Firefox (Manifest V3) qui enrichit [wiki-masters.com](https://www.wiki-masters.com),
 où chaque carte à collectionner est un article de Wikipédia.
 
 Elle ajoute uniquement ses propres éléments par-dessus la page : elle ne clique
@@ -35,6 +35,18 @@ cliquer sur la flèche de rechargement de l'extension dans `chrome://extensions`
 N'installe pas les deux en même temps. Chacune poserait ses noeuds sur la même
 page, et chacune reconnaît les siens à un attribut qui ne dit pas de laquelle
 il vient.
+
+### Sur Firefox
+
+Elle n'est pas encore sur le store de Firefox. Pour l'essayer, le paquet se
+construit depuis ce dépôt, avec Node.js et pnpm (voir [Développement](#développement)) :
+
+1. `pnpm install && pnpm build:firefox`
+2. Ouvrir `about:debugging#/runtime/this-firefox`, cliquer sur "Charger un module
+   temporaire" et choisir le fichier `.output/firefox-mv3/manifest.json`
+
+Firefox la retire à sa fermeture, réglages compris : une installation qui dure
+demande un paquet signé par Mozilla.
 
 ## Fonctionnalités
 
@@ -181,6 +193,9 @@ de `docs/store/` quand elles ont changé, puis "Envoyer pour examen" : Chrome ne
 met les joueurs à jour qu'une fois l'examen de Google passé. Rien dans la CI
 ne le fait à ta place.
 
+Le paquet Firefox se construit avec `pnpm zip:firefox`, qui produit aussi
+l'archive des sources que Mozilla demande pour un code minifié.
+
 Les journaux apparaissent dans la console de la page (F12), préfixés par le nom
 de l'extension : tous les niveaux en développement, `warn` et `error` seulement
 en production. Ceux du service worker se lisent depuis `chrome://extensions`,
@@ -191,8 +206,11 @@ lien "Service worker".
 | Commande | Description |
 | --- | --- |
 | `pnpm dev` | Développement avec rechargement automatique |
+| `pnpm dev:firefox` | La même chose pour Firefox |
 | `pnpm build` | Build de production dans `.output/chrome-mv3/` |
+| `pnpm build:firefox` | Build de production dans `.output/firefox-mv3/` |
 | `pnpm zip` | Archive de distribution, celle qui est jointe aux releases |
+| `pnpm zip:firefox` | Archive Firefox, et celle des sources que Mozilla demande |
 | `pnpm typecheck` | TypeScript sans émission |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest (`pnpm test:watch` en mode watch) |
