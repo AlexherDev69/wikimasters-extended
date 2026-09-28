@@ -14,7 +14,7 @@ décrites dans [README.md](README.md).
 ## Description
 
 ```
-WikiMasters Extended ajoute à wiki-masters.com ce que le site ne montre pas : une image sur les cartes qui n'en ont aucune, l'article de Wikipédia à un clic, le lien Letterboxd des films, et six autres choses.
+WikiMasters Extended ajoute à wiki-masters.com ce que le site ne montre pas : une image sur les cartes qui n'en ont aucune, l'article de Wikipédia à un clic, le lien Letterboxd des films, et huit autres choses.
 
 Onze réglages, tous débrayables depuis la fenêtre de l'extension ou sa page d'options, appliqués sans recharger les onglets déjà ouverts.
 
