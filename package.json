@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^22",
+    "@types/node": "^26",
     "eslint": "^10.11.0",
     "happy-dom": "^20.14.5",
     "knip": "^6.37.0",
