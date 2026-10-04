@@ -42,6 +42,7 @@ const BAR_CLASS = 'wme-pull-bar';
 const PERCENT_CLASS = 'wme-pull-percent';
 const COUNT_CLASS = 'wme-pull-count';
 const NOTE_CLASS = 'wme-pull-stats-note';
+const WARNING_CLASS = 'wme-pull-stats-warning';
 
 const PANEL_TITLE = 'Tes tirages';
 const SINGLE_CARD_TOTAL = 'carte';
@@ -49,6 +50,15 @@ const MANY_CARDS_TOTAL = 'cartes';
 const EMPTY_NOTE =
   "Aucune carte comptée pour l'instant : ouvre un paquet, les cartes révélées sont comptées " +
   'à partir de maintenant.';
+
+/**
+ * The one hole the count cannot close: a card is known only once the site has
+ * shown it, so a pack left halfway keeps the cards nobody saw. Said on the
+ * panel itself, where a total that falls short of five per pack is noticed.
+ */
+const UNSEEN_CARDS_WARNING =
+  'Attention : si tu recharges ou quittes la page pendant une ouverture, les cartes pas encore ' +
+  'vues ne sont pas comptées.';
 
 /**
  * Text of the site the block of the packs left always carries, and which no
@@ -137,21 +147,13 @@ function buildHead(document: Document, total: number): HTMLElement {
   return head;
 }
 
-function buildPanel(document: Document, tally: PullTally, key: string): HTMLElement {
-  const panel = document.createElement(PANEL_TAG);
-  panel.className = PANEL_CLASS;
-  panel.setAttribute(PULL_STATS_ATTRIBUTE, '');
-  panel.setAttribute(PULL_STATS_KEY_ATTRIBUTE, key);
-
-  const total = totalPulls(tally);
-  panel.append(buildHead(document, total));
-
+/** What the panel says of the counts: a sentence while there is none, the rows after. */
+function buildBody(document: Document, tally: PullTally, total: number): HTMLElement {
   if (total === 0) {
     const note = document.createElement(TEXT_TAG);
     note.className = NOTE_CLASS;
     note.textContent = EMPTY_NOTE;
-    panel.append(note);
-    return panel;
+    return note;
   }
 
   const rows = document.createElement(PANEL_TAG);
@@ -159,7 +161,30 @@ function buildPanel(document: Document, tally: PullTally, key: string): HTMLElem
   for (const share of pullShares(tally)) {
     rows.append(buildRow(document, share));
   }
-  panel.append(rows);
+  return rows;
+}
+
+function buildWarning(document: Document): HTMLElement {
+  const warning = document.createElement(TEXT_TAG);
+  warning.className = WARNING_CLASS;
+  warning.textContent = UNSEEN_CARDS_WARNING;
+  return warning;
+}
+
+function buildPanel(document: Document, tally: PullTally, key: string): HTMLElement {
+  const panel = document.createElement(PANEL_TAG);
+  panel.className = PANEL_CLASS;
+  panel.setAttribute(PULL_STATS_ATTRIBUTE, '');
+  panel.setAttribute(PULL_STATS_KEY_ATTRIBUTE, key);
+
+  const total = totalPulls(tally);
+  // The warning closes the panel whatever it shows: it holds from the very
+  // first pack, before a single card was counted.
+  panel.append(
+    buildHead(document, total),
+    buildBody(document, tally, total),
+    buildWarning(document),
+  );
   return panel;
 }
 
