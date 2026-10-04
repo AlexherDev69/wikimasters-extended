@@ -87,7 +87,7 @@ export default defineConfig({
             },
           }
         : {}),
-      version: '0.1.4',
+      version: '0.1.5',
       // No `action` here: the popup entrypoint writes the whole field, its
       // window from the file itself and its tooltip from the <title> of that
       // file, and it overrides whatever this config declares. Measured on the
