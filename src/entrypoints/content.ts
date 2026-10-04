@@ -158,9 +158,16 @@ export default defineContentScript({
       overlay.onScan(observedCards);
     }
 
+    function onMutation(): void {
+      if (ctx.isInvalid) {
+        return;
+      }
+      overlay.onMutation();
+    }
+
     onScan(scanCards(root));
 
-    const disconnect = observeCards({ root, onScan });
+    const disconnect = observeCards({ root, onScan, onMutation });
 
     ctx.onInvalidated(() => {
       disconnect();

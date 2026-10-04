@@ -17,11 +17,10 @@ describe('createPullTallyStore', () => {
     vi.restoreAllMocks();
   });
 
-  it('should read back the tally it wrote', async () => {
-    const store = createPullTallyStore();
-    await store.write(TALLY);
+  it('should read back the tally the storage holds', async () => {
+    await storage.setItem(KEY, TALLY);
 
-    expect(await store.read()).toEqual(TALLY);
+    expect(await createPullTallyStore().read()).toEqual(TALLY);
   });
 
   it('should return an empty tally when nothing was ever written', async () => {
@@ -40,15 +39,61 @@ describe('createPullTallyStore', () => {
     expect(await createPullTallyStore().read()).toEqual(emptyTally());
   });
 
+  it('should add the card to the tally the storage holds and give the result back', async () => {
+    await storage.setItem(KEY, TALLY);
+
+    const added = await createPullTallyStore().add('sr');
+
+    expect(added).toEqual({ ...TALLY, sr: 3 });
+    expect(await storage.getItem(KEY)).toEqual({ ...TALLY, sr: 3 });
+  });
+
+  it('should start from an empty tally when nothing was ever stored', async () => {
+    expect(await createPullTallyStore().add('c')).toEqual({ ...emptyTally(), c: 1 });
+  });
+
+  it('should keep the cards another tab has added in between', async () => {
+    // Two tabs of the site: each has a store of its own over the one storage.
+    const firstTab = createPullTallyStore();
+    const secondTab = createPullTallyStore();
+
+    await firstTab.add('c');
+    await secondTab.add('ur');
+    await firstTab.add('c');
+
+    expect(await storage.getItem(KEY)).toEqual({ ...emptyTally(), c: 2, ur: 1 });
+  });
+
+  it('should count every card when several are added without waiting for one another', async () => {
+    const store = createPullTallyStore();
+
+    await Promise.all([store.add('c'), store.add('c'), store.add('pc')]);
+
+    expect(await storage.getItem(KEY)).toEqual({ ...emptyTally(), c: 2, pc: 1 });
+  });
+
+  it('should reject and write nothing when the storage cannot be read', async () => {
+    await storage.setItem(KEY, TALLY);
+    vi.spyOn(storage, 'getItem').mockRejectedValue(new Error('storage unavailable'));
+    const setItem = vi.spyOn(storage, 'setItem');
+
+    await expect(createPullTallyStore().add('c')).rejects.toThrow('storage unavailable');
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
   it('should reject when the storage cannot be written, so the caller can log it', async () => {
     vi.spyOn(storage, 'setItem').mockRejectedValue(new Error('storage unavailable'));
 
-    await expect(createPullTallyStore().write(TALLY)).rejects.toThrow('storage unavailable');
+    await expect(createPullTallyStore().add('c')).rejects.toThrow('storage unavailable');
   });
 
-  it('should write under one versioned key of its own', async () => {
-    await createPullTallyStore().write(TALLY);
+  it('should still add the next card when an addition has failed', async () => {
+    const store = createPullTallyStore();
+    vi.spyOn(storage, 'setItem').mockRejectedValueOnce(new Error('storage unavailable'));
 
-    expect(await storage.getItem(KEY)).toEqual(TALLY);
+    await expect(store.add('c')).rejects.toThrow('storage unavailable');
+    await store.add('pc');
+
+    expect(await storage.getItem(KEY)).toEqual({ ...emptyTally(), pc: 1 });
   });
 });

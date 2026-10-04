@@ -1,3 +1,4 @@
+import type { Rarity } from '../../card-detection/domain/rarity';
 import type { PullTally } from './pull-tally';
 
 /**
@@ -11,5 +12,14 @@ import type { PullTally } from './pull-tally';
  */
 export interface PullTallyStore {
   read(): Promise<PullTally>;
-  write(tally: PullTally): Promise<void>;
+  /**
+   * Adds one card of `rarity` to what is kept at that moment, and gives back
+   * the result. The tally a page holds is never written back as a whole: the
+   * site may be open in another tab, which counts cards of its own, and a
+   * copy read when this page loaded would erase them.
+   *
+   * Rejects when the tally could not be read or written, and then writes
+   * nothing: unlike `read`, it never takes an empty tally for the one kept.
+   */
+  add(rarity: Rarity): Promise<PullTally>;
 }

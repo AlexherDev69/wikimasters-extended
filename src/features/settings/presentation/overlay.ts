@@ -48,9 +48,12 @@ import { syncModalCredit } from '../../missing-image/presentation/sync-modal-cre
 import { removePullStatsPanels } from '../../pull-stats/data/pull-stats-panel';
 import type { PullTally } from '../../pull-stats/domain/pull-tally';
 import type { PullTallyStore } from '../../pull-stats/domain/pull-tally-store';
+import { isPullsPage } from '../../pull-stats/domain/pulls-page';
 import {
+  countPackReveal,
   createPullStatsState,
   syncPullStats,
+  type PullStatsDeps,
 } from '../../pull-stats/presentation/sync-pull-stats';
 import { scanTradeChips, type ObservedTradeCard } from '../../trade-cards/data/scan-trade-chips';
 import { removeTradePreviews } from '../../trade-cards/data/trade-preview';
@@ -68,6 +71,12 @@ import { hasEnabledFeature, type Settings } from '../domain/settings';
 export interface Overlay {
   /** Called on every scan, with the cards on screen. */
   onScan: (cards: readonly ObservedCard[]) => void;
+  /**
+   * Called on every batch of mutations of the page, without the delay of a
+   * scan: what a pack shows is counted as it comes, because the user can
+   * leave a card before the scan reads it. Draws nothing.
+   */
+  onMutation: () => void;
   /**
    * Brings the overlay in line with settings that have just changed, and runs
    * a whole scan at once so a feature switched back on does not wait for the
@@ -131,6 +140,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
    * count the same card at every mutation of the reveal.
    */
   const pullStats = createPullStatsState(deps.pullTally);
+  const pullStatsDeps: PullStatsDeps = { store: deps.pullTallyStore, logger };
   /**
    * Whether the cards are drawn small right now. It outlives every scan for
    * the same reason: the button that flips it is on the page, and the site
@@ -286,7 +296,7 @@ export function createOverlay(deps: OverlayDeps): Overlay {
     // what needs the detail modal.
     if (settings.pullStats) {
       runPart('pullStats', () => {
-        syncPullStats(root, cards, pullStats, { store: deps.pullTallyStore, logger });
+        syncPullStats(root, cards, pullStats, pullStatsDeps);
       });
     }
     // Global to the page as well, and needs nothing of a card either: it only
@@ -456,6 +466,20 @@ export function createOverlay(deps: OverlayDeps): Overlay {
   return {
     onScan(cards): void {
       processScan(cards);
+    },
+
+    onMutation(): void {
+      // Every other page is left to the scan: only this one reveals a pack,
+      // and the cards are read again here, at every mutation.
+      if (!settings.pullStats || !isPullsPage(deps.readPath())) {
+        return;
+      }
+      // A name of its own: sharing the one of the scan would let either of
+      // them clear the failure the other has just logged, and log it again
+      // at every mutation.
+      runPart('pullCount', () => {
+        countPackReveal(root, scanCards(root), pullStats, pullStatsDeps);
+      });
     },
 
     applySettings(next): void {

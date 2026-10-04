@@ -24,7 +24,7 @@ import { HIDE_STATS_STYLE_SELECTOR } from '../../src/features/hide-card-stats/da
 import { CARD_BUTTON_SELECTOR } from '../../src/features/letterboxd/data/card-button-selectors';
 import type { ChimePlayer } from '../../src/features/notification-sound/data/chime';
 import { PULL_STATS_SELECTOR } from '../../src/features/pull-stats/data/pull-stats-panel';
-import { emptyTally } from '../../src/features/pull-stats/domain/pull-tally';
+import { addPull, emptyTally } from '../../src/features/pull-stats/domain/pull-tally';
 import { DEFAULT_SETTINGS, type Settings } from '../../src/features/settings/domain/settings';
 import {
   createOverlay,
@@ -164,6 +164,8 @@ export function mount(
   const frames: ((timeMs: number) => void)[] = [];
   const chime: ChimePlayer = { play: vi.fn(), close: vi.fn() };
   const logger = makeLogger();
+  // The storage of the pulls, held in memory: what a card is added to.
+  let storedTally = emptyTally();
   const deps: OverlayDeps = {
     root: document.body,
     settings,
@@ -172,7 +174,13 @@ export function mount(
     scheduleRetry: (callback) => {
       retries.push(callback);
     },
-    pullTallyStore: { read: () => Promise.resolve(emptyTally()), write: () => Promise.resolve() },
+    pullTallyStore: {
+      read: () => Promise.resolve(storedTally),
+      add: (rarity) => {
+        storedTally = addPull(storedTally, rarity);
+        return Promise.resolve(storedTally);
+      },
+    },
     pullTally: emptyTally(),
     compactStore: { read: () => Promise.resolve(false), write: () => Promise.resolve() },
     isCompact: false,

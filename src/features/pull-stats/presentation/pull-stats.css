@@ -51,11 +51,22 @@
   color: color-mix(in srgb, var(--wme-pull-ink) 55%, transparent);
 }
 
-.wme-pull-stats-note {
+.wme-pull-stats-note,
+.wme-pull-stats-warning {
   font-size: 10px;
   /* Left aligned under a centred title: it is a sentence, not a label. */
   text-align: left;
   color: color-mix(in srgb, var(--wme-pull-ink) 55%, transparent);
+}
+
+/*
+ * A rule above the warning: it speaks of the count as a whole, and must not
+ * read as a caption of the last row.
+ */
+.wme-pull-stats-warning {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--wme-pull-ink) 14%, transparent);
 }
 
 .wme-pull-stats-rows {

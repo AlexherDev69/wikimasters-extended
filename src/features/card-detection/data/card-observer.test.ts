@@ -133,6 +133,27 @@ describe('observeCards', () => {
     expect(scans[0]?.[0]?.card.title).toBe('After');
   });
 
+  it('should report every batch of mutations at once when the scan is still waiting', async () => {
+    const scans: ObservedCard[][] = [];
+    let mutationCount = 0;
+    disconnect = observeCards({
+      root: document.body,
+      onScan: (cards) => scans.push(cards),
+      onMutation: () => {
+        mutationCount += 1;
+      },
+      scanDelayMs: 200,
+    });
+
+    document.body.innerHTML = cardHtml('Alpha');
+    await Promise.resolve();
+    document.body.innerHTML = cardHtml('Beta');
+    await Promise.resolve();
+
+    expect(mutationCount).toBe(2);
+    expect(scans).toHaveLength(0);
+  });
+
   it('should not perform a scan before the scan delay has elapsed', async () => {
     const scans: ObservedCard[][] = [];
     disconnect = observeCards({

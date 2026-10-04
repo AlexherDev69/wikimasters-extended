@@ -27,6 +27,7 @@ const ROW_SELECTOR = '.wme-pull-row';
 const PERCENT_SELECTOR = '.wme-pull-percent';
 const BAR_SELECTOR = '.wme-pull-bar';
 const NOTE_SELECTOR = '.wme-pull-stats-note';
+const WARNING_SELECTOR = '.wme-pull-stats-warning';
 
 function panel(): HTMLElement | null {
   return document.querySelector<HTMLElement>(PULL_STATS_SELECTOR);
@@ -117,6 +118,20 @@ describe('applyPullStatsPanel', () => {
 
     expect(document.querySelectorAll(ROW_SELECTOR)).toHaveLength(0);
     expect(document.querySelector(NOTE_SELECTOR)?.textContent).toContain('Aucune carte comptée');
+  });
+
+  it('should warn, under the rows, that a page left during an opening loses the cards not seen yet', () => {
+    draw(TALLY);
+    const warning = document.querySelector(WARNING_SELECTOR);
+
+    expect(warning?.textContent).toContain('pendant une ouverture');
+    expect(panel()?.lastElementChild).toBe(warning);
+  });
+
+  it('should give the same warning when nothing was counted yet', () => {
+    draw(emptyTally());
+
+    expect(panel()?.lastElementChild).toBe(document.querySelector(WARNING_SELECTOR));
   });
 
   it('should write nothing at all when the panel already shows these counts', () => {
