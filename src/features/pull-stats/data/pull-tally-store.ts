@@ -1,5 +1,6 @@
 import { storage, type StorageItemKey } from '#imports';
-import { emptyTally, normalizeTally, type PullTally } from '../domain/pull-tally';
+import type { Rarity } from '../../card-detection/domain/rarity';
+import { addPull, emptyTally, normalizeTally, type PullTally } from '../domain/pull-tally';
 import type { PullTallyStore } from '../domain/pull-tally-store';
 
 /**
@@ -9,7 +10,25 @@ import type { PullTallyStore } from '../domain/pull-tally-store';
  */
 const PULL_TALLY_KEY: StorageItemKey = 'local:wme:pulls:v1';
 
+/**
+ * Read without the fallback of `read`: a storage that fails must fail the
+ * addition, since an empty tally taken for the one kept would be written back
+ * over every card ever counted.
+ */
+async function addToStored(rarity: Rarity): Promise<PullTally> {
+  const tally = addPull(normalizeTally(await storage.getItem(PULL_TALLY_KEY)), rarity);
+  await storage.setItem<PullTally>(PULL_TALLY_KEY, tally);
+  return tally;
+}
+
 export function createPullTallyStore(): PullTallyStore {
+  /**
+   * The additions of this page go one at a time. The storage has no
+   * transaction, so two cards counted in a row would otherwise both read the
+   * same tally before either has written, and one of them would be lost.
+   */
+  let lastAddition: Promise<unknown> = Promise.resolve();
+
   return {
     async read(): Promise<PullTally> {
       try {
@@ -21,8 +40,12 @@ export function createPullTallyStore(): PullTallyStore {
       }
     },
 
-    write(tally: PullTally): Promise<void> {
-      return storage.setItem<PullTally>(PULL_TALLY_KEY, tally);
+    add(rarity: Rarity): Promise<PullTally> {
+      const addition = lastAddition.then(() => addToStored(rarity));
+      // The line outlives an addition that failed: the next card is added
+      // all the same.
+      lastAddition = addition.catch(() => undefined);
+      return addition;
     },
   };
 }

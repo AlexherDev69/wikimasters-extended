@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import type { Logger } from '../../../core/logger/logger';
 import { scanCards } from '../../card-detection/data/scan-cards';
 import { PULL_STATS_SELECTOR } from '../data/pull-stats-panel';
-import { emptyTally, type PullTally } from '../domain/pull-tally';
+import { addPull, emptyTally, type PullTally } from '../domain/pull-tally';
 import type { PullTallyStore } from '../domain/pull-tally-store';
 import {
   countPackReveal,
@@ -39,14 +39,28 @@ interface Harness {
   logger: Logger;
 }
 
-function makeDeps(write: () => Promise<void> = () => Promise.resolve()): Harness {
+/**
+ * A storage held in memory, shared by every harness it is given to, as the
+ * storage of the browser is shared by every tab of the site.
+ */
+interface FakeStorage {
+  tally: PullTally;
+}
+
+function makeDeps(
+  write: () => Promise<void> = () => Promise.resolve(),
+  storage: FakeStorage = { tally: emptyTally() },
+): Harness {
   const written: PullTally[] = [];
   const logger = makeLogger();
   const store: PullTallyStore = {
-    read: () => Promise.resolve(emptyTally()),
-    write: (tally) => {
+    read: () => Promise.resolve(storage.tally),
+    add: async (rarity) => {
+      const tally = addPull(storage.tally, rarity);
       written.push(tally);
-      return write();
+      await write();
+      storage.tally = tally;
+      return tally;
     },
   };
   return { deps: { store, logger }, written, logger };
@@ -186,6 +200,41 @@ describe('syncPullStats', () => {
     sync(state, deps);
 
     expect(document.querySelector(TOTAL_SELECTOR)?.textContent).toBe('1 carte');
+  });
+
+  it('should keep the cards another tab has counted since this one read the storage', async () => {
+    const storage: FakeStorage = { tally: emptyTally() };
+    // Two tabs of the site, which both read an empty storage when they loaded.
+    const firstTab = makeDeps(undefined, storage);
+    const secondTab = makeDeps(undefined, storage);
+    const firstState = createPullStatsState(emptyTally());
+    const secondState = createPullStatsState(emptyTally());
+
+    showCard(1, 'c');
+    sync(firstState, firstTab.deps);
+    await vi.waitFor(() => {
+      expect(storage.tally.c).toBe(1);
+    });
+    showCard(1, 'ur');
+    sync(secondState, secondTab.deps);
+
+    await vi.waitFor(() => {
+      expect(storage.tally).toEqual({ ...emptyTally(), c: 1, ur: 1 });
+    });
+  });
+
+  it('should show the cards of the other tab once a card of this one is counted', async () => {
+    const storage: FakeStorage = { tally: { ...emptyTally(), c: 5 } };
+    const { deps } = makeDeps(undefined, storage);
+    // Read when the page loaded, before the other tab counted its five cards.
+    const state = createPullStatsState(emptyTally());
+    showCard(1, 'c');
+
+    sync(state, deps);
+
+    await vi.waitFor(() => {
+      expect(state.tally.c).toBe(6);
+    });
   });
 
   it('should keep counting in memory and log it when the storage cannot be written', async () => {

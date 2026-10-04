@@ -1,5 +1,6 @@
 import type { Logger } from '../../../core/logger/logger';
 import type { ObservedCard } from '../../card-detection/data/scan-cards';
+import type { Rarity } from '../../card-detection/domain/rarity';
 import { findPackReveal } from '../data/pack-reveal';
 import { applyPullStatsPanel, findPullStatsTarget } from '../data/pull-stats-panel';
 import { addPull, type PullTally } from '../domain/pull-tally';
@@ -15,7 +16,12 @@ import type { PullTallyStore } from '../domain/pull-tally-store';
 
 /** What survives between two syncs of one page. */
 export interface PullStatsState {
-  /** Read from storage once, then kept in step with what has been counted. */
+  /**
+   * What the panel shows. Read from storage when the page loads, then kept in
+   * step with what this page counts, and replaced by what the storage holds
+   * each time a card is added to it: that one also carries the cards another
+   * tab has counted.
+   */
   tally: PullTally;
   /**
    * Positions of the pack being revealed that were already counted. The site
@@ -40,14 +46,23 @@ function toErrorMessage(error: unknown): string {
 }
 
 /**
- * A failed write costs the card being counted, nothing more: the tally kept
- * in memory stays right for this page, and the next card that is counted
- * writes the whole of it again.
+ * The card is added to what the storage holds at that moment, never to the
+ * tally of this page written back as a whole: the site may be open in another
+ * tab, which has counted cards of its own since this one read the storage.
+ *
+ * A failed write costs the card being counted, nothing more: it stays in the
+ * tally of this page, which is what the panel shows, and the next card is
+ * added to the storage all the same.
  */
-function persist(tally: PullTally, deps: PullStatsDeps): void {
-  deps.store.write(tally).catch((error: unknown) => {
-    deps.logger.warn('Pull tally write failed', { error: toErrorMessage(error) });
-  });
+function persist(rarity: Rarity, state: PullStatsState, deps: PullStatsDeps): void {
+  deps.store
+    .add(rarity)
+    .then((stored) => {
+      state.tally = stored;
+    })
+    .catch((error: unknown) => {
+      deps.logger.warn('Pull tally write failed', { error: toErrorMessage(error) });
+    });
 }
 
 /**
@@ -77,8 +92,9 @@ function countReveal(
     return;
   }
   state.countedPositions.add(reveal.index);
+  // Counted on this page at once, so the panel never waits for the storage.
   state.tally = addPull(state.tally, reveal.rarity);
-  persist(state.tally, deps);
+  persist(reveal.rarity, state, deps);
 }
 
 /**
