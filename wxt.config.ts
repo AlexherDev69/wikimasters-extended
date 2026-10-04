@@ -23,12 +23,16 @@ const DEV_SUFFIX = ' (dev)';
 const GECKO_ID = 'wikimasters-extended@alexherdev69.github.io';
 
 /**
- * From Firefox 127 on, the host permissions of a Manifest V3 extension are
- * granted with the install instead of waiting for the user to allow them, so
- * the calls to Wikimedia work from the first page, as they do on Chrome. 128
- * is the extended support release that follows.
+ * The first Firefox that reads `data_collection_permissions`, the declaration
+ * made below: an older one installs the extension without ever showing the
+ * user what leaves the browser, and the validation of Mozilla flags the gap.
+ *
+ * It is also past Firefox 127, from which the host permissions of a Manifest
+ * V3 extension are granted with the install instead of waiting for the user
+ * to allow them, so the calls to Wikimedia work from the first page, as they
+ * do on Chrome.
  */
-const FIREFOX_MIN_VERSION = '128.0';
+const FIREFOX_MIN_VERSION = '140.0';
 
 export default defineConfig({
   srcDir: 'src',
