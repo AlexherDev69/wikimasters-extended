@@ -3,12 +3,13 @@
  * and nothing else: your own collection, and the catalogue of every card of
  * the game.
  *
- * This is the one place in the extension that looks at the route rather than
- * at the shape of a node. The rarity filter row the button is added to is not
- * enough on its own: the marketplace ships the very same row, and its cards
- * sit in a tile of their own, with a price under them, which this view has
- * never been measured against. The path is read, never written, and a page
- * that is not one of these two is left exactly as the site drew it.
+ * This is one of the two places in the extension that look at the route
+ * rather than at the shape of a node, the other being the page of the packs
+ * (pull-stats/domain/pulls-page.ts). The rarity filter row the button is
+ * added to is not enough on its own: the marketplace ships the very same row,
+ * and its cards sit in a tile of their own, with a price under them, which
+ * this view has never been measured against. The path is read, never written,
+ * and a page that is not one of these two is left exactly as the site drew it.
  */
 const COMPACT_PATHS: readonly string[] = ['/collection', '/global-collection'];
 

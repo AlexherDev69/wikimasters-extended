@@ -7,7 +7,12 @@ import { scanCards } from '../../card-detection/data/scan-cards';
 import { PULL_STATS_SELECTOR } from '../data/pull-stats-panel';
 import { emptyTally, type PullTally } from '../domain/pull-tally';
 import type { PullTallyStore } from '../domain/pull-tally-store';
-import { createPullStatsState, syncPullStats, type PullStatsDeps } from './sync-pull-stats';
+import {
+  countPackReveal,
+  createPullStatsState,
+  syncPullStats,
+  type PullStatsDeps,
+} from './sync-pull-stats';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../tests/fixtures');
 
@@ -50,6 +55,11 @@ function makeDeps(write: () => Promise<void> = () => Promise.resolve()): Harness
 /** One pass of the overlay: the page is scanned, then the feature is synced. */
 function sync(state: ReturnType<typeof createPullStatsState>, deps: PullStatsDeps): void {
   syncPullStats(document.body, scanCards(document), state, deps);
+}
+
+/** What a mutation of the page of the packs asks for: the count, and no drawing. */
+function count(state: ReturnType<typeof createPullStatsState>, deps: PullStatsDeps): void {
+  countPackReveal(document.body, scanCards(document), state, deps);
 }
 
 /** What the site does when the user walks to the next card of the pack. */
@@ -191,5 +201,58 @@ describe('syncPullStats', () => {
     });
 
     expect(state.tally.sr).toBe(1);
+  });
+});
+
+describe('countPackReveal', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('should count the card the pack shows when a mutation brings it', () => {
+    const { deps, written } = makeDeps();
+    const state = createPullStatsState(emptyTally());
+    showCard(2, 'sr');
+
+    count(state, deps);
+
+    expect(state.tally.sr).toBe(1);
+    expect(written).toHaveLength(1);
+  });
+
+  it('should leave nothing for the scan to count again when the card is still on the page', () => {
+    const { deps, written } = makeDeps();
+    const state = createPullStatsState(emptyTally());
+    showCard(1);
+
+    count(state, deps);
+    sync(state, deps);
+
+    expect(state.tally.c).toBe(1);
+    expect(written).toHaveLength(1);
+  });
+
+  it('should draw no panel when the page shows the packs left', () => {
+    const { deps } = makeDeps();
+    const state = createPullStatsState(emptyTally());
+    document.body.innerHTML = FIXTURE_PULL_IDLE;
+
+    count(state, deps);
+
+    expect(document.body.querySelector(PULL_STATS_SELECTOR)).toBeNull();
+  });
+
+  it('should count the next pack when a mutation has shown the packs left in between', () => {
+    const { deps } = makeDeps();
+    const state = createPullStatsState(emptyTally());
+
+    showCard(1);
+    count(state, deps);
+    document.body.innerHTML = FIXTURE_PULL_IDLE;
+    count(state, deps);
+    showCard(1);
+    count(state, deps);
+
+    expect(state.tally.c).toBe(2);
   });
 });

@@ -51,26 +51,24 @@ function persist(tally: PullTally, deps: PullStatsDeps): void {
 }
 
 /**
- * One pass over the cards of the page. The pack being revealed is forgotten
- * only when the page positively shows the block of the packs left, which is
- * the screen the site comes back to between two packs: a card missing for one
- * render, between two of its own animations, must never make the next pack
- * look like a new one and count a card twice.
+ * Counts the card the pack shows right now, once. The pack being revealed is
+ * forgotten only when the page positively shows the block of the packs left,
+ * which is the screen the site comes back to between two packs: a card
+ * missing for one render, between two of its own animations, must never make
+ * the next pack look like a new one and count a card twice.
  */
-export function syncPullStats(
-  root: ParentNode,
+function countReveal(
+  isBetweenPacks: boolean,
   cards: readonly ObservedCard[],
   state: PullStatsState,
   deps: PullStatsDeps,
 ): void {
-  const target = findPullStatsTarget(root);
-  if (target !== null) {
-    // The screen between two packs: nothing is being revealed, so the pack
-    // just closed is forgotten and the panel is drawn. Counting is left out
-    // of this branch entirely, and not merely skipped by the positions: a
-    // page showing both would otherwise count the same card at every sync.
+  if (isBetweenPacks) {
+    // Nothing is being revealed, so the pack just closed is forgotten.
+    // Counting is left out of this branch entirely, and not merely skipped by
+    // the positions: a page showing both would otherwise count the same card
+    // at every sync.
     state.countedPositions.clear();
-    applyPullStatsPanel(target, state.tally);
     return;
   }
 
@@ -81,4 +79,40 @@ export function syncPullStats(
   state.countedPositions.add(reveal.index);
   state.tally = addPull(state.tally, reveal.rarity);
   persist(state.tally, deps);
+}
+
+/**
+ * The counting alone, for the mutations of the page of the packs, which are
+ * read as they come rather than at the next scan. The site has a card down as
+ * seen the instant it is shown, and unlocks its "Continuer" button on that
+ * alone: a user who presses its arrow twice in a row never comes back to the
+ * card in between, so a scan that comes after it has lost that card for good.
+ *
+ * Draws nothing, and so writes nothing on the page: the panel is left to
+ * `syncPullStats`.
+ */
+export function countPackReveal(
+  root: ParentNode,
+  cards: readonly ObservedCard[],
+  state: PullStatsState,
+  deps: PullStatsDeps,
+): void {
+  countReveal(findPullStatsTarget(root) !== null, cards, state, deps);
+}
+
+/**
+ * One pass over the cards of the page: what the pack shows is counted, and
+ * the panel is drawn on the screen between two packs.
+ */
+export function syncPullStats(
+  root: ParentNode,
+  cards: readonly ObservedCard[],
+  state: PullStatsState,
+  deps: PullStatsDeps,
+): void {
+  const target = findPullStatsTarget(root);
+  countReveal(target !== null, cards, state, deps);
+  if (target !== null) {
+    applyPullStatsPanel(target, state.tally);
+  }
 }

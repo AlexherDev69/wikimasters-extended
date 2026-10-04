@@ -9,7 +9,8 @@
  * `overlay.card-parts.test.ts`.
  */
 
-import { describe, it, expect, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+import { observeCards } from '../../card-detection/data/card-observer';
 import { PONG_SELECTOR } from '../../loading-pong/data/pong-panel';
 import { stubCanvasContext, type CanvasStub } from '../../../../tests/helpers/canvas-context';
 import {
@@ -32,6 +33,20 @@ import {
 } from '../../../../tests/helpers/overlay-harness';
 
 import { DEFAULT_SETTINGS } from '../domain/settings';
+
+/** The page of the packs, the only one a pack is revealed on. */
+const PULLS_PATH = '/pulls';
+
+/** The delay the content script leaves between a mutation and its scan. */
+const SCAN_DELAY_MS = 200;
+
+/** What the site does when the user walks to another card of the pack. */
+function showPackCard(position: number): void {
+  document.body.innerHTML = PULL_REVEAL_HTML.replace(
+    '>1</span><span>/ 5</span>',
+    `>${String(position)}</span><span>/ 5</span>`,
+  );
+}
 
 /** One more than the five notifications the unread header fixture shows. */
 const SIX_WAITING = 6;
@@ -121,6 +136,68 @@ describe('createOverlay', () => {
     scan(overlay);
 
     expect(pullStatsPanel()?.textContent).toContain('1 carte');
+  });
+
+  it('should count a card of the pack the user leaves before the scan comes', async () => {
+    vi.useFakeTimers();
+    showPackCard(1);
+    const { overlay } = mount({ ...ALL_OFF, pullStats: true }, makeCategorize(), undefined, () => PULLS_PATH);
+    scan(overlay);
+    // Wired as the content script wires it: the scan waits, the mutation does not.
+    const disconnect = observeCards({
+      root: document.body,
+      onScan: overlay.onScan,
+      onMutation: overlay.onMutation,
+      scanDelayMs: SCAN_DELAY_MS,
+    });
+
+    // Two presses on the arrow of the site inside one delay: the second card
+    // is gone from the page when the scan reads it, and the site has it down
+    // as seen, so the user never has to come back to it.
+    showPackCard(2);
+    await Promise.resolve();
+    showPackCard(3);
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(SCAN_DELAY_MS);
+    disconnect();
+    vi.useRealTimers();
+
+    document.body.innerHTML = PULL_IDLE_HTML;
+    scan(overlay);
+    expect(pullStatsPanel()?.textContent).toContain('3 cartes');
+  });
+
+  it('should leave a mutation of another page to the scan', () => {
+    showPackCard(1);
+    const { overlay } = mount({ ...ALL_OFF, pullStats: true });
+
+    overlay.onMutation();
+    document.body.innerHTML = PULL_IDLE_HTML;
+    scan(overlay);
+
+    expect(pullStatsPanel()?.textContent).toContain('Aucune carte comptée');
+  });
+
+  it('should count nothing from a mutation while the setting is off', () => {
+    showPackCard(1);
+    const { overlay } = mount({ ...ALL_OFF, pullStats: false }, makeCategorize(), undefined, () => PULLS_PATH);
+
+    overlay.onMutation();
+    document.body.innerHTML = PULL_IDLE_HTML;
+    overlay.applySettings({ ...ALL_OFF, pullStats: true });
+
+    expect(pullStatsPanel()?.textContent).toContain('Aucune carte comptée');
+  });
+
+  it('should write nothing on the page when a mutation is read', () => {
+    document.body.innerHTML = PULL_IDLE_HTML;
+    const { overlay } = mount({ ...ALL_OFF, pullStats: true }, makeCategorize(), undefined, () => PULLS_PATH);
+    const observer = observeBody();
+
+    overlay.onMutation();
+
+    expect(observer.takeRecords()).toHaveLength(0);
+    observer.disconnect();
   });
 
   it('should count nothing on the page of the packs while the setting is off', () => {

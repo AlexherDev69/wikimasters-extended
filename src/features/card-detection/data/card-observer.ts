@@ -14,6 +14,14 @@ export interface CardObserverOptions {
   onScan: (cards: ObservedCard[]) => void;
   /** Delay between the first mutation of a batch and the scan. Defaults to DEFAULT_SCAN_DELAY_MS. */
   scanDelayMs?: number;
+  /**
+   * Called at once on every batch of mutations, without waiting for the scan.
+   * For what the page shows for less than `scanDelayMs` and the scan would
+   * therefore never read. It runs far more often than `onScan`, so it must
+   * stay cheap, and it must write nothing on the page: a write here is a
+   * mutation, which would call it again at once.
+   */
+  onMutation?: () => void;
 }
 
 /**
@@ -35,7 +43,7 @@ export interface CardObserverOptions {
  * @returns A disconnect function. Safe to call multiple times.
  */
 export function observeCards(options: CardObserverOptions): () => void {
-  const { root, onScan, scanDelayMs = DEFAULT_SCAN_DELAY_MS } = options;
+  const { root, onScan, onMutation, scanDelayMs = DEFAULT_SCAN_DELAY_MS } = options;
 
   let timerId: ReturnType<typeof setTimeout> | null = null;
   let disconnected = false;
@@ -51,7 +59,10 @@ export function observeCards(options: CardObserverOptions): () => void {
   }
 
   const observer = new MutationObserver(() => {
+    // The scan is armed first, so a reader of the mutation that throws costs
+    // only itself.
     scheduleScan();
+    onMutation?.();
   });
 
   observer.observe(root, { childList: true, subtree: true, characterData: true });
